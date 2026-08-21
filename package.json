@@ -1,8 +1,8 @@
 {
   "name": "antigravity-cockpit",
-  "displayName": "Antigravity Cockpit – AI Quota Monitor",
-  "description": "Real-time AI quota dashboard for Antigravity IDE. Zero telemetry, 100% offline-private. Shows Gemini & Claude/GPT weekly/5-hour limits in your status bar with a beautiful bilingual Webview cockpit.",
-  "version": "1.0.2",
+  "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
+  "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
+  "version": "1.0.3",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -16,15 +16,16 @@
   },
   "keywords": [
     "antigravity",
+    "privacy",
+    "offline",
+    "zero-telemetry",
+    "quota",
     "gemini",
     "claude",
     "gpt",
-    "quota",
-    "ai",
+    "status-bar",
     "cockpit",
-    "status bar",
-    "monitor",
-    "privacy"
+    "security"
   ],
   "categories": [
     "Machine Learning",
