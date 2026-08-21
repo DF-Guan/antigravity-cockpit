@@ -58,6 +58,21 @@
 
 ---
 
+## 🛠️ 快捷指令与常用操作 (Commands)
+
+按 `Ctrl + Shift + P`（macOS: `Cmd + Shift + P`）打开命令面板，输入 **`Antigravity Cockpit`** 即可执行：
+
+| 命令面板输入名称 (Command Palette) | 快捷操作 / 功能说明 |
+|:---|:---|
+| **点击状态栏文字** | 直接打开可视化大屏配额驾驶舱 |
+| `Antigravity Cockpit: Open Quota Dashboard` | 打开完整可视化配额驾驶舱 (支持深色/浅色自适应) |
+| `Antigravity Cockpit: Quick Quota Overview` | 弹出快速配额总览菜单 (QuickPick 极简视图) |
+| `Antigravity Cockpit: Refresh Quota` | 立即从本地 Language Server 强制刷新最新实时额度 |
+| `Antigravity Cockpit: Toggle Language (中/EN)` | 一键全局切换中英双语显示 (即时生效) |
+| `Antigravity Cockpit: Open Settings` | 打开插件专属设置面板 (自定义预警阈值与刷新率) |
+
+---
+
 ## ⚙️ 自由定制设置
 
 在 IDE 设置中搜索 **`Antigravity Cockpit`** 即可个性化调整：
