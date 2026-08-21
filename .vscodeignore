@@ -1,0 +1,11 @@
+.vscode/**
+.github/**
+inputs/**
+dist/**
+**/*.py
+**/*.map
+**/.gitignore
+**/.env*
+**/node_modules/**
+**/*.vsix
+memory.md

@@ -1,0 +1,19 @@
+# Development & Memory Files (Private)
+memory.md
+inputs/
+*.log
+scratch/
+dist/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Secrets & Local
+.env
+.env.*
+*.secret
+credentials.json
+token.json
+.DS_Store
+Thumbs.db

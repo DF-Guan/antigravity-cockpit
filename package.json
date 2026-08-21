@@ -1,0 +1,134 @@
+{
+  "name": "antigravity-cockpit",
+  "displayName": "Antigravity Cockpit – AI Quota Monitor",
+  "description": "Real-time AI quota dashboard for Antigravity IDE. Zero telemetry, 100% offline-private. Shows Gemini & Claude/GPT weekly/5-hour limits in your status bar with a beautiful bilingual Webview cockpit.",
+  "version": "1.0.2",
+  "publisher": "DF-Guan",
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DF-Guan/antigravity-cockpit"
+  },
+  "homepage": "https://github.com/DF-Guan/antigravity-cockpit#readme",
+  "bugs": {
+    "url": "https://github.com/DF-Guan/antigravity-cockpit/issues"
+  },
+  "keywords": [
+    "antigravity",
+    "gemini",
+    "claude",
+    "gpt",
+    "quota",
+    "ai",
+    "cockpit",
+    "status bar",
+    "monitor",
+    "privacy"
+  ],
+  "categories": [
+    "Machine Learning",
+    "Other"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agPrivateCockpit.openDashboard",
+        "title": "Antigravity Cockpit: Open Quota Dashboard",
+        "category": "Antigravity Cockpit",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "agPrivateCockpit.quickOverview",
+        "title": "Antigravity Cockpit: Quick Quota Overview",
+        "category": "Antigravity Cockpit",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "agPrivateCockpit.refresh",
+        "title": "Antigravity Cockpit: Refresh Quota",
+        "category": "Antigravity Cockpit",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "agPrivateCockpit.toggleLang",
+        "title": "Antigravity Cockpit: Toggle Language (中/EN)",
+        "category": "Antigravity Cockpit",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "agPrivateCockpit.openNativeSettings",
+        "title": "Antigravity Cockpit: Open Settings",
+        "category": "Antigravity Cockpit",
+        "icon": "$(settings-gear)"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Cockpit",
+      "properties": {
+        "agPrivateCockpit.refreshIntervalSeconds": {
+          "type": "number",
+          "default": 15,
+          "minimum": 5,
+          "maximum": 3600,
+          "description": "Auto-refresh interval in seconds (default: 15s)"
+        },
+        "agPrivateCockpit.compactStatusBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use compact status bar mode (abbreviates model names)"
+        },
+        "agPrivateCockpit.warningThreshold": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 99,
+          "description": "Percentage at which status bar turns orange warning (default: 50)"
+        },
+        "agPrivateCockpit.criticalThreshold": {
+          "type": "number",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 99,
+          "description": "Percentage at which status bar turns red critical (default: 20)"
+        },
+        "agPrivateCockpit.defaultLanguage": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "zh",
+            "en"
+          ],
+          "enumDescriptions": [
+            "Follow system locale",
+            "Always use Chinese (中文)",
+            "Always use English"
+          ],
+          "description": "Default display language for the cockpit dashboard"
+        },
+        "agPrivateCockpit.showGemini": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Gemini quota in the status bar"
+        },
+        "agPrivateCockpit.showClaude": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Claude/GPT quota in the status bar"
+        }
+      }
+    }
+  },
+  "author": {
+    "name": "DF-Guan",
+    "url": "https://github.com/DF-Guan"
+  }
+}
