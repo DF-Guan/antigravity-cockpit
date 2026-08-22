@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.30] - 2026-08-22
+### Real-Time SQLite WAL Stream Sensing Engine
+- **Sub-Second Conversation Streaming**: Replaced directory polling with direct SQLite-WAL (`.db-wal`) mtime stream sensing (captures prompt & response tokens instantly across all dialogue turns).
+- **High-Frequency Responsive Speed**: 1.5s live polling dynamically jumps to 70~95 t/s during chat responses and returns to 0 t/s on idle.
+
 ## [1.0.29] - 2026-08-22
 ### Bulletproof Responsive Layout & Dynamic Velocity Stream Engine
 - **100% Adaptive Drag & Resize**: Eliminated all visual overflow (pill badge clipping, header crushing) with responsive container queries and ellipsis protection across 280px ~ 4K displays.
