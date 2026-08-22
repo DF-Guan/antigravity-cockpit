@@ -203,7 +203,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.31 全面体验与多级预警增强版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.33 全面体验与多级预警增强版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();

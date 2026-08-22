@@ -44,7 +44,7 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 
 ## [1.0.27] - 2026-08-22
 ### Claude Warm-Minimalist Design & 100% Quota State Fix
-- **Claude Signature Aesthetics**: Adopted serif typography (`Charter`, `Georgia`), warm terracotta accents (`#da7756`), and generous breathable spacing.
+- **Modern Humanist Aesthetics**: Adopted serif typography (`Charter`, `Georgia`), warm terracotta accents (`#da7756`), and generous breathable spacing.
 - **100% Ready State Engine**: Fixed 5-hour quota state to display `满额就绪 (100% 充足)` instead of `同步中...`.
 
 ## [1.0.26] - 2026-08-22
