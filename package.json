@@ -2,15 +2,15 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DF-Guan/antigravity-cockpit"
+    "url": "https://github.com/DF-Guan/antigravity-cockpit.git"
   },
-  "homepage": "https://github.com/DF-Guan/antigravity-cockpit#readme",
+  "homepage": "https://github.com/DF-Guan/antigravity-cockpit",
   "bugs": {
     "url": "https://github.com/DF-Guan/antigravity-cockpit/issues"
   },
@@ -131,5 +131,6 @@
   "author": {
     "name": "DF-Guan",
     "url": "https://github.com/DF-Guan"
-  }
+  },
+  "qna": "https://github.com/DF-Guan/antigravity-cockpit/discussions"
 }
