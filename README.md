@@ -1,48 +1,54 @@
 # 🛸 Antigravity Private Cockpit
-### 🔒 100% Offline & Zero-Telemetry AI Quota Monitor for Antigravity IDE
 
 [![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.17-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-why-private-cockpit-security--privacy-manifesto)
+[![Bilingual](https://img.shields.io/badge/Language-English%20%7C%20%E4%B8%AD%E6%96%87-orange.svg)](README_zh.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-🌐 **Language**: **English** | [简体中文 (Chinese)](README_zh.md)
+> 🔒 **100% Local & Offline AI Quota & Velocity Monitor for Antigravity IDE / VS Code.**  
+> Zero external network requests, zero telemetry, zero token leakage. Directly reads from the local Antigravity Language Server daemon with **0ms instant cached startup**.
 
-> **Built for developers who value privacy and data sovereignty.**  
-> Real-time monitoring of **Google Gemini** and **Anthropic Claude / GPT** weekly and 5-hour quota limits. **100% offline execution with zero external network requests and zero credential harvesting.**
+[🇨🇳 **查看中文完整说明文档 (README_zh.md)**](README_zh.md)
 
 ---
 
 ## 🔒 Why Private Cockpit? (Security & Privacy Manifesto)
 
-Many third-party extensions send analytics, phone home to external servers, or intercept OAuth credentials. **Antigravity Private Cockpit is architected from day one with a strict Zero-Leak principle:**
-
-| Dimension | Typical 3rd-Party Extensions | 🛸 Antigravity Private Cockpit |
-|:---|:---:|:---:|
-| 🌐 **External Network Calls** | ⚠️ Sends telemetry to remote servers | ✅ **ZERO external network calls (100% Local 127.0.0.1 loopback)** |
-| 🔑 **Tokens & Credentials** | ⚠️ May intercept / plaintext cache tokens | ✅ **ZERO credential storage; strictly sandboxed** |
-| ⚡ **Data Synchronization** | ❌ Prone to "No models available" errors | ✅ **Native Local IPC/RPC with IDE Language Server daemon** |
-| 🪶 **Bundle Size & Footprint** | ⚠️ Bloated with hundreds of npm packages | ✅ **Only 56 KB · ZERO dependencies · Instant launch** |
-| 🎨 **UI Quality & Branding** | ❌ Clunky UI / Hardcoded styles | ✅ **Google & Anthropic official SVG graphics + fluid responsive theme** |
+| Dimension | Typical 3rd-Party Quota Tools | 🛸 Antigravity Private Cockpit |
+| :--- | :--- | :--- |
+| **Network Requests** | Calls external cloud APIs | 🚫 **0 External Network Calls (100% Loopback `127.0.0.1`)** |
+| **Telemetry & Tracking** | Embedded Google/Mixpanel trackers | 🚫 **0 Telemetry, 0 Analytics, 0 Logs Uploaded** |
+| **Token Security** | May proxy or forward CSRF tokens | 🔒 **CSRF Token stays exclusively in local memory** |
+| **Startup Speed** | Laggy background process spawn | ⚡ **0ms Instant Boot via Loopback Port Persistence** |
+| **Open Source** | Closed source or obfuscated code | 📖 **100% Open Source MIT Licensed Clean Code** |
 
 ---
 
 ## ✨ Key Features
 
-### 1. ⚡ Native IPC Real-Time Sync (No Copy-Pasting Required)
-Directly probes the running Antigravity Language Server daemon via local loopback IPC (`127.0.0.1`). Real-time millisecond-level quota changes, remaining percentages, and countdown timers are synchronized automatically.
+1. **📊 Symmetrical Dual-Model & Dual-Period Status Bar**:
+   - **Google Gemini**: Displays Weekly Limit (`96%`) and 5-Hour Sprint Limit (`86%`).
+   - **Anthropic Claude & GPT**: Displays Weekly Limit (`84%`) and 5-Hour Sprint Limit (`54%`).
+   - **Tightened Svelte Layout**: Micro-spaced alignment without visual separation.
 
-### 2. 📊 Digit-Only Dynamic Alert Coloring
-Percentage digits dynamically reflect individual model health without altering label text colors:
-- 🟢 **Healthy (>50%)**: Digits glow vibrant green (`#3fb950`)
-- 🟡 **Warning (<50%)**: Digits turn alert orange (`#e3b341`)
-- 🔴 **Critical (<20%)**: Digits turn urgent red (`#ff6b6b`)
+2. **⚡ Real-Time Token Generation Velocity (TPS)**:
+   - Live stream tracking calculating **Tokens / Second (`⚡ 68.4 t/s`)** and output volume from recent conversation turns.
+   - Distinctive **Electric Cyan (`#38bdf8`)** dynamic highlight.
 
-### 3. 🎨 Brand-Accurate Visual Cockpit Dashboard
-- **Vector Brand Visuals**: Official Google Gemini aurora star and Anthropic Claude sunburst SVG icons.
-- **Fluid Layout**: Seamlessly transitions from narrow sidebars (280px) to ultra-wide 4K displays.
-- **Theme Adaptive**: Uses native VS Code CSS variables (`var(--vscode-*)`) to match Dark, Light, and High-Contrast themes.
-- **Bilingual i18n**: One-click instant toggle between 🌐 English and 中文 across all views.
+3. **🎨 Digit-Only Dynamic Alert Coloring**:
+   - Model labels retain your native IDE theme color.
+   - Percentage numbers independently calculate dynamic health colors:
+     - 🟢 **Optimal (>50%)**: Vibrant Mint (`#3fb950`)
+     - 🟡 **Warning (<50%)**: Warm Amber (`#e3b341`)
+     - 🔴 **Critical (<20%)**: Crimson Red (`#ff6b6b`)
+
+4. **🖥️ Brand-Accurate Bilingual Cockpit Dashboard**:
+   - Beautiful visual webview with official Google Gemini (blue gradient) and Anthropic Claude (warm amber) vector graphics.
+   - Seamless one-click global language toggle between English and Chinese (`中 / EN`).
+
+5. **⚡ Zero-Lag Instant Cold-Boot**:
+   - Automatically caches active local loopback port and token for instant `10ms` response upon IDE startup.
 
 ---
 
@@ -54,53 +60,45 @@ Percentage digits dynamically reflect individual model health without altering l
 3. Click **Install**.
 
 ### Option 2: Install from VSIX (Offline Package)
-1. Download the latest `antigravity-cockpit-x.x.x.vsix` from [GitHub Releases](https://github.com/DF-Guan/antigravity-cockpit/releases).
+1. Download the latest `antigravity-cockpit-1.0.17.vsix` from [GitHub Releases](https://github.com/DF-Guan/antigravity-cockpit/releases).
 2. Press `Ctrl+Shift+P` (macOS: `Cmd+Shift+P`) ➔ Type and select `Extensions: Install from VSIX...` ➔ Choose the downloaded `.vsix` file.
 
 ---
 
-## 🛠️ Commands
+## ⌨️ Commands
 
-按 `Ctrl + Shift + P`（macOS: `Cmd + Shift + P`）打开命令面板输入：
+Press `Ctrl+Shift+P` (or `Cmd+Shift+P`) to run:
 
-| Command | Action |
-|:---|:---|
-| `Antigravity Private Cockpit: Open Quota Dashboard` | Opens the full visual cockpit dashboard |
-| `Antigravity Private Cockpit: Quick Quota Overview` | Shows quick summary in command palette menu |
-| `Antigravity Private Cockpit: Refresh Quota` | Force-syncs live quota from local Language Server |
-| `Antigravity Private Cockpit: Toggle Language (中/EN)` | Toggles display language globally (ZH / EN) |
+| Command | Description |
+| :--- | :--- |
+| `Antigravity Private Cockpit: Open Quota Dashboard` | Opens full visual quota & velocity cockpit |
+| `Antigravity Private Cockpit: Quick Quota Overview` | Opens lightweight quick-pick summary menu |
+| `Antigravity Private Cockpit: Refresh Quota` | Force-syncs latest live quota from local Language Server |
+| `Antigravity Private Cockpit: Toggle Language (中/EN)` | Globally toggles display language (ZH / EN) |
 | `Antigravity Private Cockpit: Open Settings` | Opens extension configuration panel |
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Extension Settings
 
-You can open the extension configuration panel via any of the following ways:
-1. **Option 1 (Recommended)**: Click the **`⚙️ Settings`** button directly at the top of the Cockpit Dashboard;
-2. **Option 2**: Press `Ctrl + Shift + P` (or `Cmd + Shift + P`) and execute **`Antigravity Private Cockpit: Open Settings`**;
-3. **Option 3**: In Extensions view (`Ctrl + Shift + X`), click the gear icon on **Antigravity Private Cockpit** ➔ **`Extension Settings`**.
+Access settings via:
+1. Click the **`⚙️ Settings`** button at the top of the Cockpit Dashboard;
+2. Press `Ctrl + Shift + P` and execute **`Antigravity Private Cockpit: Open Settings`**;
+3. In Extensions view (`Ctrl + Shift + X`), click the gear icon on **Antigravity Private Cockpit** ➔ **Extension Settings**.
 
-### Available Configuration Options:
-
-- `agPrivateCockpit.refreshIntervalSeconds`: Auto-refresh interval in seconds (default: `15`, minimum: `5`).
-- `agPrivateCockpit.compactStatusBar`: Compact status bar mode with abbreviated names (default: `false`).
-- `agPrivateCockpit.warningThreshold`: Quota % for orange warning alert (default: `50`).
-- `agPrivateCockpit.criticalThreshold`: Quota % for red critical alert (default: `20`).
-- `agPrivateCockpit.defaultLanguage`: Default display language (`auto` / `zh` / `en`).
-- `agPrivateCockpit.showGemini`: Toggle Google Gemini quota visibility in the status bar (default: `true`).
-- `agPrivateCockpit.showClaude`: Toggle Anthropic Claude/GPT quota visibility in the status bar (default: `true`).
-- `agPrivateCockpit.showTokenSpeed`: Toggle recent conversation Token Speed (t/s) indicator in the status bar (default: `true`).
-
----
-
-## 🔒 Privacy & Security Architecture
-
-- **100% Offline**: Never contacts any third-party server or analytics service.
-- **Zero Credentials**: Never stores, logs, or transmits API keys, passwords, or tokens.
-- **Local-Only Loopback**: All IPC queries are strictly bound to `127.0.0.1`.
+| Configuration Key | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `agPrivateCockpit.refreshIntervalSeconds` | `number` | `15` | Auto-refresh interval in seconds (minimum: `5`). |
+| `agPrivateCockpit.compactStatusBar` | `boolean` | `false` | Compact status bar mode (`✨G:96%(86%) 🤖C:84%(54%) ⚡68t/s`). |
+| `agPrivateCockpit.warningThreshold` | `number` | `50` | Quota percentage triggering orange warning alert. |
+| `agPrivateCockpit.criticalThreshold` | `number` | `20` | Quota percentage triggering red critical alert. |
+| `agPrivateCockpit.defaultLanguage` | `string` | `"auto"` | Display language preference (`auto` / `zh` / `en`). |
+| `agPrivateCockpit.showGemini` | `boolean` | `true` | Show/hide Google Gemini quota in status bar. |
+| `agPrivateCockpit.showClaude` | `boolean` | `true` | Show/hide Anthropic Claude/GPT quota in status bar. |
+| `agPrivateCockpit.showTokenSpeed` | `boolean` | `true` | Show/hide recent conversation Token Speed (`t/s`) in status bar. |
 
 ---
 
 ## 📄 License
 
-MIT License © 2026 [DF-Guan](https://github.com/DF-Guan)
+MIT License © 2026 [DF-Guan](https://github.com/DF-Guan). 100% Free and Open Source.

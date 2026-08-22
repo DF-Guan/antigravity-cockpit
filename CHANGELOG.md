@@ -2,23 +2,28 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
-## [1.0.14] - 2026-08-22
-### Precision Audit
-- **Zero Wording Inconsistencies**: Fully audited all installation guides, shortcut keys, and tooltips across all languages.
+## [1.0.17] - 2026-08-22
+### Pure Factual Metrics & Token Velocity
+- **Real-Time Token Generation Velocity (TPS)**: Live calculation of Token Speed (`⚡ 68.4 t/s`) and volume for recent conversation turns.
+- **Pure Factual Data**: Removed speculative composite model labels to ensure 100% objective, verifiable metrics.
+- **Svelte Tightened Spacing**: Micro-spaced layout eliminating loose visual gaps between model labels and percentage digits.
+- **5-Gate Pre-Flight Quality Assurance**: Verified zero privacy leakage, syntax integrity, and airtight dual-language isolation.
 
-## [1.0.13] - 2026-08-22
-### Brand & Reliability
-- **100% Unified Brand Name**: Standardized all titles, commands, and installation search guides to `Antigravity Private Cockpit`.
-- **Instant Cold-Boot Alignment**: 0ms cached local IPC probing with animated loading state.
+## [1.0.15] - 2026-08-22
+### Airtight i18n Fix
+- Completely isolated English tooltip status badge (`🟢 Native Live Synced` vs `🟢 官方原生实时同频`).
+- Localized webview progress bar labels and quick overview menus.
 
-## [1.0.10] - 2026-08-22
-### Added & Refined
-- **Strict Digit-Only Alert Coloring**: Model names and labels retain native IDE theme colors, while individual percentage numbers dynamically reflect health status colors.
-- **Harmonized Documentation**: 100% synchronized bilingual `README.md` and `README_zh.md` with explicit configuration defaults.
-- **Accurate Antigravity IDE Settings Navigation**: Integrated direct settings command and 1-click dashboard button.
+## [1.0.11] - 2026-08-22
+### Symmetrical Dual-Quota Status Bar
+- Added Gemini 5-hour sprint limit alongside weekly limit (`✨ Gemini: 96% (5h: 86%)   🤖 Claude/GPT: 84% (5h: 54%)`).
+- Fine-grained multi-item architecture with independent digit-only alert coloring.
+
+## [1.0.3] - 2026-08-21
+### Privacy First Rebranding
+- Rebranded to Antigravity Private Cockpit. Added Security & Privacy Manifesto with 0 telemetry guarantee.
 
 ## [1.0.0] - 2026-08-21
-### Initial Public Release
-- **100% Local Real-Time Detection**: Automatically probes local Language Server daemon for live model quota.
-- **Zero Telemetry**: Pure offline loopback execution with zero external network calls.
-- **Bilingual Webview Cockpit**: Fluid responsive layout with official Google & Anthropic vector SVG graphics.
+### Initial Release
+- Brand-accurate visual dashboard for Google Gemini and Anthropic Claude.
+- 100% local loopback Language Server IPC connector.
