@@ -45,7 +45,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Cockpit] 秒级冷启动无缝对齐版激活');
+    console.log('[Antigravity Private Cockpit] 秒级冷启动无缝对齐版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     
@@ -125,7 +125,7 @@ function setLanguage(context, lang) {
     renderStatusBar();
     if (currentPanel) {
         try {
-            currentPanel.title = lang === 'zh' ? 'Antigravity 配额驾驶舱' : 'Antigravity Quota Cockpit';
+            currentPanel.title = lang === 'zh' ? 'Antigravity 隐私配额驾驶舱' : 'Antigravity Private Quota Cockpit';
             currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, lang);
         } catch (_) {}
     }
@@ -309,7 +309,7 @@ async function fetchLiveQuota(context, manual = false) {
         const statusText = liveQuotaState.isLive 
             ? (currentLang === 'zh' ? '🟢 原生实时数据同步成功' : '🟢 Native live quota synced') 
             : (currentLang === 'zh' ? '⚡ 配额已更新' : '⚡ Quota updated');
-        vscode.window.showInformationMessage(`[Antigravity Cockpit] ${statusText} (${liveQuotaState.lastSyncTime})`);
+        vscode.window.showInformationMessage(`[Antigravity Private Cockpit] ${statusText} (${liveQuotaState.lastSyncTime})`);
     }
 }
 
@@ -487,7 +487,7 @@ function showDashboard(context) {
     try {
         currentPanel = vscode.window.createWebviewPanel(
             'agPrivateCockpit',
-            currentLang === 'zh' ? 'Antigravity 配额驾驶舱' : 'Antigravity Quota Cockpit',
+            currentLang === 'zh' ? 'Antigravity 隐私配额驾驶舱' : 'Antigravity Private Quota Cockpit',
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -507,7 +507,7 @@ function showDashboard(context) {
             currentPanel = undefined;
         }, null, context.subscriptions);
     } catch (err) {
-        console.error('[Antigravity Cockpit] Webview create failed:', err);
+        console.error('[Antigravity Private Cockpit] Webview create failed:', err);
         showQuickOverview(context);
     }
 }

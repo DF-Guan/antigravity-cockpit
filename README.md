@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 100% Offline & Zero-Telemetry AI Quota Monitor for Antigravity IDE
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.10-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.13-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -50,7 +50,7 @@ Percentage digits dynamically reflect individual model health without altering l
 
 ### Option 1: Install from Open VSX Marketplace (Recommended)
 1. In Antigravity IDE / VS Code, open Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`).
-2. Search for **`Antigravity Cockpit`**.
+2. Search for **`Antigravity Private Cockpit`** (or `antigravity-cockpit`).
 3. Click **Install**.
 
 ### Option 2: Install from VSIX (Offline Package)
@@ -65,11 +65,11 @@ Percentage digits dynamically reflect individual model health without altering l
 
 | Command | Action |
 |:---|:---|
-| `Antigravity Cockpit: Open Quota Dashboard` | Opens the full visual cockpit dashboard |
-| `Antigravity Cockpit: Quick Quota Overview` | Shows quick summary in command palette menu |
-| `Antigravity Cockpit: Refresh Quota` | Force-syncs live quota from local Language Server |
-| `Antigravity Cockpit: Toggle Language (中/EN)` | Toggles display language globally (ZH / EN) |
-| `Antigravity Cockpit: Open Settings` | Opens extension configuration panel |
+| `Antigravity Private Cockpit: Open Quota Dashboard` | Opens the full visual cockpit dashboard |
+| `Antigravity Private Cockpit: Quick Quota Overview` | Shows quick summary in command palette menu |
+| `Antigravity Private Cockpit: Refresh Quota` | Force-syncs live quota from local Language Server |
+| `Antigravity Private Cockpit: Toggle Language (中/EN)` | Toggles display language globally (ZH / EN) |
+| `Antigravity Private Cockpit: Open Settings` | Opens extension configuration panel |
 
 ---
 
@@ -77,7 +77,7 @@ Percentage digits dynamically reflect individual model health without altering l
 
 You can open the extension configuration panel via any of the following ways:
 1. **Option 1 (Recommended)**: Click the **`⚙️ Settings`** button directly at the top of the Cockpit Dashboard;
-2. **Option 2**: Press `Ctrl + Shift + P` (or `Cmd + Shift + P`) and execute **`Antigravity Cockpit: Open Settings`**;
+2. **Option 2**: Press `Ctrl + Shift + P` (or `Cmd + Shift + P`) and execute **`Antigravity Private Cockpit: Open Settings`**;
 3. **Option 3**: In Extensions view (`Ctrl + Shift + X`), click the gear icon on Antigravity Cockpit ➔ **`Extension Settings`**.
 
 ### Available Configuration Options:

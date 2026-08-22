@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -42,37 +42,37 @@
     "commands": [
       {
         "command": "agPrivateCockpit.openDashboard",
-        "title": "Antigravity Cockpit: Open Quota Dashboard",
+        "title": "Antigravity Private Cockpit: Open Quota Dashboard",
         "category": "Antigravity Cockpit",
         "icon": "$(dashboard)"
       },
       {
         "command": "agPrivateCockpit.quickOverview",
-        "title": "Antigravity Cockpit: Quick Quota Overview",
+        "title": "Antigravity Private Cockpit: Quick Quota Overview",
         "category": "Antigravity Cockpit",
         "icon": "$(graph)"
       },
       {
         "command": "agPrivateCockpit.refresh",
-        "title": "Antigravity Cockpit: Refresh Quota",
+        "title": "Antigravity Private Cockpit: Refresh Quota",
         "category": "Antigravity Cockpit",
         "icon": "$(refresh)"
       },
       {
         "command": "agPrivateCockpit.toggleLang",
-        "title": "Antigravity Cockpit: Toggle Language (中/EN)",
+        "title": "Antigravity Private Cockpit: Toggle Language (中/EN)",
         "category": "Antigravity Cockpit",
         "icon": "$(globe)"
       },
       {
         "command": "agPrivateCockpit.openNativeSettings",
-        "title": "Antigravity Cockpit: Open Settings",
+        "title": "Antigravity Private Cockpit: Open Settings",
         "category": "Antigravity Cockpit",
         "icon": "$(settings-gear)"
       }
     ],
     "configuration": {
-      "title": "Antigravity Cockpit",
+      "title": "Antigravity Private Cockpit",
       "properties": {
         "agPrivateCockpit.refreshIntervalSeconds": {
           "type": "number",

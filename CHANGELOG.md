@@ -1,6 +1,11 @@
 # Change Log
 
-All notable changes to the "Antigravity Cockpit" extension will be documented in this file.
+All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
+
+## [1.0.13] - 2026-08-22
+### Brand & Reliability
+- **100% Unified Brand Name**: Standardized all titles, commands, and installation search guides to `Antigravity Private Cockpit`.
+- **Instant Cold-Boot Alignment**: 0ms cached local IPC probing with animated loading state.
 
 ## [1.0.10] - 2026-08-22
 ### Added & Refined

@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 纯本地零泄露 · AI 配额实时驾驶舱 (Zero-Telemetry AI Quota Monitor)
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.10-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.13-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -50,7 +50,7 @@
 
 ### 方式 1：Open VSX 市场一键安装（推荐）
 1. 在 Antigravity IDE / VS Code 中按 `Ctrl + Shift + X` 打开插件中心；
-2. 搜索 **`Antigravity Cockpit`**；
+2. 搜索 **`Antigravity Private Cockpit`**（或 `antigravity-cockpit`）；
 3. 点击 **安装（Install）** 即可。
 
 ### 方式 2：GitHub Releases 离线安装
@@ -61,16 +61,16 @@
 
 ## 🛠️ 快捷指令与常用操作 (Commands)
 
-按 `Ctrl + Shift + P`（macOS: `Cmd + Shift + P`）打开命令面板，输入 **`Antigravity Cockpit`** 即可执行：
+按 `Ctrl + Shift + P`（macOS: `Cmd + Shift + P`）打开命令面板，输入 **`Antigravity Private Cockpit`** 即可执行：
 
 | 命令面板输入名称 (Command Palette) | 快捷操作 / 功能说明 |
 |:---|:---|
 | **点击状态栏文字** | 直接打开可视化大屏配额驾驶舱 |
-| `Antigravity Cockpit: Open Quota Dashboard` | 打开完整可视化配额驾驶舱 (支持深色/浅色自适应) |
-| `Antigravity Cockpit: Quick Quota Overview` | 弹出快速配额总览菜单 (QuickPick 极简视图) |
-| `Antigravity Cockpit: Refresh Quota` | 立即从本地 Language Server 强制刷新最新实时额度 |
-| `Antigravity Cockpit: Toggle Language (中/EN)` | 一键全局切换中英双语显示 (即时生效) |
-| `Antigravity Cockpit: Open Settings` | 打开插件专属设置面板 (自定义预警阈值与刷新率) |
+| `Antigravity Private Cockpit: Open Quota Dashboard` | 打开完整可视化配额驾驶舱 (支持深色/浅色自适应) |
+| `Antigravity Private Cockpit: Quick Quota Overview` | 弹出快速配额总览菜单 (QuickPick 极简视图) |
+| `Antigravity Private Cockpit: Refresh Quota` | 立即从本地 Language Server 强制刷新最新实时额度 |
+| `Antigravity Private Cockpit: Toggle Language (中/EN)` | 一键全局切换中英双语显示 (即时生效) |
+| `Antigravity Private Cockpit: Open Settings` | 打开插件专属设置面板 (自定义预警阈值与刷新率) |
 
 ---
 
@@ -78,7 +78,7 @@
 
 可通过以下任意方式进入插件专属配置面板：
 1. **方式 1（最推荐）**：在配额驾驶舱仪表盘顶部，直接点击 **`⚙️ 设置`** 按钮；
-2. **方式 2**：按 `Ctrl + Shift + P` 输入并执行 **`Antigravity Cockpit: Open Settings`**；
+2. **方式 2**：按 `Ctrl + Shift + P` 输入并执行 **`Antigravity Private Cockpit: Open Settings`**；
 3. **方式 3**：在扩展管理列表（`Ctrl + Shift + X`）中找到本插件，点击齿轮图标 ➔ **`扩展设置 (Extension Settings)`**。
 
 ### 支持调整的配置项：
