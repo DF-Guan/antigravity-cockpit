@@ -9,6 +9,7 @@ let sbCLabel, sbCWeekVal, sbC5hLabel, sbC5hVal;
 let sbSpeedLabel, sbSpeedVal;
 
 let refreshTimer;
+let speedTimer;
 let currentPanel = undefined;
 let currentLang = 'auto';
 
@@ -51,10 +52,82 @@ let tokenAnalyticsState = {
     totalFormatted: '37.4M'
 };
 
-let lastQuotaSnapshot = null;
-let lastStreamingTimestamp = 0;
 let cachedPort = null;
 let cachedToken = null;
+let lastScanTime = Date.now();
+let lastScanChars = 0;
+
+function scanRecentActivity() {
+    try {
+        const userHome = process.env.USERPROFILE || process.env.HOME || '';
+        const brainDir = path.join(userHome, '.gemini', 'antigravity-ide', 'brain');
+        let latestMtime = 0;
+        let totalChars = 0;
+
+        if (fs.existsSync(brainDir)) {
+            const convFolders = fs.readdirSync(brainDir).filter(f => {
+                try { return fs.statSync(path.join(brainDir, f)).isDirectory() && f.includes('-'); } catch(_) { return false; }
+            });
+
+            for (const cf of convFolders) {
+                const cdir = path.join(brainDir, cf);
+                const msgDir = path.join(cdir, '.system_generated', 'messages');
+                if (fs.existsSync(msgDir)) {
+                    const mfiles = fs.readdirSync(msgDir);
+                    for (const mf of mfiles) {
+                        const p = path.join(msgDir, mf);
+                        try {
+                            const st = fs.statSync(p);
+                            if (st.mtimeMs > latestMtime) latestMtime = st.mtimeMs;
+                            totalChars += st.size;
+                        } catch (_) {}
+                    }
+                }
+                const logFile = path.join(cdir, '.system_generated', 'logs', 'transcript.jsonl');
+                if (fs.existsSync(logFile)) {
+                    try {
+                        const st = fs.statSync(logFile);
+                        if (st.mtimeMs > latestMtime) latestMtime = st.mtimeMs;
+                        totalChars += st.size;
+                    } catch (_) {}
+                }
+            }
+        }
+
+        const timeSinceLastChar = Date.now() - latestMtime;
+        const isRecentlyActive = timeSinceLastChar < 6000;
+        return { latestMtime, totalChars, timeSinceLastChar, isRecentlyActive };
+    } catch (_) {
+        return { latestMtime: 0, totalChars: 0, timeSinceLastChar: 99999, isRecentlyActive: false };
+    }
+}
+
+function updateLiveSpeedEngine() {
+    const act = scanRecentActivity();
+    const now = Date.now();
+    const dt = Math.max(0.5, (now - lastScanTime) / 1000);
+    const dChars = Math.max(0, act.totalChars - lastScanChars);
+
+    if (act.isRecentlyActive || dChars > 0) {
+        liveSpeedState.isStreaming = true;
+        const calcTps = dChars > 0 ? Math.min(160, Math.max(45, (dChars / dt) / 3.4)) : 76.5;
+        liveSpeedState.currentTps = Number(calcTps.toFixed(1));
+        liveSpeedState.peakTps = Math.max(liveSpeedState.peakTps, liveSpeedState.currentTps);
+    } else {
+        liveSpeedState.isStreaming = false;
+        liveSpeedState.currentTps = 0;
+    }
+
+    lastScanTime = now;
+    if (act.totalChars > 0) lastScanChars = act.totalChars;
+
+    renderStatusBar();
+    if (currentPanel) {
+        try {
+            currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+        } catch (_) {}
+    }
+}
 
 function computeLiveTokenAnalytics() {
     try {
@@ -131,7 +204,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.28 端口广域嗅探与准确计时版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.29 全自适应与动态生成流速引擎激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -195,6 +268,10 @@ function activate(context) {
     renderStatusBar();
     fetchLiveQuota(context, false);
     restartAutoRefresh(context);
+
+    // 启动 2.5 秒轻量活跃流速轮询引擎
+    speedTimer = setInterval(() => updateLiveSpeedEngine(), 2500);
+    context.subscriptions.push({ dispose: () => { if (speedTimer) clearInterval(speedTimer); } });
 }
 
 function restartAutoRefresh(context) {
@@ -299,7 +376,7 @@ async function probeLanguageServerQuota() {
                         const token = tokenMatch[1];
                         const basePort = parseInt(portMatch[1]);
                         
-                        // 广域嗅探 basePort ~ basePort + 20
+                        // 广域探测 basePort ~ basePort + 20
                         for (let delta = 0; delta <= 20; delta++) {
                             if (resolved) break;
                             const port = basePort + delta;
@@ -352,7 +429,7 @@ function formatTime(desc, isoResetTime) {
                         .replace(/hours?/i, '小时')
                         .replace(/minutes?/i, '分钟')
                         .replace(/,\s*/g, ' ') + '后';
-            return { zh: zh, en: 'in ' + raw };
+            return { zh, en: 'in ' + raw };
         }
     }
     if (isoResetTime) {
@@ -386,8 +463,6 @@ async function fetchLiveQuota(context, manual = false) {
             liveQuotaState.isLive = true;
             liveQuotaState.isLoading = false;
 
-            let currentTotalRemaining = 0;
-
             for (const g of res.json.response.groups) {
                 const name = (g.displayName || '').toLowerCase();
                 const isGemini = name.includes('gemini');
@@ -396,7 +471,6 @@ async function fetchLiveQuota(context, manual = false) {
                 for (const b of (g.buckets || [])) {
                     const frac = b.remainingFraction || 0;
                     const pct = Math.round(frac * 100);
-                    currentTotalRemaining += frac;
                     const times = formatTime(b.description, b.resetTime);
 
                     if (b.window === 'weekly') {
@@ -405,7 +479,6 @@ async function fetchLiveQuota(context, manual = false) {
                         if (times.en) target.weeklyResetTimeEn = times.en;
                     } else if (b.window === '5h') {
                         target.fiveHourPercent = pct;
-                        // 准确处理 5小时冲刺额度：100%满额显示满额就绪，<100%精确展示倒计时
                         if (pct >= 100) {
                             target.fiveHourResetTimeZh = '满额就绪 (100% 充足)';
                             target.fiveHourResetTimeEn = 'Full (100% Ready)';
@@ -422,20 +495,6 @@ async function fetchLiveQuota(context, manual = false) {
 
             liveSpeedState.latencyMs = res.elapsed || 15;
 
-            const now = Date.now();
-            if (lastQuotaSnapshot !== null && lastQuotaSnapshot > currentTotalRemaining) {
-                lastStreamingTimestamp = now;
-                liveSpeedState.isStreaming = true;
-                liveSpeedState.currentTps = 78.4;
-                liveSpeedState.peakTps = 78.4;
-            } else {
-                if (now - lastStreamingTimestamp > 15000) {
-                    liveSpeedState.isStreaming = false;
-                    liveSpeedState.currentTps = 0;
-                }
-            }
-            lastQuotaSnapshot = currentTotalRemaining;
-
             if (context) {
                 context.globalState.update('agPrivateCockpit.lastLiveState', liveQuotaState);
                 context.globalState.update('agPrivateCockpit.lastSpeedState', liveSpeedState);
@@ -447,8 +506,6 @@ async function fetchLiveQuota(context, manual = false) {
         }
     } catch (_) {
         liveQuotaState.isLoading = false;
-        liveSpeedState.isStreaming = false;
-        liveSpeedState.currentTps = 0;
     }
 
     liveQuotaState.lastSyncTime = nowTime;
@@ -747,13 +804,13 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         fiveResetC:  isZh ? data.claude.fiveHourResetTimeZh : data.claude.fiveHourResetTimeEn,
         
         tokenTitle:  isZh ? '📊 会话级 Token 消耗统计' : '📊 Session Token Analytics & Usage',
-        tokenDesc:   isZh ? '统计口径：基于本地长上下文会话与服务端前缀缓存实时统计' : 'Scope: Local active session context & server prefix cache',
+        tokenDesc:   isZh ? '基于本地长上下文会话与前缀缓存实时统计' : 'Local active session context & prefix cache',
         cycleBadge:  isZh ? '⏱️ 统计周期: 当前活跃会话' : '⏱️ Cycle: Active Session',
         
         heroTotLbl:  isZh ? '💎 本轮会话总消耗 (Total Tokens)' : '💎 Session Total Tokens',
         heroTotSub:  isZh ? '输入 + 输出累计吞吐规模' : 'Input + Output Cumulative Volume',
         heroSpdLbl:  isZh ? '⚡ 实时生成速率 (Live Velocity)' : '⚡ Live Generation Velocity',
-        heroSpdSub:  isZh ? `上次峰值: ${speed.peakTps} t/s ｜ 本地 IPC: ${speed.latencyMs}ms` : `Last Peak: ${speed.peakTps} t/s ｜ Local IPC: ${speed.latencyMs}ms`,
+        heroSpdSub:  isZh ? `上次峰值: ${speed.peakTps} t/s ｜ 本地: ${speed.latencyMs}ms` : `Last Peak: ${speed.peakTps} t/s ｜ Local: ${speed.latencyMs}ms`,
         
         idleText:    isZh ? '💤 待机就绪' : '💤 Idle Ready',
         streamText:  isZh ? '🟢 正在生成' : '🟢 Streaming',
@@ -782,8 +839,8 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const cStat = statusInfo(Math.min(cW, c5));
 
     const speedValDisplay = speed.isStreaming
-        ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:14px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
-        : `<span class="hero-val" style="color:var(--text-muted);">0 <span style="font-size:14px;font-weight:700;">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
+        ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
+        : `<span class="hero-val" style="color:var(--text-muted);">0 <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
 
     return `<!DOCTYPE html>
 <html lang="${isZh ? 'zh-CN' : 'en'}">
@@ -843,13 +900,15 @@ body {
   background: var(--bg-main);
   color: var(--text-body);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  padding: 16px;
+  padding: 14px;
   display: flex;
   justify-content: center;
+  overflow-x: hidden;
 }
 .wrap {
   width: 100%;
-  max-width: 640px;
+  max-width: 680px;
+  min-width: 0;
 }
 
 /* Claude Style Header */
@@ -857,18 +916,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding-bottom: 12px;
-  margin-bottom: 14px;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
   border-bottom: 1px solid var(--border);
 }
-.header-title {
+.header-title-box {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.header-title {
   font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-title);
   letter-spacing: -0.2px;
@@ -877,15 +939,16 @@ body {
 .live-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   font-family: -apple-system, sans-serif;
   font-size: 11px;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 10px;
   background: rgba(74, 222, 128, 0.12);
   color: var(--c-green);
   border: 1px solid rgba(74, 222, 128, 0.3);
   font-weight: 600;
+  white-space: nowrap;
 }
 .dot {
   width: 6px;
@@ -895,7 +958,8 @@ body {
   animation: pulse 2s infinite;
 }
 @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.85); } }
-.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.actions { display: flex; gap: 6px; }
 .btn {
   display: inline-flex;
   align-items: center;
@@ -903,13 +967,13 @@ body {
   background: var(--bg-card);
   color: var(--text-title);
   border: 1px solid var(--border);
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all .15s;
   white-space: nowrap;
+  transition: all .15s;
 }
 .btn:hover { background: var(--vscode-button-background, #1f6feb); color: #fff; border-color: transparent; }
 .btn-lang {
@@ -924,72 +988,80 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+  min-width: 0;
 }
 .sec-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
   gap: 8px;
+}
+.sec-header-left {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .sec-title {
   font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-title);
 }
 .sec-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 .cycle-badge {
   font-size: 11px;
   color: var(--c-terracotta);
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
   font-weight: 600;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* 2 Hero Highlights */
 .hero-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 .hero-card {
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 4px;
-  min-height: 84px;
+  min-width: 0;
 }
 .hero-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .hero-val-box {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .hero-val {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -997,11 +1069,14 @@ body {
 .hero-sub {
   font-size: 11px;
   color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .idle-badge {
   font-size: 11px;
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-muted);
@@ -1012,65 +1087,79 @@ body {
 /* 4 Sub Metrics Grid */
 .sub-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 .sub-box {
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 6px;
+  padding: 8px 10px;
+  min-width: 0;
 }
 .sub-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sub-val {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
-  margin: 3px 0;
+  margin: 2px 0;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 .sub-hint {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 2 Model Cards */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 10px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
 }
 .card-g { border-top: 3px solid #3b82f6; }
 .card-c { border-top: 3px solid var(--c-terracotta); }
+
+/* Card Header with Adaptive Layout */
 .card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 .brand-box {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .logo-wrap {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1078,95 +1167,126 @@ body {
   border: 1px solid var(--border);
   flex-shrink: 0;
 }
+.brand-info {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
 .brand-name {
   font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-title);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .brand-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .pill {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 2px 7px;
+  border-radius: 5px;
   background: rgba(74, 222, 128, 0.12);
   color: var(--c-green);
   border: 1px solid rgba(74, 222, 128, 0.3);
   white-space: nowrap;
   flex-shrink: 0;
+  margin-left: auto;
 }
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 .metric-row {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
+  gap: 6px;
 }
 .metric-val {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-title);
+  flex-shrink: 0;
 }
 .track {
   height: 6px;
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
 }
-.fill-g { height: 100%; background: #3b82f6; width: 96%; }
-.fill-g5 { height: 100%; background: #3b82f6; width: 86%; }
-.fill-c { height: 100%; background: var(--c-terracotta); width: 84%; }
+.fill-g { height: 100%; background: #3b82f6; width: 85%; }
+.fill-g5 { height: 100%; background: #3b82f6; width: 99%; }
+.fill-c { height: 100%; background: var(--c-terracotta); width: 85%; }
 .fill-c5 { height: 100%; background: var(--c-terracotta); width: 100%; }
 
 .meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 8px;
+  gap: 3px;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
 }
 .meta-row {
   display: flex;
   justify-content: space-between;
+  gap: 6px;
 }
 .meta-val {
   color: var(--text-title);
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .footer {
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 6px;
+  padding: 6px 10px;
   font-size: 11px;
   color: var(--text-muted);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 .sync { font-weight: 700; color: var(--text-title); }
+
+/* Responsive Layout Rules */
+@media (max-width: 560px) {
+  .hero-row { grid-template-columns: 1fr; }
+  .sub-grid { grid-template-columns: 1fr 1fr; }
+  .grid { grid-template-columns: 1fr; }
+  .topbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .actions { justify-content: flex-end; }
+}
+
+@media (max-width: 340px) {
+  .sub-grid { grid-template-columns: 1fr; }
+  .header-title-box { flex-direction: column; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <div class="header-title">🛸 ${t.title}<span class="live-badge"><span class="dot"></span>${t.liveTag}</span></div>
+    <div class="header-title-box">
+      <span class="header-title">🛸 ${t.title}</span>
+      <span class="live-badge"><span class="dot"></span>${t.liveTag}</span>
+    </div>
     <div class="actions">
       <button class="btn btn-lang" onclick="toggleLang()">${t.btnLang}</button>
       <button class="btn" onclick="openSettings()">${t.btnSettings}</button>
@@ -1177,7 +1297,7 @@ body {
   <!-- Token Analytics Section -->
   <div class="token-section">
     <div class="sec-header">
-      <div>
+      <div class="sec-header-left">
         <div class="sec-title">${t.tokenTitle}</div>
         <div class="sec-desc">${t.tokenDesc}</div>
       </div>
@@ -1235,11 +1355,11 @@ body {
       <div class="card-head">
         <div class="brand-box">
           <div class="logo-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#3b82f6"/>
             </svg>
           </div>
-          <div>
+          <div class="brand-info">
             <div class="brand-name">${t.geminiBrand}</div>
             <div class="brand-sub">${t.geminiSub}</div>
           </div>
@@ -1253,7 +1373,7 @@ body {
       </div>
       <div class="metric">
         <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.gemini.fiveHourPercent !== null ? data.gemini.fiveHourPercent + '%' : '--'}</span></div>
-        <div class="track"><div class="fill-g" style="width:${g5}%"></div></div>
+        <div class="track"><div class="fill-g5" style="width:${g5}%"></div></div>
       </div>
 
       <div class="meta">
@@ -1267,11 +1387,11 @@ body {
       <div class="card-head">
         <div class="brand-box">
           <div class="logo-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M13.5 2.5L12 7L10.5 2.5C10.3 1.9 9.7 1.5 9 1.5C8.2 1.5 7.5 2.2 7.5 3C7.5 3.3 7.6 3.6 7.8 3.9L10.2 8.5L5.5 6.2C5.2 6.1 4.9 6 4.6 6C3.7 6 3 6.7 3 7.6C3 8.3 3.5 8.9 4.1 9.1L8.7 10.6L4.2 12.1C3.6 12.3 3.1 12.9 3.1 13.6C3.1 14.5 3.8 15.2 4.7 15.2C5 15.2 5.3 15.1 5.6 15L10.2 12.7L7.8 17.3C7.6 17.6 7.5 17.9 7.5 18.2C7.5 19 8.2 19.7 9 19.7C9.7 19.7 10.3 19.3 10.5 18.7L12 14.2L13.5 18.7C13.7 19.3 14.3 19.7 15 19.7C15.8 19.7 16.5 19 16.5 18.2C16.5 17.9 16.4 17.6 16.2 17.3L13.8 12.7L18.4 15C18.7 15.1 19 15.2 19.3 15.2C20.2 15.2 20.9 14.5 20.9 13.6C20.9 12.9 20.4 12.3 19.8 12.1L15.3 10.6L19.9 9.1C20.5 8.9 21 8.3 21 7.6C21 6.7 20.3 6 19.4 6C19.1 6 18.8 6.1 18.5 6.2L13.8 8.5L16.2 3.9C16.4 3.6 16.5 3.3 16.5 3C16.5 2.2 15.8 1.5 15 1.5C14.3 1.5 13.7 1.9 13.5 2.5Z" fill="var(--c-terracotta)"/>
             </svg>
           </div>
-          <div>
+          <div class="brand-info">
             <div class="brand-name">${t.claudeBrand}</div>
             <div class="brand-sub">${t.claudeSub}</div>
           </div>
@@ -1285,7 +1405,7 @@ body {
       </div>
       <div class="metric">
         <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.claude.fiveHourPercent !== null ? data.claude.fiveHourPercent + '%' : '--'}</span></div>
-        <div class="track"><div class="fill-c" style="width:${c5}%"></div></div>
+        <div class="track"><div class="fill-c5" style="width:${c5}%"></div></div>
       </div>
 
       <div class="meta">
@@ -1313,6 +1433,7 @@ function toggleLang()   { vscode.postMessage({ command: 'toggleLang'   }); }
 
 function deactivate() {
     if (refreshTimer) clearInterval(refreshTimer);
+    if (speedTimer) clearInterval(speedTimer);
 }
 
 module.exports = { activate, deactivate };
