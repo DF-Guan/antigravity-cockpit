@@ -1,6 +1,6 @@
 # 🛸 Antigravity Private Cockpit
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.17-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.19-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![Bilingual](https://img.shields.io/badge/Language-English%20%7C%20%E4%B8%AD%E6%96%87-orange.svg)](README_zh.md)
@@ -15,13 +15,9 @@
 
 ## 📸 Visual Preview
 
-<div align="center">
-
 | Visual Quota & Velocity Cockpit | Status Bar & Unified Tooltip |
 | :---: | :---: |
-| <img src="assets/dashboard_preview_en.png" width="400" alt="Cockpit Dashboard"> | <img src="assets/statusbar_preview_en.png" width="400" alt="Status Bar & Tooltip"> |
-
-</div>
+| ![Cockpit Dashboard](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_en.png) | ![Status Bar & Tooltip](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_en.png) |
 
 ---
 

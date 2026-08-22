@@ -1,6 +1,6 @@
 # 🛸 Antigravity Private Cockpit
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.17-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.19-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-为什么选择-private-cockpit隐私安全宣言)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-为什么选择-private-cockpit隐私安全宣言)
 [![Bilingual](https://img.shields.io/badge/Language-English%20%7C%20%E4%B8%AD%E6%96%87-orange.svg)](README.md)
@@ -15,13 +15,9 @@
 
 ## 📸 界面实测预览 (Visual Preview)
 
-<div align="center">
-
 | 🛸 实时可视化配额与流速驾驶舱 | 📍 底部状态栏微距排版与多维悬浮卡片 |
 | :---: | :---: |
-| <img src="assets/dashboard_preview_zh.png" width="400" alt="配额驾驶舱"> | <img src="assets/statusbar_preview_zh.png" width="400" alt="状态栏与悬浮卡片"> |
-
-</div>
+| ![配额驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png) | ![状态栏与悬浮卡片](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_zh.png) |
 
 ---
 

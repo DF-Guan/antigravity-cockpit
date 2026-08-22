@@ -2,6 +2,10 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.19] - 2026-08-22
+### Marketplace Asset Compatibility
+- **Universal Absolute Image URLs**: Switched all documentation image links to GitHub raw CDN URLs (`https://raw.githubusercontent.com/...`) for 100% compatibility with Open VSX and VS Code marketplace renderers.
+
 ## [1.0.17] - 2026-08-22
 ### Pure Factual Metrics & Token Velocity
 - **Real-Time Token Generation Velocity (TPS)**: Live calculation of Token Speed (`⚡ 68.4 t/s`) and volume for recent conversation turns.
