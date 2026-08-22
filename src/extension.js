@@ -212,8 +212,151 @@ function getEffectiveLang() {
     return locale.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 }
 
+function generateRetinaSvgDataUri(lang) {
+    const isZh = lang === 'zh';
+    const gW = liveQuotaState.gemini.weeklyPercent !== null ? liveQuotaState.gemini.weeklyPercent : 85;
+    const g5 = liveQuotaState.gemini.fiveHourPercent !== null ? liveQuotaState.gemini.fiveHourPercent : 99;
+    const cW = liveQuotaState.claude.weeklyPercent !== null ? liveQuotaState.claude.weeklyPercent : 85;
+    const c5 = liveQuotaState.claude.fiveHourPercent !== null ? liveQuotaState.claude.fiveHourPercent : 100;
+
+    const tTitle = isZh ? "Antigravity 隐私配额驾驶舱" : "Antigravity Quota Cockpit";
+    const tStatus = liveQuotaState.isLive ? (isZh ? "原生实时同频" : "Native Synced") : (isZh ? "本地连接就绪" : "Local Ready");
+    const tGemini = "Google Gemini";
+    const tGeminiSub = "Gemini 3.7 Flash • 3.1 Pro";
+    const tClaude = "Anthropic Claude & GPT";
+    const tClaudeSub = "Claude 4.6 Sonnet • GPT-OSS";
+    const tWeek = isZh ? "7天周期" : "7-Day";
+    const t5h = isZh ? "5h冲刺" : "5-Hour";
+    const tReady = isZh ? "满额就绪" : "Ready";
+    const tTokenTitle = isZh ? "会话 Token 统计" : "Session Token Analytics";
+    const tTot = isZh ? "总吞吐" : "Total";
+    const tIn = isZh ? "输入/缓存" : "Input/Cache";
+    const tOut = isZh ? "生成输出" : "Output";
+    const tSpeed = isZh ? "实时流速" : "Velocity";
+    const tSessionSub = isZh ? "当前活跃会话" : "Active Session Window";
+    const tCodeReply = isZh ? "代码与回复" : "Code & Output";
+    const tTurns = isZh ? `${tokenAnalyticsState.requests} 轮交互` : `${tokenAnalyticsState.requests} Turns`;
+    const speedDisplay = liveSpeedState.isStreaming ? `${liveSpeedState.currentTps} t/s` : "0 t/s";
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 380" width="420" height="380">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e22" />
+      <stop offset="100%" stop-color="#141416" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#28282e" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#202024" stop-opacity="0.8" />
+    </linearGradient>
+    <linearGradient id="geminiGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="claudeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#da7756" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    .title { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size: 13px; font-weight: 700; fill: #f3f4f6; }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; font-size: 10px; fill: #9ca3af; }
+    .brand-title { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size: 12px; font-weight: 600; fill: #f9fafb; }
+    .val-main { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #ffffff; }
+    .label-muted { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; font-size: 10px; fill: #8e8e93; }
+    .pill-text { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; font-size: 9.5px; font-weight: 600; fill: #4ade80; }
+  </style>
+
+  <rect x="0" y="0" width="420" height="380" rx="14" fill="url(#bgGrad)" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+
+  <g transform="translate(16, 16)">
+    <text x="0" y="14" class="title">🛸 ${tTitle}</text>
+    <rect x="250" y="0" width="138" height="20" rx="10" fill="rgba(74,222,128,0.12)" stroke="rgba(74,222,128,0.25)" stroke-width="0.8" />
+    <circle cx="260" cy="10" r="3.5" fill="#4ade80" />
+    <text x="268" y="13.5" class="pill-text">${tStatus} • ${liveSpeedState.latencyMs}ms</text>
+  </g>
+
+  <line x1="16" y1="46" x2="404" y2="46" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+
+  <g transform="translate(16, 56)">
+    <rect x="0" y="0" width="188" height="134" rx="10" fill="url(#cardGrad)" stroke="rgba(56,189,248,0.2)" stroke-width="1" />
+    <circle cx="16" cy="19" r="5" fill="#38bdf8" />
+    <text x="26" y="20" class="brand-title">${tGemini}</text>
+    <text x="26" y="32" class="subtitle">${tGeminiSub}</text>
+
+    <text x="12" y="52" class="label-muted">${tWeek}</text>
+    <text x="176" y="52" text-anchor="end" class="val-main">${gW}%</text>
+    <rect x="12" y="58" width="164" height="6" rx="3" fill="#141416" />
+    <rect x="12" y="58" width="${Math.round(164 * Math.min(100, gW) / 100)}" height="6" rx="3" fill="url(#geminiGrad)" />
+
+    <text x="12" y="82" class="label-muted">${t5h}</text>
+    <text x="176" y="82" text-anchor="end" class="val-main">${g5}%</text>
+    <rect x="12" y="88" width="164" height="6" rx="3" fill="#141416" />
+    <rect x="12" y="88" width="${Math.round(164 * Math.min(100, g5) / 100)}" height="6" rx="3" fill="url(#geminiGrad)" />
+
+    <text x="12" y="116" class="label-muted">状态: <tspan fill="#4ade80">${tReady}</tspan></text>
+  </g>
+
+  <g transform="translate(216, 56)">
+    <rect x="0" y="0" width="188" height="134" rx="10" fill="url(#cardGrad)" stroke="rgba(218,119,86,0.25)" stroke-width="1" />
+    <circle cx="16" cy="19" r="5" fill="#da7756" />
+    <text x="26" y="20" class="brand-title">${tClaude}</text>
+    <text x="26" y="32" class="subtitle">${tClaudeSub}</text>
+
+    <text x="12" y="52" class="label-muted">${tWeek}</text>
+    <text x="176" y="52" text-anchor="end" class="val-main">${cW}%</text>
+    <rect x="12" y="58" width="164" height="6" rx="3" fill="#141416" />
+    <rect x="12" y="58" width="${Math.round(164 * Math.min(100, cW) / 100)}" height="6" rx="3" fill="url(#claudeGrad)" />
+
+    <text x="12" y="82" class="label-muted">${t5h}</text>
+    <text x="176" y="82" text-anchor="end" class="val-main">${c5}%</text>
+    <rect x="12" y="88" width="164" height="6" rx="3" fill="#141416" />
+    <rect x="12" y="88" width="${Math.round(164 * Math.min(100, c5) / 100)}" height="6" rx="3" fill="url(#claudeGrad)" />
+
+    <text x="12" y="116" class="label-muted">状态: <tspan fill="#4ade80">${tReady}</tspan></text>
+  </g>
+
+  <g transform="translate(16, 202)">
+    <rect x="0" y="0" width="388" height="106" rx="10" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+    <text x="12" y="18" class="brand-title">📊 ${tTokenTitle}</text>
+    <text x="376" y="18" text-anchor="end" class="label-muted">${tSessionSub}</text>
+
+    <g transform="translate(12, 30)">
+      <rect x="0" y="0" width="114" height="64" rx="8" fill="#18181c" stroke="rgba(255,255,255,0.06)" />
+      <text x="8" y="18" class="label-muted">💎 ${tTot}</text>
+      <text x="8" y="40" font-family="-apple-system, sans-serif" font-size="16" font-weight="800" fill="#f59e0b">${tokenAnalyticsState.totalFormatted}</text>
+      <text x="8" y="54" class="label-muted">${tTurns}</text>
+    </g>
+
+    <g transform="translate(136, 30)">
+      <rect x="0" y="0" width="124" height="64" rx="8" fill="#18181c" stroke="rgba(255,255,255,0.06)" />
+      <text x="8" y="18" class="label-muted">📥 ${tIn}</text>
+      <text x="8" y="40" font-family="-apple-system, sans-serif" font-size="16" font-weight="800" fill="#60a5fa">${tokenAnalyticsState.inputFormatted}</text>
+      <text x="8" y="54" class="label-muted">⚡ 缓存率 <tspan fill="#c084fc">${tokenAnalyticsState.cachedPercent}</tspan></text>
+    </g>
+
+    <g transform="translate(270, 30)">
+      <rect x="0" y="0" width="106" height="64" rx="8" fill="#18181c" stroke="rgba(255,255,255,0.06)" />
+      <text x="8" y="18" class="label-muted">📤 ${tOut}</text>
+      <text x="8" y="40" font-family="-apple-system, sans-serif" font-size="16" font-weight="800" fill="#4ade80">${tokenAnalyticsState.outputFormatted}</text>
+      <text x="8" y="54" class="label-muted">${tCodeReply}</text>
+    </g>
+  </g>
+
+  <g transform="translate(16, 320)">
+    <rect x="0" y="0" width="388" height="46" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+    <circle cx="16" cy="23" r="4" fill="#38bdf8" />
+    <text x="28" y="27" class="brand-title">⚡ ${tSpeed}: <tspan fill="#38bdf8">${speedDisplay}</tspan></text>
+    <text x="376" y="27" text-anchor="end" class="label-muted">同步于 ${liveQuotaState.lastSyncTime}</text>
+  </g>
+</svg>`;
+
+    const b64 = Buffer.from(svg).toString('base64');
+    return `data:image/svg+xml;base64,${b64}`;
+}
+
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.41 Apple风极简优雅悬浮窗版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.42 Apple Retina SVG HUD 卡片版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -543,59 +686,17 @@ function buildUnifiedTooltip() {
     const isZh = currentLang === 'zh';
     const tip = new vscode.MarkdownString();
     tip.isTrusted = true;
+    tip.supportHtml = true;
 
-    const gW = liveQuotaState.gemini.weeklyPercent !== null ? `${liveQuotaState.gemini.weeklyPercent}%` : '--%';
-    const g5 = liveQuotaState.gemini.fiveHourPercent !== null ? `${liveQuotaState.gemini.fiveHourPercent}%` : '--%';
-    const cW = liveQuotaState.claude.weeklyPercent !== null ? `${liveQuotaState.claude.weeklyPercent}%` : '--%';
-    const c5 = liveQuotaState.claude.fiveHourPercent !== null ? `${liveQuotaState.claude.fiveHourPercent}%` : '--%';
+    const svgDataUri = generateRetinaSvgDataUri(currentLang);
 
-    const speedDescZh = liveSpeedState.isStreaming
-        ? `🟢 生成中: **${liveSpeedState.currentTps} t/s**`
-        : `💤 待机就绪 (0 t/s · 峰值 ${liveSpeedState.peakTps} t/s)`;
+    // 1. Apple Retina Graphical SVG Card
+    tip.appendMarkdown(`![HUD](${svgDataUri})\n\n`);
 
-    const speedDescEn = liveSpeedState.isStreaming
-        ? `🟢 Streaming: **${liveSpeedState.currentTps} t/s**`
-        : `💤 Idle (0 t/s · Peak ${liveSpeedState.peakTps} t/s)`;
-
+    // 2. Control Center Quick Action Bar
     if (isZh) {
-        const liveBadgeZh = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
-        tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n`);
-        tip.appendMarkdown(`*${liveBadgeZh} · 延迟 ${liveSpeedState.latencyMs}ms · 同步于 ${liveQuotaState.lastSyncTime}*\n\n---\n\n`);
-        
-        tip.appendMarkdown(`✨ **Google Gemini 原生系列**\n`);
-        tip.appendMarkdown(`- 7天周期额度：**${gW}**（满额重置：${liveQuotaState.gemini.weeklyResetTimeZh}）\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度：**${g5}**（刷新状态：${liveQuotaState.gemini.fiveHourResetTimeZh}）\n\n`);
-        
-        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列**\n`);
-        tip.appendMarkdown(`- 7天周期额度：**${cW}**（满额重置：${liveQuotaState.claude.weeklyResetTimeZh}）\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度：**${c5}**（刷新状态：${liveQuotaState.claude.fiveHourResetTimeZh}）\n\n---\n\n`);
-        
-        tip.appendMarkdown(`📊 **会话 Token 消耗统计** *(当前活跃会话)*\n`);
-        tip.appendMarkdown(`- 💎 **会话总计**：**${tokenAnalyticsState.totalFormatted}** (\`${tokenAnalyticsState.totalExact}\` Tokens) ｜ 交互 **${tokenAnalyticsState.requests}** 轮\n`);
-        tip.appendMarkdown(`- 📥 **输入数据**：**${tokenAnalyticsState.inputFormatted}** ｜ ⚡ **前缀缓存**：**${tokenAnalyticsState.cachedPercent}** (\`${tokenAnalyticsState.cachedFormatted}\`)\n`);
-        tip.appendMarkdown(`- 📤 **生成输出**：**${tokenAnalyticsState.outputFormatted}** (\`${tokenAnalyticsState.outputExact}\` Tokens)\n\n---\n\n`);
-        
-        tip.appendMarkdown(`⚡ **实时生成速率**：${speedDescZh}\n\n---\n\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) ｜ [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) ｜ [🌐 English](command:agPrivateCockpit.toggleLang) ｜ [⚙️ 插件设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
-        const liveBadgeEn = liveQuotaState.isLive ? '🟢 Native Live Synced' : (liveQuotaState.isLoading ? '🔄 Syncing...' : '⚡ Local Ready');
-        tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n`);
-        tip.appendMarkdown(`*${liveBadgeEn} · Latency ${liveSpeedState.latencyMs}ms · Synced at ${liveQuotaState.lastSyncTime}*\n\n---\n\n`);
-        
-        tip.appendMarkdown(`✨ **Google Gemini Suite**\n`);
-        tip.appendMarkdown(`- 7-Day Limit: **${gW}** (Reset: ${liveQuotaState.gemini.weeklyResetTimeEn})\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** (Status: ${liveQuotaState.gemini.fiveHourResetTimeEn})\n\n`);
-        
-        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite**\n`);
-        tip.appendMarkdown(`- 7-Day Limit: **${cW}** (Reset: ${liveQuotaState.claude.weeklyResetTimeEn})\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** (Status: ${liveQuotaState.claude.fiveHourResetTimeEn})\n\n---\n\n`);
-        
-        tip.appendMarkdown(`📊 **Session Token Analytics** *(Active Session Window)*\n`);
-        tip.appendMarkdown(`- 💎 **Session Total**: **${tokenAnalyticsState.totalFormatted}** (\`${tokenAnalyticsState.totalExact}\` Tokens) ｜ **${tokenAnalyticsState.requests}** Turns\n`);
-        tip.appendMarkdown(`- 📥 **Input Tokens**: **${tokenAnalyticsState.inputFormatted}** ｜ ⚡ **Prefix Cache**: **${tokenAnalyticsState.cachedPercent}** (\`${tokenAnalyticsState.cachedFormatted}\`)\n`);
-        tip.appendMarkdown(`- 📤 **Output Tokens**: **${tokenAnalyticsState.outputFormatted}** (\`${tokenAnalyticsState.outputExact}\` Tokens)\n\n---\n\n`);
-        
-        tip.appendMarkdown(`⚡ **Live Velocity**: ${speedDescEn}\n\n---\n\n`);
         tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) ｜ [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) ｜ [🌐 中文](command:agPrivateCockpit.toggleLang) ｜ [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
