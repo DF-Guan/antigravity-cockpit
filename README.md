@@ -13,6 +13,18 @@
 
 ---
 
+## 📸 Visual Preview
+
+<div align="center">
+
+| Visual Quota & Velocity Cockpit | Status Bar & Unified Tooltip |
+| :---: | :---: |
+| <img src="assets/dashboard_preview_en.png" width="400" alt="Cockpit Dashboard"> | <img src="assets/statusbar_preview_en.png" width="400" alt="Status Bar & Tooltip"> |
+
+</div>
+
+---
+
 ## 🔒 Why Private Cockpit? (Security & Privacy Manifesto)
 
 | Dimension | Typical 3rd-Party Quota Tools | 🛸 Antigravity Private Cockpit |

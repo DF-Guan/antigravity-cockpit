@@ -13,6 +13,18 @@
 
 ---
 
+## 📸 界面实测预览 (Visual Preview)
+
+<div align="center">
+
+| 🛸 实时可视化配额与流速驾驶舱 | 📍 底部状态栏微距排版与多维悬浮卡片 |
+| :---: | :---: |
+| <img src="assets/dashboard_preview_zh.png" width="400" alt="配额驾驶舱"> | <img src="assets/statusbar_preview_zh.png" width="400" alt="状态栏与悬浮卡片"> |
+
+</div>
+
+---
+
 ## 🔒 为什么选择 Private Cockpit？（隐私安全宣言）
 
 | 安全与技术维度 | 传统第三方插件 | 🛸 Antigravity Private Cockpit |
