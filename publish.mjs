@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ============================================================
-//  publish.mjs  –  Antigravity Cockpit 一键发布脚本
+//  publish.mjs  –  Antigravity Private Cockpit 一键发布脚本
 //  用法:
 //    node publish.mjs                    → 打包 .vsix (本地分发)
 //    node publish.mjs --open-vsx         → 发布到 Open VSX 市场

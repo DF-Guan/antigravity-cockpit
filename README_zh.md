@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 纯本地零泄露 · AI 配额实时驾驶舱 (Zero-Telemetry AI Quota Monitor)
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.13-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.14-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -55,7 +55,7 @@
 
 ### 方式 2：GitHub Releases 离线安装
 1. 前往 [GitHub Releases](https://github.com/DF-Guan/antigravity-cockpit/releases) 下载最新的 `antigravity-cockpit-x.x.x.vsix`；
-2. 在 IDE 中按 `Ctrl + Shift + P` ➔ 输入并选择 `从 VSIX 安装...` ➔ 选择下载好的文件。
+2. 在 IDE 中按 `Ctrl + Shift + P`（macOS: `Cmd + Shift + P`）➔ 输入并选择 `扩展: 从 VSIX 安装...`（`Extensions: Install from VSIX...`）➔ 选择下载好的 `.vsix` 文件。
 
 ---
 
@@ -79,7 +79,7 @@
 可通过以下任意方式进入插件专属配置面板：
 1. **方式 1（最推荐）**：在配额驾驶舱仪表盘顶部，直接点击 **`⚙️ 设置`** 按钮；
 2. **方式 2**：按 `Ctrl + Shift + P` 输入并执行 **`Antigravity Private Cockpit: Open Settings`**；
-3. **方式 3**：在扩展管理列表（`Ctrl + Shift + X`）中找到本插件，点击齿轮图标 ➔ **`扩展设置 (Extension Settings)`**。
+3. **方式 3**：在扩展管理列表（`Ctrl + Shift + X`）中找到 **`Antigravity Private Cockpit`**，点击齿轮图标 ➔ **`扩展设置 (Extension Settings)`**。
 
 ### 支持调整的配置项：
 

@@ -335,7 +335,7 @@ function buildUnifiedTooltip() {
     const liveBadge = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
 
     if (isZh) {
-        tip.appendMarkdown(`### 🛸 Antigravity 实时配额驾驶舱\n\n`);
+        tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n\n`);
         tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadge}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini 原生系列**\n`);
         tip.appendMarkdown(`- 每周剩余额度: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
@@ -345,7 +345,7 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`- 5小时冲刺额度: **${c5}** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
-        tip.appendMarkdown(`### 🛸 Antigravity Live Quota Cockpit\n\n`);
+        tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n\n`);
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadge}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini Suite**\n`);
         tip.appendMarkdown(`- Weekly Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);

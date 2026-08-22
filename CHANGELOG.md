@@ -2,6 +2,10 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.14] - 2026-08-22
+### Precision Audit
+- **Zero Wording Inconsistencies**: Fully audited all installation guides, shortcut keys, and tooltips across all languages.
+
 ## [1.0.13] - 2026-08-22
 ### Brand & Reliability
 - **100% Unified Brand Name**: Standardized all titles, commands, and installation search guides to `Antigravity Private Cockpit`.

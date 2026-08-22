@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 100% Offline & Zero-Telemetry AI Quota Monitor for Antigravity IDE
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.13-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.14-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -55,7 +55,7 @@ Percentage digits dynamically reflect individual model health without altering l
 
 ### Option 2: Install from VSIX (Offline Package)
 1. Download the latest `antigravity-cockpit-x.x.x.vsix` from [GitHub Releases](https://github.com/DF-Guan/antigravity-cockpit/releases).
-2. Press `Ctrl+Shift+P` ➔ `Extensions: Install from VSIX...` ➔ Select the downloaded file.
+2. Press `Ctrl+Shift+P` (macOS: `Cmd+Shift+P`) ➔ Type and select `Extensions: Install from VSIX...` ➔ Choose the downloaded `.vsix` file.
 
 ---
 
@@ -78,7 +78,7 @@ Percentage digits dynamically reflect individual model health without altering l
 You can open the extension configuration panel via any of the following ways:
 1. **Option 1 (Recommended)**: Click the **`⚙️ Settings`** button directly at the top of the Cockpit Dashboard;
 2. **Option 2**: Press `Ctrl + Shift + P` (or `Cmd + Shift + P`) and execute **`Antigravity Private Cockpit: Open Settings`**;
-3. **Option 3**: In Extensions view (`Ctrl + Shift + X`), click the gear icon on Antigravity Cockpit ➔ **`Extension Settings`**.
+3. **Option 3**: In Extensions view (`Ctrl + Shift + X`), click the gear icon on **Antigravity Private Cockpit** ➔ **`Extension Settings`**.
 
 ### Available Configuration Options:
 
