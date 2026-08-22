@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.36] - 2026-08-22
+### Exact Token Precision Mode & Interactive Inspector
+- **Exact Precision Toggle (🔢 精度切换)**: Switch between compact abbreviations (`37.4M`, `128.5K`) and exact comma-separated integers (`37,470,392`, `128,500`) with 1 click.
+- **Full-Precision Tooltips**: Hovering over any Token metric or status bar tooltip now reveals the exact count down to individual units.
+- **Persistent Memory**: Exact precision mode state is automatically saved across sessions.
+
 ## [1.0.35] - 2026-08-22
 ### Independent Official Icons & Pure Digit Dynamic Coloring
 - **Decoupled Neutral Icons & Labels**: Official Gemini and Claude vector icons, as well as `(5h:` bracket tags, remain in neutral theme colors.
@@ -20,6 +26,12 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.36] - 2026-08-22
+### Exact Token Precision Mode & Interactive Inspector
+- **Exact Precision Toggle (🔢 精度切换)**: Switch between compact abbreviations (`37.4M`, `128.5K`) and exact comma-separated integers (`37,470,392`, `128,500`) with 1 click.
+- **Full-Precision Tooltips**: Hovering over any Token metric or status bar tooltip now reveals the exact count down to individual units.
+- **Persistent Memory**: Exact precision mode state is automatically saved across sessions.
 
 ## [1.0.35] - 2026-08-22
 ### Independent Official Icons & Pure Digit Dynamic Coloring

@@ -46,10 +46,14 @@ let liveSpeedState = {
 let tokenAnalyticsState = {
     requests: 49,
     inputFormatted: '37.3M',
+    inputExact: '37,341,892',
     outputFormatted: '128.5K',
+    outputExact: '128,500',
     cachedFormatted: '36.8M',
+    cachedExact: '36,819,105',
     cachedPercent: '98.6%',
-    totalFormatted: '37.4M'
+    totalFormatted: '37.4M',
+    totalExact: '37,470,392'
 };
 
 let cachedPort = null;
@@ -180,13 +184,21 @@ function computeLiveTokenAnalytics() {
             return n.toString();
         }
 
+        function fmtExact(n) {
+            return n.toLocaleString('en-US');
+        }
+
         tokenAnalyticsState = {
             requests: requests,
             inputFormatted: fmt(estInputTokens),
+            inputExact: fmtExact(estInputTokens),
             outputFormatted: fmt(estOutputTokens),
+            outputExact: fmtExact(estOutputTokens),
             cachedFormatted: fmt(estCachedTokens),
+            cachedExact: fmtExact(estCachedTokens),
             cachedPercent: '98.6%',
-            totalFormatted: fmt(estTotalTokens)
+            totalFormatted: fmt(estTotalTokens),
+            totalExact: fmtExact(estTotalTokens)
         };
     } catch (_) {}
 }
@@ -201,7 +213,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.35 独立图标与独立纯数字着色版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.36 全精度Token切换与独立着色版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -214,19 +226,19 @@ function activate(context) {
         liveQuotaState.isLoading = false;
     }
 
-    // 1. Google Gemini 解耦槽位 (独立图标 + 独立周数字 + 独立5h前缀 + 独立5h数字)
+    // 1. Google Gemini 解耦槽位
     sbGIcon     = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
     sbGWeekVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
     sbG5hPrefix = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
     sbG5hVal    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
 
-    // 2. Claude & GPT 解耦槽位 (独立图标 + 独立周数字 + 独立5h前缀 + 独立5h数字)
+    // 2. Claude & GPT 解耦槽位
     sbCIcon     = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
     sbCWeekVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
     sbC5hPrefix = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
     sbC5hVal    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9993);
 
-    // 3. 实时 Token 流速槽位 (独立图标 + 独立流速数字)
+    // 3. 实时 Token 流速槽位
     sbSpeedIcon = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9992);
     sbSpeedVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9991);
 
@@ -548,8 +560,8 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n\n`);
         tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadgeZh}*\n\n---\n`);
         tip.appendMarkdown(`📊 **会话级 Token 消耗统计 (当前活跃会话)**\n`);
-        tip.appendMarkdown(`- 💎 **会话总计: ${tokenAnalyticsState.totalFormatted}** ｜ 📈 交互: **${tokenAnalyticsState.requests}轮**\n`);
-        tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.inputFormatted}** ｜ ⚡ 前缀缓存: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 输出: **${tokenAnalyticsState.outputFormatted}**\n\n---\n`);
+        tip.appendMarkdown(`- 💎 **会话总计: ${tokenAnalyticsState.totalFormatted}** (\`${tokenAnalyticsState.totalExact}\` Tokens) ｜ 📈 交互: **${tokenAnalyticsState.requests}轮**\n`);
+        tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.inputFormatted}** (\`${tokenAnalyticsState.inputExact}\`) ｜ ⚡ 缓存: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 输出: **${tokenAnalyticsState.outputFormatted}** (\`${tokenAnalyticsState.outputExact}\`)\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini 原生系列 (周周期 & 5h冲刺)**\n`);
         tip.appendMarkdown(`- 7天周期剩余: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
         tip.appendMarkdown(`- 5小时冲刺剩余: **${g5}** ｜ 状态/刷新: \`${liveQuotaState.gemini.fiveHourResetTimeZh}\`\n\n`);
@@ -568,8 +580,8 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n\n`);
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*\n\n---\n`);
         tip.appendMarkdown(`📊 **Session Token Analytics (Active Session Window)**\n`);
-        tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.totalFormatted}** ｜ 📈 Turns: **${tokenAnalyticsState.requests}**\n`);
-        tip.appendMarkdown(`- 📥 In: **${tokenAnalyticsState.inputFormatted}** ｜ ⚡ Cache: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 Out: **${tokenAnalyticsState.outputFormatted}**\n\n---\n`);
+        tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.totalFormatted}** (\`${tokenAnalyticsState.totalExact}\` Tokens) ｜ 📈 Turns: **${tokenAnalyticsState.requests}**\n`);
+        tip.appendMarkdown(`- 📥 In: **${tokenAnalyticsState.inputFormatted}** (\`${tokenAnalyticsState.inputExact}\`) ｜ ⚡ Cache: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 Out: **${tokenAnalyticsState.outputFormatted}** (\`${tokenAnalyticsState.outputExact}\`)\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini Suite (7-Day & 5h Windows)**\n`);
         tip.appendMarkdown(`- 7-Day Limit Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
         tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Status/Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn}\`\n\n`);
@@ -601,7 +613,7 @@ function renderStatusBar() {
 
     const tip = buildUnifiedTooltip();
 
-    // 1. Google Gemini 解耦槽位 (独立图标 + 独立纯数字变色)
+    // 1. Google Gemini 解耦槽位
     if (showGemini) {
         sbGIcon.text = `$(gemini-icon)`;
         sbGIcon.color = undefined;
@@ -634,7 +646,7 @@ function renderStatusBar() {
         sbG5hVal.hide();
     }
 
-    // 2. Claude & GPT 解耦槽位 (独立图标 + 独立纯数字变色)
+    // 2. Claude & GPT 解耦槽位
     if (showClaude) {
         sbCIcon.text = `$(claude-icon)`;
         sbCIcon.color = undefined;
@@ -667,7 +679,7 @@ function renderStatusBar() {
         sbC5hVal.hide();
     }
 
-    // 3. 实时流速槽位 (独立图标 + 独立数字)
+    // 3. 实时流速槽位
     if (showSpeed) {
         sbSpeedIcon.text = `$(zap)`;
         sbSpeedIcon.color = undefined;
@@ -704,7 +716,7 @@ function showQuickOverview(context) {
         : `💤 待机就绪 (0 t/s) | 上次峰值: ${liveSpeedState.peakTps} t/s`;
 
     const items = isZh ? [
-        { label: `📊 当前会话消耗: ${tokenAnalyticsState.totalFormatted}`, description: `统计周期: 当前活跃会话 | 交互: ${tokenAnalyticsState.requests}轮 | 输入: ${tokenAnalyticsState.inputFormatted} | 输出: ${tokenAnalyticsState.outputFormatted}`, detail: '本地长会话上下文与前缀缓存多维分析' },
+        { label: `📊 当前会话消耗: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `统计周期: 当前活跃会话 | 交互: ${tokenAnalyticsState.requests}轮 | 输入: ${tokenAnalyticsState.inputFormatted} | 输出: ${tokenAnalyticsState.outputFormatted}`, detail: '本地长会话上下文与前缀缓存多维分析' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `⚡ 实时响应速率: ${speedInfo}`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
@@ -713,7 +725,7 @@ function showQuickOverview(context) {
         { label: `🌐 切换为 English`, description: '当前: 中文' },
         { label: `⚙️ 打开插件设置`, description: '自定义预警阈值与刷新频率' }
     ] : [
-        { label: `📊 Active Session Tokens: ${tokenAnalyticsState.totalFormatted}`, description: `Cycle: Active Session | Turns: ${tokenAnalyticsState.requests} | In: ${tokenAnalyticsState.inputFormatted} | Out: ${tokenAnalyticsState.outputFormatted}`, detail: 'Session context & prefix cache analytics' },
+        { label: `📊 Active Session Tokens: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `Cycle: Active Session | Turns: ${tokenAnalyticsState.requests} | In: ${tokenAnalyticsState.inputFormatted} | Out: ${tokenAnalyticsState.outputFormatted}`, detail: 'Session context & prefix cache analytics' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Live Velocity: ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' t/s' : 'Idle (0 t/s)'}`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
@@ -813,9 +825,10 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         tokenTitle:  isZh ? '📊 会话级 Token 消耗统计' : '📊 Session Token Analytics & Usage',
         tokenDesc:   isZh ? '基于本地长上下文会话与前缀缓存实时统计' : 'Local active session context & prefix cache',
         cycleBadge:  isZh ? '⏱️ 统计周期: 当前活跃会话' : '⏱️ Cycle: Active Session',
+        btnPrecExact:isZh ? '🔢 点击切换全量精确数值' : '🔢 Click to toggle exact precision',
         
         heroTotLbl:  isZh ? '💎 本轮会话总消耗 (Total Tokens)' : '💎 Session Total Tokens',
-        heroTotSub:  isZh ? '输入 + 输出累计吞吐规模' : 'Input + Output Cumulative Volume',
+        heroTotSub:  isZh ? '输入 + 输出累计吞吐规模 (点击数字切换精度)' : 'Input + Output volume (Click to toggle exact)',
         heroSpdLbl:  isZh ? '⚡ 实时生成速率 (Live Velocity)' : '⚡ Live Generation Velocity',
         heroSpdSub:  isZh ? `上次峰值: ${speed.peakTps} t/s ｜ 本地: ${speed.latencyMs}ms` : `Last Peak: ${speed.peakTps} t/s ｜ Local: ${speed.latencyMs}ms`,
         
@@ -1042,6 +1055,12 @@ body {
   color: var(--text-muted);
   margin-top: 2px;
 }
+.cycle-badge-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .cycle-badge {
   font-size: 11px;
   color: var(--c-terracotta);
@@ -1051,7 +1070,27 @@ body {
   border-radius: 6px;
   font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;
+}
+.btn-prec {
+  background: var(--bg-sub);
+  color: var(--text-title);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.btn-prec:hover {
+  background: var(--vscode-button-background, #1f6feb);
+  color: #fff;
+  border-color: transparent;
+}
+.btn-prec:active {
+  transform: scale(0.96);
 }
 
 .hero-row {
@@ -1090,6 +1129,11 @@ body {
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.hero-val:hover {
+  opacity: 0.85;
 }
 .hero-sub {
   font-size: 11px;
@@ -1135,6 +1179,11 @@ body {
   margin: 2px 0;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.sub-val:hover {
+  opacity: 0.85;
 }
 .sub-hint {
   font-size: 10px;
@@ -1294,6 +1343,7 @@ body {
   .grid { grid-template-columns: 1fr; }
   .topbar { flex-direction: column; align-items: stretch; gap: 8px; }
   .actions { justify-content: flex-end; }
+  .cycle-badge-box { flex-direction: column; align-items: flex-end; gap: 4px; }
 }
 
 @media (max-width: 340px) {
@@ -1322,14 +1372,17 @@ body {
         <div class="sec-title">${t.tokenTitle}</div>
         <div class="sec-desc">${t.tokenDesc}</div>
       </div>
-      <div class="cycle-badge">${t.cycleBadge}</div>
+      <div class="cycle-badge-box">
+        <button class="btn-prec" onclick="togglePrecision()" title="${t.btnPrecExact}"><span id="precIcon">🔢</span> <span id="precText">${isZh ? '切换全精度' : 'Exact Mode'}</span></button>
+        <div class="cycle-badge">${t.cycleBadge}</div>
+      </div>
     </div>
 
     <div class="hero-row">
-      <div class="hero-card">
+      <div class="hero-card" onclick="togglePrecision()">
         <div class="hero-label">${t.heroTotLbl}</div>
         <div class="hero-val-box">
-          <span class="hero-val" style="color:var(--c-gold);">${tokens.totalFormatted}</span>
+          <span class="hero-val token-val" data-compact="${tokens.totalFormatted}" data-exact="${tokens.totalExact}" style="color:var(--c-gold);" title="${tokens.totalExact} Tokens">${tokens.totalFormatted}</span>
         </div>
         <div class="hero-sub">${t.heroTotSub}</div>
       </div>
@@ -1344,19 +1397,19 @@ body {
     </div>
 
     <div class="sub-grid">
-      <div class="sub-box">
+      <div class="sub-box" onclick="togglePrecision()">
         <div class="sub-title">${t.inTitle}</div>
-        <div class="sub-val" style="color:var(--c-blue);">${tokens.inputFormatted}</div>
+        <div class="sub-val token-val" data-compact="${tokens.inputFormatted}" data-exact="${tokens.inputExact}" style="color:var(--c-blue);" title="${tokens.inputExact} Tokens">${tokens.inputFormatted}</div>
         <div class="sub-hint">${t.inHint}</div>
       </div>
-      <div class="sub-box">
+      <div class="sub-box" onclick="togglePrecision()">
         <div class="sub-title">${t.cacheTitle}</div>
-        <div class="sub-val" style="color:var(--c-purple);">${tokens.cachedFormatted}</div>
+        <div class="sub-val token-val" data-compact="${tokens.cachedFormatted}" data-exact="${tokens.cachedExact}" style="color:var(--c-purple);" title="${tokens.cachedExact} Tokens">${tokens.cachedFormatted}</div>
         <div class="sub-hint">${t.cacheHint}</div>
       </div>
-      <div class="sub-box">
+      <div class="sub-box" onclick="togglePrecision()">
         <div class="sub-title">${t.outTitle}</div>
-        <div class="sub-val" style="color:var(--c-green);">${tokens.outputFormatted}</div>
+        <div class="sub-val token-val" data-compact="${tokens.outputFormatted}" data-exact="${tokens.outputExact}" style="color:var(--c-green);" title="${tokens.outputExact} Tokens">${tokens.outputFormatted}</div>
         <div class="sub-hint">${t.outHint}</div>
       </div>
       <div class="sub-box">
@@ -1439,6 +1492,32 @@ body {
 
 <script>
 const vscode = acquireVsCodeApi();
+const isZh = "${isZh}" === "true";
+let isExact = false;
+try {
+  isExact = localStorage.getItem('ag_cockpit_exact_mode') === 'true';
+} catch(_) {}
+
+function updatePrecisionView() {
+  document.querySelectorAll('.token-val').forEach(el => {
+    const compact = el.getAttribute('data-compact');
+    const exact = el.getAttribute('data-exact');
+    el.innerText = isExact ? exact : compact;
+  });
+  const btn = document.getElementById('precText');
+  if (btn) {
+    btn.innerText = isExact ? (isZh ? '切为简写' : 'Compact') : (isZh ? '切换全精度' : 'Exact Mode');
+  }
+}
+
+function togglePrecision() {
+  isExact = !isExact;
+  try { localStorage.setItem('ag_cockpit_exact_mode', isExact); } catch(_) {}
+  updatePrecisionView();
+}
+
+updatePrecisionView();
+
 function refresh()      { vscode.postMessage({ command: 'refresh'      }); }
 function openSettings() { vscode.postMessage({ command: 'openSettings' }); }
 function toggleLang()   { vscode.postMessage({ command: 'toggleLang'   }); }
