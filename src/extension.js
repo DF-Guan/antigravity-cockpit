@@ -276,11 +276,15 @@ function renderStatusBar() {
         showClaude ? fiveH : 100
     );
 
+    // 视觉三阶色彩：不仅作用于背景，同时直接着色状态栏文字与百分比数值
     if (minPct < critPct) {
+        statusBarItem.color = '#ff6b6b'; // 红色高亮告警数值
         statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
     } else if (minPct < warnPct) {
+        statusBarItem.color = '#e3b341'; // 橙黄色高亮预警数值
         statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
     } else {
+        statusBarItem.color = '#3fb950'; // 绿色健康数值
         statusBarItem.backgroundColor = undefined;
     }
 
