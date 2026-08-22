@@ -2,10 +2,9 @@ const vscode = require('vscode');
 const https = require('https');
 const { exec } = require('child_process');
 
-// 分离式状态栏项：标签文字保持主题原生色彩，百分比数字独享动态告警色彩
-let sbGeminiLabel, sbGeminiVal;
-let sbClaudeLabel, sbClaudeVal;
-let sb5hLabel, sb5hVal;
+// 细粒度状态栏微结构：每个模型专属的 周额度(W) + 5小时冲刺额度(5h)，文字保色、数字独变
+let sbGLabel, sbGWeekVal, sbG5hLabel, sbG5hVal;
+let sbCLabel, sbCWeekVal, sbC5hLabel, sbC5hVal;
 
 let refreshTimer;
 let currentPanel = undefined;
@@ -42,7 +41,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Cockpit] 仅百分比数字独立着色版激活');
+    console.log('[Antigravity Cockpit] 双模型完整双周期(周+5h)独立着色版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     const savedQuota = context.globalState.get('agPrivateCockpit.customQuota');
@@ -50,30 +49,23 @@ function activate(context) {
         liveQuotaState = Object.assign(liveQuotaState, savedQuota);
     }
 
-    // 采用精准的优先级链条（Right Alignment 从高到低由左至右平铺）
-    // 1. Gemini (Label: 10000, Val: 9999)
-    sbGeminiLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
-    sbGeminiVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
-    sbGeminiLabel.command = 'agPrivateCockpit.openDashboard';
-    sbGeminiVal.command   = 'agPrivateCockpit.openDashboard';
+    // 1. Google Gemini 槽位 (周额度 + 5h额度)
+    sbGLabel   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
+    sbGWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
+    sbG5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
+    sbG5hVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
 
-    // 2. Claude (Label: 9998, Val: 9997)
-    sbClaudeLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
-    sbClaudeVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
-    sbClaudeLabel.command = 'agPrivateCockpit.openDashboard';
-    sbClaudeVal.command   = 'agPrivateCockpit.openDashboard';
+    // 2. Claude & GPT 槽位 (周额度 + 5h额度)
+    sbCLabel   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
+    sbCWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
+    sbC5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
+    sbC5hVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9993);
 
-    // 3. 5h (Label: 9996, Val: 9995)
-    sb5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
-    sb5hVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
-    sb5hLabel.command = 'agPrivateCockpit.openDashboard';
-    sb5hVal.command   = 'agPrivateCockpit.openDashboard';
-
-    context.subscriptions.push(
-        sbGeminiLabel, sbGeminiVal,
-        sbClaudeLabel, sbClaudeVal,
-        sb5hLabel, sb5hVal
-    );
+    const allItems = [sbGLabel, sbGWeekVal, sbG5hLabel, sbG5hVal, sbCLabel, sbCWeekVal, sbC5hLabel, sbC5hVal];
+    allItems.forEach(item => {
+        item.command = 'agPrivateCockpit.openDashboard';
+        context.subscriptions.push(item);
+    });
 
     context.subscriptions.push(
         vscode.commands.registerCommand('agPrivateCockpit.openDashboard', () => showDashboard(context)),
@@ -280,8 +272,9 @@ function buildUnifiedTooltip() {
     tip.isTrusted = true;
 
     const gW = liveQuotaState.gemini.weeklyPercent;
+    const g5 = liveQuotaState.gemini.fiveHourPercent;
     const cW = liveQuotaState.claude.weeklyPercent;
-    const fiveH = liveQuotaState.claude.fiveHourPercent;
+    const c5 = liveQuotaState.claude.fiveHourPercent;
     const liveBadge = liveQuotaState.isLive ? '🟢 官方原生实时同频' : '⚡ 本地连接就绪';
 
     if (isZh) {
@@ -289,30 +282,30 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadge}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini 原生系列**\n`);
         tip.appendMarkdown(`- 每周剩余额度: **${gW}%** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度: **${liveQuotaState.gemini.fiveHourPercent}%** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
+        tip.appendMarkdown(`- 5小时冲刺额度: **${g5}%** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列**\n`);
         tip.appendMarkdown(`- 每周剩余额度: **${cW}%** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度: **${fiveH}%** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
+        tip.appendMarkdown(`- 5小时冲刺额度: **${c5}%** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         tip.appendMarkdown(`### 🛸 Antigravity Live Quota Cockpit\n\n`);
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveQuotaState.isLive ? '🟢 Native Live Synced' : 'Connected'}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini Suite**\n`);
         tip.appendMarkdown(`- Weekly Remaining: **${gW}%** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${liveQuotaState.gemini.fiveHourPercent}%** ｜ Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn || 'calculating'}\`\n\n`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}%** ｜ Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn || 'calculating'}\`\n\n`);
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite**\n`);
         tip.appendMarkdown(`- Weekly Remaining: **${cW}%** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${fiveH}%** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}%** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
 }
 
 /**
- * 状态栏渲染器：文字保持原生主题默认色，仅百分比数字应用告警色彩
+ * 状态栏渲染器：展示 Gemini(周+5h) 和 Claude(周+5h)，数字独立着色
  */
 function renderStatusBar() {
-    if (!sbGeminiLabel || !sbGeminiVal || !sbClaudeLabel || !sbClaudeVal || !sb5hLabel || !sb5hVal) return;
+    if (!sbGLabel || !sbGWeekVal || !sbG5hLabel || !sbG5hVal || !sbCLabel || !sbCWeekVal || !sbC5hLabel || !sbC5hVal) return;
 
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const showGemini = cfg.get('showGemini', true);
@@ -321,64 +314,67 @@ function renderStatusBar() {
     const warnPct    = cfg.get('warningThreshold', 50);
     const critPct    = cfg.get('criticalThreshold', 20);
 
-    const gW    = liveQuotaState.gemini.weeklyPercent;
-    const cW    = liveQuotaState.claude.weeklyPercent;
-    const fiveH = liveQuotaState.claude.fiveHourPercent;
+    const gW = liveQuotaState.gemini.weeklyPercent;
+    const g5 = liveQuotaState.gemini.fiveHourPercent;
+    const cW = liveQuotaState.claude.weeklyPercent;
+    const c5 = liveQuotaState.claude.fiveHourPercent;
 
     const tip = buildUnifiedTooltip();
 
-    // 1. Google Gemini 槽位
+    // 1. Google Gemini 槽位 (包含 Weekly 和 5h 冲刺两个数值)
     if (showGemini) {
-        // 文字部分：颜色置为 undefined（完全跟随主题原生文字颜色）
-        sbGeminiLabel.text = compact ? `$(sparkle) G: ` : `✨ Gemini: `;
-        sbGeminiLabel.color = undefined;
-        sbGeminiLabel.tooltip = tip;
-        sbGeminiLabel.show();
+        sbGLabel.text = compact ? `$(sparkle) G:` : `✨ Gemini:`;
+        sbGLabel.color = undefined;
+        sbGLabel.tooltip = tip;
+        sbGLabel.show();
 
-        // 数字部分：仅数字变色（绿/橙/红）
-        sbGeminiVal.text = `${gW}%   `;
-        sbGeminiVal.color = getNumberAlertColor(gW, warnPct, critPct);
-        sbGeminiVal.tooltip = tip;
-        sbGeminiVal.show();
+        sbGWeekVal.text = ` ${gW}%`;
+        sbGWeekVal.color = getNumberAlertColor(gW, warnPct, critPct);
+        sbGWeekVal.tooltip = tip;
+        sbGWeekVal.show();
+
+        sbG5hLabel.text = compact ? ` (5h:` : ` (5h:`;
+        sbG5hLabel.color = undefined;
+        sbG5hLabel.tooltip = tip;
+        sbG5hLabel.show();
+
+        sbG5hVal.text = `${g5}%)   `;
+        sbG5hVal.color = getNumberAlertColor(g5, warnPct, critPct);
+        sbG5hVal.tooltip = tip;
+        sbG5hVal.show();
     } else {
-        sbGeminiLabel.hide();
-        sbGeminiVal.hide();
+        sbGLabel.hide();
+        sbGWeekVal.hide();
+        sbG5hLabel.hide();
+        sbG5hVal.hide();
     }
 
-    // 2. Claude & GPT 槽位
+    // 2. Claude & GPT 槽位 (包含 Weekly 和 5h 冲刺两个数值)
     if (showClaude) {
-        // 文字部分：完全跟随主题原生文字颜色
-        sbClaudeLabel.text = compact ? `$(organization) C: ` : `🤖 Claude/GPT: `;
-        sbClaudeLabel.color = undefined;
-        sbClaudeLabel.tooltip = tip;
-        sbClaudeLabel.show();
+        sbCLabel.text = compact ? `$(organization) C:` : `🤖 Claude/GPT:`;
+        sbCLabel.color = undefined;
+        sbCLabel.tooltip = tip;
+        sbCLabel.show();
 
-        // 数字部分：仅数字变色（绿/橙/红）
-        sbClaudeVal.text = `${cW}%   `;
-        sbClaudeVal.color = getNumberAlertColor(cW, warnPct, critPct);
-        sbClaudeVal.tooltip = tip;
-        sbClaudeVal.show();
+        sbCWeekVal.text = ` ${cW}%`;
+        sbCWeekVal.color = getNumberAlertColor(cW, warnPct, critPct);
+        sbCWeekVal.tooltip = tip;
+        sbCWeekVal.show();
+
+        sbC5hLabel.text = compact ? ` (5h:` : ` (5h:`;
+        sbC5hLabel.color = undefined;
+        sbC5hLabel.tooltip = tip;
+        sbC5hLabel.show();
+
+        sbC5hVal.text = `${c5}%)`;
+        sbC5hVal.color = getNumberAlertColor(c5, warnPct, critPct);
+        sbC5hVal.tooltip = tip;
+        sbC5hVal.show();
     } else {
-        sbClaudeLabel.hide();
-        sbClaudeVal.hide();
-    }
-
-    // 3. 5小时冲刺槽位
-    if (showClaude || showGemini) {
-        // 文字部分：完全跟随主题原生文字颜色
-        sb5hLabel.text = compact ? `$(clock) 5h: ` : `⏱️ 5h: `;
-        sb5hLabel.color = undefined;
-        sb5hLabel.tooltip = tip;
-        sb5hLabel.show();
-
-        // 数字部分：仅数字变色（绿/橙/红）
-        sb5hVal.text = `${fiveH}%`;
-        sb5hVal.color = getNumberAlertColor(fiveH, warnPct, critPct);
-        sb5hVal.tooltip = tip;
-        sb5hVal.show();
-    } else {
-        sb5hLabel.hide();
-        sb5hVal.hide();
+        sbCLabel.hide();
+        sbCWeekVal.hide();
+        sbC5hLabel.hide();
+        sbC5hVal.hide();
     }
 }
 
@@ -388,15 +384,15 @@ function showQuickOverview(context) {
     const c = liveQuotaState.claude;
 
     const items = isZh ? [
-        { label: `✨ Google Gemini: ${g.weeklyPercent}%`, description: `5h: ${g.fiveHourPercent}% | 重置: ${g.weeklyResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
-        { label: `🎭 Claude 4.6 & GPT: ${c.weeklyPercent}%`, description: `5h: ${c.fiveHourPercent}% | 重置: ${c.weeklyResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
+        { label: `✨ Google Gemini: ${g.weeklyPercent}% (5h: ${g.fiveHourPercent}%)`, description: `重置: ${g.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
+        { label: `🎭 Claude 4.6 & GPT: ${c.weeklyPercent}% (5h: ${c.fiveHourPercent}%)`, description: `重置: ${c.weeklyResetTimeZh} | 5h重置: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏图表' },
         { label: `🌐 切换为 English`, description: '当前: 中文' },
         { label: `⚙️ 打开插件设置`, description: '自定义预警阈值与刷新频率' }
     ] : [
-        { label: `✨ Google Gemini: ${g.weeklyPercent}%`, description: `5h: ${g.fiveHourPercent}% | Reset: ${g.weeklyResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
-        { label: `🎭 Claude 4.6 & GPT: ${c.weeklyPercent}%`, description: `5h: ${c.fiveHourPercent}% | Reset: ${c.weeklyResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
+        { label: `✨ Google Gemini: ${g.weeklyPercent}% (5h: ${g.fiveHourPercent}%)`, description: `Reset: ${g.weeklyResetTimeEn} | 5h Reset: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
+        { label: `🎭 Claude 4.6 & GPT: ${c.weeklyPercent}% (5h: ${c.fiveHourPercent}%)`, description: `Reset: ${c.weeklyResetTimeEn} | 5h Reset: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `🔄 Force Refresh Now`, description: 'Probe latest quota from Language Server' },
         { label: `🖥️ Open Visual Dashboard`, description: 'View brand-accurate quota cockpit' },
         { label: `🌐 Switch to Chinese (中文)`, description: 'Current: English' },
