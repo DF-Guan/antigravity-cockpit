@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -124,6 +124,11 @@
           "type": "boolean",
           "default": true,
           "description": "Toggle Anthropic Claude & GPT quota visibility in the status bar (default: true)."
+        },
+        "agPrivateCockpit.showTokenSpeed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Toggle recent conversation Token Speed (t/s) indicator on status bar (default: true)."
         }
       }
     }
