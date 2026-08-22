@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.39] - 2026-08-22
+### HUD Matrix Floating Tooltip & Visual Mini Gauge Bars
+- **Visual Mini Gauge Bars (`[████████░░]`)**: Added instant-read unicode progress bars next to each model's quota percentage in the status bar hover tooltip.
+- **Structured HUD Quota Matrix Table**: Transformed status bar hover tooltip from text lists into a crisp, high-density HUD matrix table for 0.1s instant readability.
+- **Layered Session Token Telemetry**: Streamlined session token consumption and cache ratio analytics into a high-contrast telemetry block.
+
 ## [1.0.38] - 2026-08-22
 ### Brand Colors & Ultra-Tight Status Bar Typography
 - **Official Brand Colors for Icons**: Google Gemini vector icon is now colored with official Electric Blue (`#38bdf8`), Anthropic Claude icon with official Terracotta (`#da7756`), and Live Speed with vibrant Cyan (`#38bdf8`).
@@ -36,6 +42,12 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.39] - 2026-08-22
+### HUD Matrix Floating Tooltip & Visual Mini Gauge Bars
+- **Visual Mini Gauge Bars (`[████████░░]`)**: Added instant-read unicode progress bars next to each model's quota percentage in the status bar hover tooltip.
+- **Structured HUD Quota Matrix Table**: Transformed status bar hover tooltip from text lists into a crisp, high-density HUD matrix table for 0.1s instant readability.
+- **Layered Session Token Telemetry**: Streamlined session token consumption and cache ratio analytics into a high-contrast telemetry block.
 
 ## [1.0.38] - 2026-08-22
 ### Brand Colors & Ultra-Tight Status Bar Typography
