@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.43] - 2026-08-22
+### Restore Proven Native Clean Hover Tooltip
+- **100% Reliable Native Tooltip**: Completely restored the rock-solid, zero-CSP-error, high-readability native Markdown tooltip.
+- **Instant Hover Response**: Eliminated image loading overhead, ensuring the tooltip appears instantly on mouse hover.
+
 ## [1.0.42] - 2026-08-22
 ### Apple Cupertino Retina Graphical HUD Hover Card
 - **Retina SVG Graphical Card**: Hovering over the status bar now renders a pixel-perfect, 2x Retina Apple Cupertino Dark HUD Card with genuine pill progress capsules, glowing status pills, and brand gradients.
@@ -59,6 +64,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.43] - 2026-08-22
+### Restore Proven Native Clean Hover Tooltip
+- **100% Reliable Native Tooltip**: Completely restored the rock-solid, zero-CSP-error, high-readability native Markdown tooltip.
+- **Instant Hover Response**: Eliminated image loading overhead, ensuring the tooltip appears instantly on mouse hover.
 
 ## [1.0.42] - 2026-08-22
 ### Apple Cupertino Retina Graphical HUD Hover Card
