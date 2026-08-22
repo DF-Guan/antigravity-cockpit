@@ -2,6 +2,16 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.32] - 2026-08-22
+### Product-First Documentation & Zero-Telemetry Transparency
+- **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
+- **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.32] - 2026-08-22
+### Product-First Documentation & Zero-Telemetry Transparency
+- **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
+- **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
 ## [1.0.31] - 2026-08-22
 ### Enhanced UX, Multi-Tier Quota Alerts & Zero-Flicker Webview
 - **Zero-Flicker Tab Switching**: Added `retainContextWhenHidden: true` to prevent Webview DOM reloads and state resets when toggling editor tabs.
