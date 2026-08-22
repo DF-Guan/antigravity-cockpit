@@ -15,7 +15,7 @@
 
 ## 📸 Visual Preview
 
-| 🛸 Claude Warm Minimalist Cockpit & Token Analytics | 📍 Status Bar Compact Layout & Rich Tooltip |
+| 🛸 Warm Minimalist Cockpit & Token Analytics | 📍 Status Bar Compact Layout & Rich Tooltip |
 | :---: | :---: |
 | ![Cockpit Dashboard](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_en.png) | ![Status Bar & Tooltip](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_en.png) |
 
@@ -23,7 +23,7 @@
 
 ## ✨ Key Highlights
 
-1. **🎨 Claude Signature Aesthetic Typography**:
+1. **🎨 Modern Humanist Typography & Layout**:
    - Signature serif headers (`Charter`, `Georgia`, `Cambria`) paired with monospace numeric metrics for human-centric elegance.
    - Warm terracotta accents (`#da7756`) and warm-dark surfaces for eye comfort during long coding sessions.
 2. **📱 280px to 4K Zero-Overflow Responsive Layout**:

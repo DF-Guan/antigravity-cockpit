@@ -15,7 +15,7 @@
 
 ## 📸 界面实测预览 (Visual Preview)
 
-| 🛸 Claude 人文风配额与多维 Token 驾驶舱 | 📍 底部状态栏微距排版与多维悬浮卡片 |
+| 🛸 现代极简人文美学配额与多维 Token 驾驶舱 | 📍 底部状态栏微距排版与多维悬浮卡片 |
 | :---: | :---: |
 | ![配额驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png) | ![状态栏与悬浮卡片](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_zh.png) |
 
@@ -23,7 +23,7 @@
 
 ## ✨ 核心特性一览 (Key Highlights)
 
-1. **🎨 Claude 标志性人文排版美学**：
+1. **🎨 经典衬线与现代排版美学**：
    - 采用经典衬线字体（`Charter`, `Georgia`, `Cambria`）搭配等宽数字排版，优雅与科技感兼备；
    - 专属 Claude 赤陶暖色调（`#da7756`）与深陶碳黑底色，长时间查看护眼舒适；
 2. **📱 280px ~ 4K 全屏无缝自适应（Zero Overflow）**：

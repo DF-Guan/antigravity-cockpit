@@ -928,7 +928,7 @@ body {
   min-width: 0;
 }
 
-/* Claude Style Header */
+/* Cockpit Top Navigation */
 .topbar {
   display: flex;
   align-items: center;
@@ -1004,7 +1004,7 @@ body {
 .spin-icon { display: inline-block; transition: transform 0.4s ease; }
 .btn:active .spin-icon { transform: rotate(180deg); }
 
-/* Claude Warm Minimalist Token Section */
+/* Warm Minimalist Token Section */
 .token-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
