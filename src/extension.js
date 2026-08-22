@@ -2,9 +2,11 @@ const vscode = require('vscode');
 const https = require('https');
 const { exec } = require('child_process');
 
-let statusBarGemini;
-let statusBarClaude;
-let statusBar5h;
+// 分离式状态栏项：标签文字保持主题原生色彩，百分比数字独享动态告警色彩
+let sbGeminiLabel, sbGeminiVal;
+let sbClaudeLabel, sbClaudeVal;
+let sb5hLabel, sb5hVal;
+
 let refreshTimer;
 let currentPanel = undefined;
 let currentLang = 'auto';
@@ -40,7 +42,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Cockpit] 独立数值精确着色版激活');
+    console.log('[Antigravity Cockpit] 仅百分比数字独立着色版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     const savedQuota = context.globalState.get('agPrivateCockpit.customQuota');
@@ -48,17 +50,30 @@ function activate(context) {
         liveQuotaState = Object.assign(liveQuotaState, savedQuota);
     }
 
-    // 创建 3 个独立的细粒度状态栏项，使得每个数值拥有完全独立的专属告警颜色
-    statusBarGemini = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
-    statusBarGemini.command = 'agPrivateCockpit.openDashboard';
+    // 采用精准的优先级链条（Right Alignment 从高到低由左至右平铺）
+    // 1. Gemini (Label: 10000, Val: 9999)
+    sbGeminiLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
+    sbGeminiVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
+    sbGeminiLabel.command = 'agPrivateCockpit.openDashboard';
+    sbGeminiVal.command   = 'agPrivateCockpit.openDashboard';
 
-    statusBarClaude = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
-    statusBarClaude.command = 'agPrivateCockpit.openDashboard';
+    // 2. Claude (Label: 9998, Val: 9997)
+    sbClaudeLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
+    sbClaudeVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
+    sbClaudeLabel.command = 'agPrivateCockpit.openDashboard';
+    sbClaudeVal.command   = 'agPrivateCockpit.openDashboard';
 
-    statusBar5h = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
-    statusBar5h.command = 'agPrivateCockpit.openDashboard';
+    // 3. 5h (Label: 9996, Val: 9995)
+    sb5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
+    sb5hVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
+    sb5hLabel.command = 'agPrivateCockpit.openDashboard';
+    sb5hVal.command   = 'agPrivateCockpit.openDashboard';
 
-    context.subscriptions.push(statusBarGemini, statusBarClaude, statusBar5h);
+    context.subscriptions.push(
+        sbGeminiLabel, sbGeminiVal,
+        sbClaudeLabel, sbClaudeVal,
+        sb5hLabel, sb5hVal
+    );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('agPrivateCockpit.openDashboard', () => showDashboard(context)),
@@ -251,25 +266,12 @@ async function fetchLiveQuota(manual = false) {
 }
 
 /**
- * 🎨 计算单个百分比数值的专属告警着色
+ * 🎨 仅对【百分比数字】计算专属动态告警色
  */
-function getMetricColorStyle(pct, warnPct, critPct) {
-    if (pct < critPct) {
-        return {
-            color: '#ff6b6b', // 红色极危数值
-            bgColor: new vscode.ThemeColor('statusBarItem.errorBackground')
-        };
-    }
-    if (pct < warnPct) {
-        return {
-            color: '#e3b341', // 橙黄色预警数值
-            bgColor: new vscode.ThemeColor('statusBarItem.warningBackground')
-        };
-    }
-    return {
-        color: '#3fb950',     // 绿色健康数值
-        bgColor: undefined
-    };
+function getNumberAlertColor(pct, warnPct, critPct) {
+    if (pct < critPct) return '#ff6b6b'; // 红色告警
+    if (pct < warnPct) return '#e3b341'; // 橙黄预警
+    return '#3fb950';                   // 活力翠绿
 }
 
 function buildUnifiedTooltip() {
@@ -307,10 +309,10 @@ function buildUnifiedTooltip() {
 }
 
 /**
- * 状态栏渲染器：每个数值独立根据自身配额实时计算告警颜色
+ * 状态栏渲染器：文字保持原生主题默认色，仅百分比数字应用告警色彩
  */
 function renderStatusBar() {
-    if (!statusBarGemini || !statusBarClaude || !statusBar5h) return;
+    if (!sbGeminiLabel || !sbGeminiVal || !sbClaudeLabel || !sbClaudeVal || !sb5hLabel || !sb5hVal) return;
 
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const showGemini = cfg.get('showGemini', true);
@@ -325,40 +327,58 @@ function renderStatusBar() {
 
     const tip = buildUnifiedTooltip();
 
-    // 1. Google Gemini 独立项与数值着色
+    // 1. Google Gemini 槽位
     if (showGemini) {
-        const styleG = getMetricColorStyle(gW, warnPct, critPct);
-        statusBarGemini.text = compact ? `$(sparkle) G: ${gW}%` : `✨ Gemini: ${gW}%`;
-        statusBarGemini.color = styleG.color;
-        statusBarGemini.backgroundColor = styleG.bgColor;
-        statusBarGemini.tooltip = tip;
-        statusBarGemini.show();
+        // 文字部分：颜色置为 undefined（完全跟随主题原生文字颜色）
+        sbGeminiLabel.text = compact ? `$(sparkle) G: ` : `✨ Gemini: `;
+        sbGeminiLabel.color = undefined;
+        sbGeminiLabel.tooltip = tip;
+        sbGeminiLabel.show();
+
+        // 数字部分：仅数字变色（绿/橙/红）
+        sbGeminiVal.text = `${gW}%   `;
+        sbGeminiVal.color = getNumberAlertColor(gW, warnPct, critPct);
+        sbGeminiVal.tooltip = tip;
+        sbGeminiVal.show();
     } else {
-        statusBarGemini.hide();
+        sbGeminiLabel.hide();
+        sbGeminiVal.hide();
     }
 
-    // 2. Claude & GPT 独立项与数值着色
+    // 2. Claude & GPT 槽位
     if (showClaude) {
-        const styleC = getMetricColorStyle(cW, warnPct, critPct);
-        statusBarClaude.text = compact ? `$(organization) C: ${cW}%` : `🤖 Claude/GPT: ${cW}%`;
-        statusBarClaude.color = styleC.color;
-        statusBarClaude.backgroundColor = styleC.bgColor;
-        statusBarClaude.tooltip = tip;
-        statusBarClaude.show();
+        // 文字部分：完全跟随主题原生文字颜色
+        sbClaudeLabel.text = compact ? `$(organization) C: ` : `🤖 Claude/GPT: `;
+        sbClaudeLabel.color = undefined;
+        sbClaudeLabel.tooltip = tip;
+        sbClaudeLabel.show();
+
+        // 数字部分：仅数字变色（绿/橙/红）
+        sbClaudeVal.text = `${cW}%   `;
+        sbClaudeVal.color = getNumberAlertColor(cW, warnPct, critPct);
+        sbClaudeVal.tooltip = tip;
+        sbClaudeVal.show();
     } else {
-        statusBarClaude.hide();
+        sbClaudeLabel.hide();
+        sbClaudeVal.hide();
     }
 
-    // 3. 5小时冲刺独立项与数值着色
+    // 3. 5小时冲刺槽位
     if (showClaude || showGemini) {
-        const style5 = getMetricColorStyle(fiveH, warnPct, critPct);
-        statusBar5h.text = compact ? `$(clock) 5h: ${fiveH}%` : `⏱️ 5h: ${fiveH}%`;
-        statusBar5h.color = style5.color;
-        statusBar5h.backgroundColor = style5.bgColor;
-        statusBar5h.tooltip = tip;
-        statusBar5h.show();
+        // 文字部分：完全跟随主题原生文字颜色
+        sb5hLabel.text = compact ? `$(clock) 5h: ` : `⏱️ 5h: `;
+        sb5hLabel.color = undefined;
+        sb5hLabel.tooltip = tip;
+        sb5hLabel.show();
+
+        // 数字部分：仅数字变色（绿/橙/红）
+        sb5hVal.text = `${fiveH}%`;
+        sb5hVal.color = getNumberAlertColor(fiveH, warnPct, critPct);
+        sb5hVal.tooltip = tip;
+        sb5hVal.show();
     } else {
-        statusBar5h.hide();
+        sb5hLabel.hide();
+        sb5hVal.hide();
     }
 }
 
