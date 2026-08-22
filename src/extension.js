@@ -131,7 +131,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.25 零虚标与高对比度版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.26 全主题自适应版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -393,7 +393,6 @@ async function fetchLiveQuota(context, manual = false) {
 
             liveSpeedState.latencyMs = res.elapsed || 15;
 
-            // 严格真实的待机/生成状态检测
             const now = Date.now();
             if (lastQuotaSnapshot !== null && lastQuotaSnapshot > currentTotalRemaining) {
                 lastStreamingTimestamp = now;
@@ -401,7 +400,6 @@ async function fetchLiveQuota(context, manual = false) {
                 liveSpeedState.currentTps = 78.4;
                 liveSpeedState.peakTps = 78.4;
             } else {
-                // 如果距离上次生成超过 15 秒，准确判定为待机状态（0 t/s）
                 if (now - lastStreamingTimestamp > 15000) {
                     liveSpeedState.isStreaming = false;
                     liveSpeedState.currentTps = 0;
@@ -577,7 +575,7 @@ function renderStatusBar() {
         sbC5hVal.hide();
     }
 
-    // 3. 实时 Token 速率槽位 (待机时显示待机，生成时显示实时速率)
+    // 3. 实时 Token 速率槽位
     if (showSpeed) {
         sbSpeedLabel.text = compact ? `  $(zap)` : `   ⚡`;
         sbSpeedLabel.color = undefined;
@@ -616,7 +614,7 @@ function showQuickOverview(context) {
     const items = isZh ? [
         { label: `📊 当前会话消耗: ${tokenAnalyticsState.totalFormatted}`, description: `统计周期: 当前活跃会话 | 交互: ${tokenAnalyticsState.requests}轮 | 输入: ${tokenAnalyticsState.inputFormatted} | 输出: ${tokenAnalyticsState.outputFormatted}`, detail: '本地长会话上下文与前缀缓存多维分析' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 重置: ${g.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
-        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 重置: ${c.weeklyResetTimeZh} | 5h重置: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
+        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 重置: ${c.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `⚡ 实时响应速率: ${speedInfo}`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏图表' },
@@ -719,25 +717,25 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         resetTimeG:  isZh ? data.gemini.weeklyResetTimeZh : data.gemini.weeklyResetTimeEn,
         resetTimeC:  isZh ? data.claude.weeklyResetTimeZh : data.claude.weeklyResetTimeEn,
         
-        tokenTitle:  isZh ? '📊 会话级 Token 消耗多维统计 (Token Analytics)' : '📊 Session Token Analytics & Consumption',
-        tokenDesc:   isZh ? '统计口径：基于本地长上下文会话与服务端前缀缓存实时统计' : 'Scope: Local active session context & server prefix cache',
-        cycleBadge:  isZh ? '⏱️ 统计周期: 当前活跃会话 (Active Session)' : '⏱️ Cycle: Active Session Context',
+        tokenTitle:  isZh ? '📊 会话级 Token 消耗多维统计' : '📊 Session Token Analytics & Usage',
+        tokenDesc:   isZh ? '统计口径：基于本地长上下文会话与前缀缓存统计' : 'Scope: Local active session context & prefix cache',
+        cycleBadge:  isZh ? '⏱️ 统计周期: 当前活跃会话' : '⏱️ Cycle: Active Session',
         
         heroTotLbl:  isZh ? '💎 本轮会话总消耗 (Total Tokens)' : '💎 Session Total Tokens',
         heroTotSub:  isZh ? '输入 + 输出累计吞吐规模' : 'Input + Output Cumulative Volume',
         heroSpdLbl:  isZh ? '⚡ 实时流式速率 (Live Velocity)' : '⚡ Live Generation Velocity',
-        heroSpdSub:  isZh ? `上次生成峰值: ${speed.peakTps} t/s ｜ 本地 IPC: ${speed.latencyMs}ms` : `Last Peak: ${speed.peakTps} t/s ｜ Local IPC: ${speed.latencyMs}ms`,
+        heroSpdSub:  isZh ? `上次峰值: ${speed.peakTps} t/s ｜ 本地 IPC: ${speed.latencyMs}ms` : `Last Peak: ${speed.peakTps} t/s ｜ Local IPC: ${speed.latencyMs}ms`,
         
         idleText:    isZh ? '💤 待机就绪' : '💤 Idle Ready',
         streamText:  isZh ? '🟢 正在生成' : '🟢 Streaming',
         
         inTitle:     isZh ? '📥 输入 Token' : '📥 Input Tokens',
-        inHint:      isZh ? '含工程文件与多轮历史' : 'Project files & turns history',
+        inHint:      isZh ? '工程文件与多轮历史' : 'Project files & history',
         cacheTitle:  isZh ? '⚡ 前缀缓存读取' : '⚡ Prefix Cache Read',
-        cacheHint:   isZh ? `缓存命中率 <strong>${tokens.cachedPercent}</strong>` : `Cache hit ratio <strong>${tokens.cachedPercent}</strong>`,
+        cacheHint:   isZh ? `缓存命中率 ${tokens.cachedPercent}` : `Cache hit ratio ${tokens.cachedPercent}`,
         outTitle:    isZh ? '📤 输出 Token' : '📤 Output Tokens',
         outHint:     isZh ? '模型生成代码与回复' : 'Generated code & answers',
-        reqTitle:    isZh ? '📈 累计交互轮次' : '📈 Interaction Turns',
+        reqTitle:    isZh ? '📈 交互轮次' : '📈 Interaction Turns',
         reqHint:     isZh ? '用户提问与工具调度' : 'User prompts & tool calls',
         unitTimes:   isZh ? '次' : 'reqs',
         
@@ -755,8 +753,8 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const cStat = statusInfo(Math.min(cW, c5));
 
     const speedValDisplay = speed.isStreaming
-        ? `<span class="hero-val c-in">${speed.currentTps} <span style="font-size:14px;font-weight:700;color:var(--text-sub);">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.2);color:#38bdf8;border-color:rgba(56,189,248,0.4);">${t.streamText}</span>`
-        : `<span class="hero-val c-idle">0 <span style="font-size:14px;font-weight:700;color:var(--text-muted);">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
+        ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
+        : `<span class="hero-val" style="color:var(--text-muted);">0 <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
 
     return `<!DOCTYPE html>
 <html lang="${isZh ? 'zh-CN' : 'en'}">
@@ -766,86 +764,364 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>${t.title}</title>
 <style>
-:root{
-  --bg: var(--vscode-editor-background,#0d1117);
-  --surface: var(--vscode-sideBar-background,#161b22);
-  --border: var(--vscode-widget-border,rgba(255,255,255,0.22));
-  --text-main: var(--vscode-editor-foreground,#ffffff);
-  --text-sub: var(--vscode-descriptionForeground,#e2e8f0);
-  --text-muted: #cbd5e1;
-  --text-hint: #93c5fd;
+:root {
+  --bg-main: var(--vscode-editor-background, #0d1117);
+  --bg-card: var(--vscode-sideBar-background, #161b22);
+  --bg-sub: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.04));
+  --border: var(--vscode-widget-border, rgba(255, 255, 255, 0.18));
+  --text-title: var(--vscode-editor-foreground, #ffffff);
+  --text-body: var(--vscode-editor-foreground, #e2e8f0);
+  --text-muted: var(--vscode-descriptionForeground, #94a3b8);
+  --c-gold: #fbbf24;
+  --c-blue: #38bdf8;
+  --c-green: #4ade80;
+  --c-purple: #c084fc;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text-main);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:16px;display:flex;justify-content:center;}
-.wrap{width:100%;max-width:640px;}
-.topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border);}
-.header-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;white-space:nowrap;color:#ffffff;}
-.live-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px;border-radius:12px;background:rgba(63,185,80,.2);color:#4ade80;border:1px solid rgba(63,185,80,.4);font-weight:700;}
-.dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.85)}}
-.actions{display:flex;flex-wrap:wrap;gap:6px;}
-.btn{display:inline-flex;align-items:center;gap:4px;background:var(--vscode-button-secondaryBackground,#21262d);color:#ffffff;border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
-.btn:hover{background:var(--vscode-button-background,#1f6feb);color:#fff;border-color:transparent;}
-.btn-lang{background:rgba(88,166,255,.18);color:#70b8ff;border-color:rgba(88,166,255,.4);}
-.btn-lang:hover{background:#1f6feb;color:#fff;}
 
-/* Redesigned High-Contrast Token Analytics Section */
-.token-section{background:linear-gradient(180deg,#1e293b,var(--surface));border:1px solid rgba(56,189,248,0.45);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
-.sec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.15);flex-wrap:wrap;gap:8px;}
-.sec-title{font-size:15px;font-weight:800;color:#ffffff;display:flex;align-items:center;gap:6px;}
-.cycle-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#38bdf8;background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.45);padding:4px 10px;border-radius:6px;font-weight:700;white-space:nowrap;}
-.sec-desc{font-size:12px;color:var(--text-sub);margin-top:4px;font-weight:500;}
+body.vscode-light {
+  --bg-main: var(--vscode-editor-background, #f6f8fa);
+  --bg-card: var(--vscode-sideBar-background, #ffffff);
+  --bg-sub: #f0f2f5;
+  --border: var(--vscode-widget-border, #d0d7de);
+  --text-title: #1f2328;
+  --text-body: #333d47;
+  --text-muted: #57606a;
+  --c-gold: #b45309;
+  --c-blue: #0969da;
+  --c-green: #1a7f37;
+  --c-purple: #7c3aed;
+}
 
-/* Top 2 Primary Highlight Cards */
-.hero-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px;}
-.hero-card{border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;min-height:92px;}
-.hero-card.gold{border:1px solid rgba(251,191,36,0.5);background:linear-gradient(135deg,rgba(251,191,36,0.14),rgba(0,0,0,0.3));}
-.hero-card.cyan{border:1px solid rgba(56,189,248,0.5);background:linear-gradient(135deg,rgba(56,189,248,0.14),rgba(0,0,0,0.3));}
-.hero-label{font-size:13px;font-weight:800;color:#ffffff;white-space:nowrap;}
-.hero-val-box{display:flex;align-items:center;gap:10px;}
-.hero-val{font-size:26px;font-weight:900;letter-spacing:-0.5px;line-height:1;}
-.hero-sub{font-size:11px;color:var(--text-sub);font-weight:600;}
+body.vscode-dark {
+  --bg-main: var(--vscode-editor-background, #0d1117);
+  --bg-card: var(--vscode-sideBar-background, #161b22);
+  --bg-sub: rgba(255, 255, 255, 0.04);
+  --border: var(--vscode-widget-border, rgba(255, 255, 255, 0.18));
+  --text-title: #ffffff;
+  --text-body: #e2e8f0;
+  --text-muted: #94a3b8;
+  --c-gold: #fbbf24;
+  --c-blue: #38bdf8;
+  --c-green: #4ade80;
+  --c-purple: #c084fc;
+}
 
-.idle-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(148,163,184,0.18);color:#cbd5e1;border:1px solid rgba(148,163,184,0.35);font-weight:700;white-space:nowrap;}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg-main);
+  color: var(--text-body);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+.wrap {
+  width: 100%;
+  max-width: 640px;
+}
 
-/* Sub Metrics Grid */
-.sub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
-.sub-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:12px 10px;display:flex;flex-direction:column;justify-content:space-between;}
-.sub-val{font-size:18px;font-weight:900;margin-bottom:3px;line-height:1.2;}
-.sub-title{font-size:12px;font-weight:800;color:#ffffff;}
-.sub-hint{font-size:11px;color:var(--text-hint);margin-top:3px;font-weight:600;}
+/* Top Navigation Bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-title);
+  white-space: nowrap;
+}
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--c-green);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  font-weight: 700;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.85); } }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card);
+  color: var(--text-title);
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--vscode-button-background, #1f6feb); color: #fff; border-color: transparent; }
+.btn-lang {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--c-blue);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+.btn-lang:hover { background: #1f6feb; color: #fff; }
 
-.c-in{color:#38bdf8;}
-.c-out{color:#34d399;}
-.c-cache{color:#c084fc;}
-.c-req{color:#ffffff;}
-.c-gold{color:#fbbf24;}
-.c-idle{color:#94a3b8;}
+/* Clean Conservative Token Section */
+.token-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.sec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sec-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-title);
+}
+.sec-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+.cycle-badge {
+  font-size: 11px;
+  color: var(--c-blue);
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 
-/* Quota Grid */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;}
-.card-g{border-top:3px solid #4285f4;background:linear-gradient(180deg,rgba(66,133,244,0.1),var(--surface) 40%);}
-.card-c{border-top:3px solid #d97706;background:linear-gradient(180deg,rgba(217,119,6,0.1),var(--surface) 40%);}
-.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.brand-box{display:flex;align-items:center;gap:8px;}
-.logo-wrap{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);flex-shrink:0;}
-.brand-info{display:flex;flex-direction:column;}
-.brand-name{font-size:13px;font-weight:800;color:#ffffff;white-space:nowrap;}
-.brand-sub{font-size:11px;color:var(--text-sub);white-space:nowrap;}
-.pill{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0;}
-.metric{display:flex;flex-direction:column;gap:4px;}
-.metric-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-sub);font-weight:600;}
-.metric-val{font-size:13px;font-weight:900;color:#ffffff;}
-.track{height:7px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden;}
-.fill-g{height:100%;background:linear-gradient(90deg,#1ba0e2,#4285f4 35%,#9b72cb 70%,#d96570);border-radius:4px;width:96%;}
-.fill-c{height:100%;background:linear-gradient(90deg,#b45309,#d97706 40%,#f97316 75%,#ea580c);border-radius:4px;width:84%;}
-.meta{display:flex;flex-direction:column;gap:4px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:var(--text-sub);}
-.meta-row{display:flex;justify-content:space-between;align-items:center;font-weight:600;}
-.meta-val{color:#ffffff;font-weight:700;}
+/* 2 Hero Highlights */
+.hero-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.hero-card {
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 80px;
+}
+.hero-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.hero-val-box {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.hero-val {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+.hero-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.idle-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
 
-.footer{background:rgba(255,255,255,.04);border:1px dashed var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--text-sub);display:flex;justify-content:space-between;align-items:center;font-weight:500;flex-wrap:wrap;gap:8px;}
-.sync{font-size:12px;font-weight:700;color:#ffffff;}
+/* 4 Sub Metrics Grid */
+.sub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+.sub-box {
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.sub-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.sub-val {
+  font-size: 16px;
+  font-weight: 900;
+  margin: 2px 0;
+  line-height: 1.2;
+}
+.sub-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* 2 Model Cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card-g { border-top: 3px solid #3b82f6; }
+.card-c { border-top: 3px solid #d97706; }
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.brand-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-wrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.brand-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-title);
+  white-space: nowrap;
+}
+.brand-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--c-green);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.metric-val {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-title);
+}
+.track {
+  height: 6px;
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.fill-g { height: 100%; background: #3b82f6; width: 96%; }
+.fill-g5 { height: 100%; background: #3b82f6; width: 86%; }
+.fill-c { height: 100%; background: #d97706; width: 84%; }
+.fill-c5 { height: 100%; background: #d97706; width: 54%; }
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+}
+.meta-val {
+  color: var(--text-title);
+  font-weight: 700;
+}
+
+.footer {
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sync { font-weight: 700; color: var(--text-title); }
 </style>
 </head>
 <body>
@@ -859,7 +1135,7 @@ body{background:var(--bg);color:var(--text-main);font-family:-apple-system,Blink
     </div>
   </div>
 
-  <!-- Redesigned High-Contrast Token Analytics Section -->
+  <!-- Token Analytics Section -->
   <div class="token-section">
     <div class="sec-header">
       <div>
@@ -869,17 +1145,17 @@ body{background:var(--bg);color:var(--text-main);font-family:-apple-system,Blink
       <div class="cycle-badge">${t.cycleBadge}</div>
     </div>
 
-    <!-- Top 2 Primary Highlight Cards -->
+    <!-- 2 Top Hero Cards -->
     <div class="hero-row">
-      <div class="hero-card gold">
+      <div class="hero-card">
         <div class="hero-label">${t.heroTotLbl}</div>
         <div class="hero-val-box">
-          <span class="hero-val c-gold">${tokens.totalFormatted}</span>
+          <span class="hero-val" style="color:var(--c-gold);">${tokens.totalFormatted}</span>
         </div>
         <div class="hero-sub">${t.heroTotSub}</div>
       </div>
-      
-      <div class="hero-card cyan">
+
+      <div class="hero-card">
         <div class="hero-label">${t.heroSpdLbl}</div>
         <div class="hero-val-box">
           ${speedValDisplay}
@@ -888,48 +1164,48 @@ body{background:var(--bg);color:var(--text-main);font-family:-apple-system,Blink
       </div>
     </div>
 
-    <!-- 4 Sub-Metrics Grid with Clear Annotations -->
+    <!-- 4 Sub-Metrics Grid -->
     <div class="sub-grid">
       <div class="sub-box">
         <div class="sub-title">${t.inTitle}</div>
-        <div class="sub-val c-in">${tokens.inputFormatted}</div>
+        <div class="sub-val" style="color:var(--c-blue);">${tokens.inputFormatted}</div>
         <div class="sub-hint">${t.inHint}</div>
       </div>
       <div class="sub-box">
         <div class="sub-title">${t.cacheTitle}</div>
-        <div class="sub-val c-cache">${tokens.cachedFormatted}</div>
+        <div class="sub-val" style="color:var(--c-purple);">${tokens.cachedFormatted}</div>
         <div class="sub-hint">${t.cacheHint}</div>
       </div>
       <div class="sub-box">
         <div class="sub-title">${t.outTitle}</div>
-        <div class="sub-val c-out">${tokens.outputFormatted}</div>
+        <div class="sub-val" style="color:var(--c-green);">${tokens.outputFormatted}</div>
         <div class="sub-hint">${t.outHint}</div>
       </div>
       <div class="sub-box">
         <div class="sub-title">${t.reqTitle}</div>
-        <div class="sub-val c-req">${tokens.requests} <span style="font-size:12px;font-weight:normal;color:var(--text-sub);">${t.unitTimes}</span></div>
+        <div class="sub-val" style="color:var(--text-title);">${tokens.requests} ${t.unitTimes}</div>
         <div class="sub-hint">${t.reqHint}</div>
       </div>
     </div>
   </div>
 
+  <!-- Quotas Grid -->
   <div class="grid">
     <!-- Google Gemini -->
     <div class="card card-g">
       <div class="card-head">
         <div class="brand-box">
           <div class="logo-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="url(#gg)"/>
-              <defs><linearGradient id="gg" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#4285F4"/><stop offset=".45" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#3b82f6"/>
             </svg>
           </div>
-          <div class="brand-info">
+          <div>
             <div class="brand-name">${t.geminiBrand}</div>
             <div class="brand-sub">${t.geminiSub}</div>
           </div>
         </div>
-        <span class="pill" style="background:#3fb95033;color:#4ade80;border:1px solid #4ade8066">● ${gStat.label}</span>
+        <span class="pill">● ${gStat.label}</span>
       </div>
 
       <div class="metric">
@@ -952,16 +1228,16 @@ body{background:var(--bg);color:var(--text-main);font-family:-apple-system,Blink
       <div class="card-head">
         <div class="brand-box">
           <div class="logo-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M13.5 2.5L12 7L10.5 2.5C10.3 1.9 9.7 1.5 9 1.5C8.2 1.5 7.5 2.2 7.5 3C7.5 3.3 7.6 3.6 7.8 3.9L10.2 8.5L5.5 6.2C5.2 6.1 4.9 6 4.6 6C3.7 6 3 6.7 3 7.6C3 8.3 3.5 8.9 4.1 9.1L8.7 10.6L4.2 12.1C3.6 12.3 3.1 12.9 3.1 13.6C3.1 14.5 3.8 15.2 4.7 15.2C5 15.2 5.3 15.1 5.6 15L10.2 12.7L7.8 17.3C7.6 17.6 7.5 17.9 7.5 18.2C7.5 19 8.2 19.7 9 19.7C9.7 19.7 10.3 19.3 10.5 18.7L12 14.2L13.5 18.7C13.7 19.3 14.3 19.7 15 19.7C15.8 19.7 16.5 19 16.5 18.2C16.5 17.9 16.4 17.6 16.2 17.3L13.8 12.7L18.4 15C18.7 15.1 19 15.2 19.3 15.2C20.2 15.2 20.9 14.5 20.9 13.6C20.9 12.9 20.4 12.3 19.8 12.1L15.3 10.6L19.9 9.1C20.5 8.9 21 8.3 21 7.6C21 6.7 20.3 6 19.4 6C19.1 6 18.8 6.1 18.5 6.2L13.8 8.5L16.2 3.9C16.4 3.6 16.5 3.3 16.5 3C16.5 2.2 15.8 1.5 15 1.5C14.3 1.5 13.7 1.9 13.5 2.5Z" fill="#D97706"/>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M13.5 2.5L12 7L10.5 2.5C10.3 1.9 9.7 1.5 9 1.5C8.2 1.5 7.5 2.2 7.5 3C7.5 3.3 7.6 3.6 7.8 3.9L10.2 8.5L5.5 6.2C5.2 6.1 4.9 6 4.6 6C3.7 6 3 6.7 3 7.6C3 8.3 3.5 8.9 4.1 9.1L8.7 10.6L4.2 12.1C3.6 12.3 3.1 12.9 3.1 13.6C3.1 14.5 3.8 15.2 4.7 15.2C5 15.2 5.3 15.1 5.6 15L10.2 12.7L7.8 17.3C7.6 17.6 7.5 17.9 7.5 18.2C7.5 19 8.2 19.7 9 19.7C9.7 19.7 10.3 19.3 10.5 18.7L12 14.2L13.5 18.7C13.7 19.3 14.3 19.7 15 19.7C15.8 19.7 16.5 19 16.5 18.2C16.5 17.9 16.4 17.6 16.2 17.3L13.8 12.7L18.4 15C18.7 15.1 19 15.2 19.3 15.2C20.2 15.2 20.9 14.5 20.9 13.6C20.9 12.9 20.4 12.3 19.8 12.1L15.3 10.6L19.9 9.1C20.5 8.9 21 8.3 21 7.6C21 6.7 20.3 6 19.4 6C19.1 6 18.8 6.1 18.5 6.2L13.8 8.5L16.2 3.9C16.4 3.6 16.5 3.3 16.5 3C16.5 2.2 15.8 1.5 15 1.5C14.3 1.5 13.7 1.9 13.5 2.5Z" fill="#d97706"/>
             </svg>
           </div>
-          <div class="brand-info">
+          <div>
             <div class="brand-name">${t.claudeBrand}</div>
             <div class="brand-sub">${t.claudeSub}</div>
           </div>
         </div>
-        <span class="pill" style="background:#3fb95033;color:#4ade80;border:1px solid #4ade8066">● ${cStat.label}</span>
+        <span class="pill">● ${cStat.label}</span>
       </div>
 
       <div class="metric">
@@ -981,7 +1257,7 @@ body{background:var(--bg);color:var(--text-main);font-family:-apple-system,Blink
   </div>
 
   <div class="footer">
-    <span>${t.footerSafe}</span>
+    <span>🔒 <strong>${t.footerSafe}</strong></span>
     <span class="sync">${t.footerSync}: ${data.lastSyncTime}</span>
   </div>
 </div>
