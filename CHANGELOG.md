@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.40] - 2026-08-22
+### Pixel-Perfect Zero-Wrap Native Hover Tooltip
+- **Zero-Wrap Layout**: Completely eliminated table column width compression and awkward line breaks in the status bar hover tooltip.
+- **Structured Single-Line Cards**: Restructured quota entries and token analytics into tight, single-line structured bullet cards with inline mini gauge bars.
+- **Clean Native Spacing**: Optimized punctuation and action buttons for maximum readability.
+
 ## [1.0.39] - 2026-08-22
 ### HUD Matrix Floating Tooltip & Visual Mini Gauge Bars
 - **Visual Mini Gauge Bars (`[████████░░]`)**: Added instant-read unicode progress bars next to each model's quota percentage in the status bar hover tooltip.
@@ -42,6 +48,12 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.40] - 2026-08-22
+### Pixel-Perfect Zero-Wrap Native Hover Tooltip
+- **Zero-Wrap Layout**: Completely eliminated table column width compression and awkward line breaks in the status bar hover tooltip.
+- **Structured Single-Line Cards**: Restructured quota entries and token analytics into tight, single-line structured bullet cards with inline mini gauge bars.
+- **Clean Native Spacing**: Optimized punctuation and action buttons for maximum readability.
 
 ## [1.0.39] - 2026-08-22
 ### HUD Matrix Floating Tooltip & Visual Mini Gauge Bars
