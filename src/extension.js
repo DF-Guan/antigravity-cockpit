@@ -4,8 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const { execFile, exec } = require('child_process');
 
-let sbGIcon, sbGWeekVal, sbG5hPrefix, sbG5hVal;
-let sbCIcon, sbCWeekVal, sbC5hPrefix, sbC5hVal;
+let sbGIcon, sbGWeekVal, sbG5h;
+let sbCIcon, sbCWeekVal, sbC5h;
 let sbSpeedIcon, sbSpeedVal;
 
 let refreshTimer;
@@ -213,7 +213,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.36 全精度Token切换与独立着色版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.38 专属品牌色与紧致字距精修版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -226,23 +226,21 @@ function activate(context) {
         liveQuotaState.isLoading = false;
     }
 
-    // 1. Google Gemini 解耦槽位
-    sbGIcon     = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
-    sbGWeekVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
-    sbG5hPrefix = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
-    sbG5hVal    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
+    // 1. Google Gemini 紧致槽位 (品牌蓝图标 + 周数字 + 紧密5h整体)
+    sbGIcon    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
+    sbGWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
+    sbG5h      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
 
-    // 2. Claude & GPT 解耦槽位
-    sbCIcon     = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
-    sbCWeekVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
-    sbC5hPrefix = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
-    sbC5hVal    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9993);
+    // 2. Claude & GPT 紧致槽位 (品牌陶土橙图标 + 周数字 + 紧密5h整体)
+    sbCIcon    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
+    sbCWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
+    sbC5h      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
 
-    // 3. 实时 Token 流速槽位
-    sbSpeedIcon = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9992);
-    sbSpeedVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9991);
+    // 3. 实时流速槽位 (极光青图标 + 流速数字)
+    sbSpeedIcon = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
+    sbSpeedVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9993);
 
-    const allItems = [sbGIcon, sbGWeekVal, sbG5hPrefix, sbG5hVal, sbCIcon, sbCWeekVal, sbC5hPrefix, sbC5hVal, sbSpeedIcon, sbSpeedVal];
+    const allItems = [sbGIcon, sbGWeekVal, sbG5h, sbCIcon, sbCWeekVal, sbC5h, sbSpeedIcon, sbSpeedVal];
     allItems.forEach(item => {
         item.command = 'agPrivateCockpit.openDashboard';
         context.subscriptions.push(item);
@@ -536,8 +534,8 @@ async function fetchLiveQuota(context, manual = false) {
 
 function getNumberAlertColor(pct, warnPct, critPct) {
     if (pct === null || pct === undefined) return undefined;
-    if (pct < critPct) return '#ff6b6b';
-    if (pct < warnPct) return '#e3b341';
+    if (pct < critPct) return '#ef4444';
+    if (pct < warnPct) return '#f59e0b';
     return '#3fb950';
 }
 
@@ -596,7 +594,7 @@ function buildUnifiedTooltip() {
 }
 
 function renderStatusBar() {
-    if (!sbGIcon || !sbGWeekVal || !sbG5hPrefix || !sbG5hVal || !sbCIcon || !sbCWeekVal || !sbC5hPrefix || !sbC5hVal || !sbSpeedIcon || !sbSpeedVal) return;
+    if (!sbGIcon || !sbGWeekVal || !sbG5h || !sbCIcon || !sbCWeekVal || !sbC5h || !sbSpeedIcon || !sbSpeedVal) return;
 
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const showGemini = cfg.get('showGemini', true);
@@ -613,10 +611,10 @@ function renderStatusBar() {
 
     const tip = buildUnifiedTooltip();
 
-    // 1. Google Gemini 解耦槽位
+    // 1. Google Gemini 紧致槽位 (品牌蓝图标 + 周数字 + 紧密5h整体)
     if (showGemini) {
         sbGIcon.text = `$(gemini-icon)`;
-        sbGIcon.color = undefined;
+        sbGIcon.color = '#38bdf8'; // Google Gemini 品牌蓝
         sbGIcon.tooltip = tip;
         sbGIcon.show();
 
@@ -626,30 +624,24 @@ function renderStatusBar() {
         sbGWeekVal.show();
 
         if (compact) {
-            sbG5hPrefix.hide();
-            sbG5hVal.hide();
+            sbG5h.hide();
         } else {
-            sbG5hPrefix.text = `(5h:`;
-            sbG5hPrefix.color = undefined;
-            sbG5hPrefix.tooltip = tip;
-            sbG5hPrefix.show();
-
-            sbG5hVal.text = g5 !== null ? `${g5}%)` : (liveQuotaState.isLoading ? `...)` : `--%)`);
-            sbG5hVal.color = getNumberAlertColor(g5, warnPct, critPct);
-            sbG5hVal.tooltip = tip;
-            sbG5hVal.show();
+            const g5Str = g5 !== null ? `${g5}%` : (liveQuotaState.isLoading ? `...` : `--%`);
+            sbG5h.text = `(5h:${g5Str})`;
+            sbG5h.color = getNumberAlertColor(g5, warnPct, critPct);
+            sbG5h.tooltip = tip;
+            sbG5h.show();
         }
     } else {
         sbGIcon.hide();
         sbGWeekVal.hide();
-        sbG5hPrefix.hide();
-        sbG5hVal.hide();
+        sbG5h.hide();
     }
 
-    // 2. Claude & GPT 解耦槽位
+    // 2. Claude & GPT 紧致槽位 (品牌陶土橙图标 + 周数字 + 紧密5h整体)
     if (showClaude) {
         sbCIcon.text = `$(claude-icon)`;
-        sbCIcon.color = undefined;
+        sbCIcon.color = '#da7756'; // Anthropic Claude 品牌陶土橙
         sbCIcon.tooltip = tip;
         sbCIcon.show();
 
@@ -659,30 +651,24 @@ function renderStatusBar() {
         sbCWeekVal.show();
 
         if (compact) {
-            sbC5hPrefix.hide();
-            sbC5hVal.hide();
+            sbC5h.hide();
         } else {
-            sbC5hPrefix.text = `(5h:`;
-            sbC5hPrefix.color = undefined;
-            sbC5hPrefix.tooltip = tip;
-            sbC5hPrefix.show();
-
-            sbC5hVal.text = c5 !== null ? `${c5}%)` : (liveQuotaState.isLoading ? `...)` : `--%)`);
-            sbC5hVal.color = getNumberAlertColor(c5, warnPct, critPct);
-            sbC5hVal.tooltip = tip;
-            sbC5hVal.show();
+            const c5Str = c5 !== null ? `${c5}%` : (liveQuotaState.isLoading ? `...` : `--%`);
+            sbC5h.text = `(5h:${c5Str})`;
+            sbC5h.color = getNumberAlertColor(c5, warnPct, critPct);
+            sbC5h.tooltip = tip;
+            sbC5h.show();
         }
     } else {
         sbCIcon.hide();
         sbCWeekVal.hide();
-        sbC5hPrefix.hide();
-        sbC5hVal.hide();
+        sbC5h.hide();
     }
 
-    // 3. 实时流速槽位
+    // 3. 实时流速槽位 (极光青图标 + 流速数字)
     if (showSpeed) {
         sbSpeedIcon.text = `$(zap)`;
-        sbSpeedIcon.color = undefined;
+        sbSpeedIcon.color = liveSpeedState.isStreaming ? '#38bdf8' : '#8b949e';
         sbSpeedIcon.tooltip = tip;
         sbSpeedIcon.show();
 
@@ -691,7 +677,7 @@ function renderStatusBar() {
             sbSpeedVal.color = '#38bdf8';
         } else {
             sbSpeedVal.text = `0 t/s`;
-            sbSpeedVal.color = '#94a3b8';
+            sbSpeedVal.color = '#8b949e';
         }
         sbSpeedVal.tooltip = tip;
         sbSpeedVal.show();
@@ -1412,7 +1398,7 @@ body {
         <div class="sub-val token-val" data-compact="${tokens.outputFormatted}" data-exact="${tokens.outputExact}" style="color:var(--c-green);" title="${tokens.outputExact} Tokens">${tokens.outputFormatted}</div>
         <div class="sub-hint">${t.outHint}</div>
       </div>
-      <div class="sub-box">
+      <div class="sub-box" onclick="togglePrecision()">
         <div class="sub-title">${t.reqTitle}</div>
         <div class="sub-val" style="color:var(--text-title);">${tokens.requests} ${t.unitTimes}</div>
         <div class="sub-hint">${t.reqHint}</div>

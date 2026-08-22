@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.38] - 2026-08-22
+### Brand Colors & Ultra-Tight Status Bar Typography
+- **Official Brand Colors for Icons**: Google Gemini vector icon is now colored with official Electric Blue (`#38bdf8`), Anthropic Claude icon with official Terracotta (`#da7756`), and Live Speed with vibrant Cyan (`#38bdf8`).
+- **Consolidated Tight 5h Typography**: Reconstructed `(5h:99%)` into single seamless typography units, completely eliminating dead margins between colons and digits.
+
 ## [1.0.37] - 2026-08-22
 ### Showcase Bottom Status Bar Banner in Documentation First Position
 - **Status Bar Showcase Banner**: Added high-definition horizontal banner screenshots (`statusbar_banner_zh.png` & `statusbar_banner_en.png`) to the first position of extension documentation.
@@ -31,6 +36,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.38] - 2026-08-22
+### Brand Colors & Ultra-Tight Status Bar Typography
+- **Official Brand Colors for Icons**: Google Gemini vector icon is now colored with official Electric Blue (`#38bdf8`), Anthropic Claude icon with official Terracotta (`#da7756`), and Live Speed with vibrant Cyan (`#38bdf8`).
+- **Consolidated Tight 5h Typography**: Reconstructed `(5h:99%)` into single seamless typography units, completely eliminating dead margins between colons and digits.
 
 ## [1.0.37] - 2026-08-22
 ### Showcase Bottom Status Bar Banner in Documentation First Position
