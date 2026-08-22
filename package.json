@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -79,26 +79,26 @@
           "default": 15,
           "minimum": 5,
           "maximum": 3600,
-          "description": "Auto-refresh interval in seconds (default: 15s)"
+          "description": "Auto-refresh polling interval in seconds (default: 15s, minimum: 5s)."
         },
         "agPrivateCockpit.compactStatusBar": {
           "type": "boolean",
           "default": false,
-          "description": "Use compact status bar mode (abbreviates model names)"
+          "description": "Enable compact status bar mode to abbreviate model names (default: false)."
         },
         "agPrivateCockpit.warningThreshold": {
           "type": "number",
           "default": 50,
           "minimum": 1,
           "maximum": 99,
-          "description": "Percentage at which status bar turns orange warning (default: 50)"
+          "description": "Quota percentage below which digits turn warning orange (default: 50%)."
         },
         "agPrivateCockpit.criticalThreshold": {
           "type": "number",
           "default": 20,
           "minimum": 1,
           "maximum": 99,
-          "description": "Percentage at which status bar turns red critical (default: 20)"
+          "description": "Quota percentage below which digits turn critical red (default: 20%)."
         },
         "agPrivateCockpit.defaultLanguage": {
           "type": "string",
@@ -113,17 +113,17 @@
             "Always use Chinese (中文)",
             "Always use English"
           ],
-          "description": "Default display language for the cockpit dashboard"
+          "description": "Default display language for cockpit dashboard (auto / zh / en)."
         },
         "agPrivateCockpit.showGemini": {
           "type": "boolean",
           "default": true,
-          "description": "Show Gemini quota in the status bar"
+          "description": "Toggle Google Gemini quota visibility in the status bar (default: true)."
         },
         "agPrivateCockpit.showClaude": {
           "type": "boolean",
           "default": true,
-          "description": "Show Claude/GPT quota in the status bar"
+          "description": "Toggle Anthropic Claude & GPT quota visibility in the status bar (default: true)."
         }
       }
     }

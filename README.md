@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 100% Offline & Zero-Telemetry AI Quota Monitor for Antigravity IDE
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.4-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.10-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -32,11 +32,11 @@ Many third-party extensions send analytics, phone home to external servers, or i
 ### 1. ⚡ Native IPC Real-Time Sync (No Copy-Pasting Required)
 Directly probes the running Antigravity Language Server daemon via local loopback IPC (`127.0.0.1`). Real-time millisecond-level quota changes, remaining percentages, and countdown timers are synchronized automatically.
 
-### 2. 📊 Smart 3-Tier Status Bar Monitor
-Always visible in your status bar with intelligent color alerts:
-- 🟢 **Healthy (>50%)**: Quiet, clean monitor
-- 🟡 **Warning (<50%)**: Orange warning indicator
-- 🔴 **Critical (<20%)**: High-contrast red alert
+### 2. 📊 Digit-Only Dynamic Alert Coloring
+Percentage digits dynamically reflect individual model health without altering label text colors:
+- 🟢 **Healthy (>50%)**: Digits glow vibrant green (`#3fb950`)
+- 🟡 **Warning (<50%)**: Digits turn alert orange (`#e3b341`)
+- 🔴 **Critical (<20%)**: Digits turn urgent red (`#ff6b6b`)
 
 ### 3. 🎨 Brand-Accurate Visual Cockpit Dashboard
 - **Vector Brand Visuals**: Official Google Gemini aurora star and Anthropic Claude sunburst SVG icons.
@@ -61,13 +61,15 @@ Always visible in your status bar with intelligent color alerts:
 
 ## 🛠️ Commands
 
+按 `Ctrl + Shift + P`（macOS: `Cmd + Shift + P`）打开命令面板输入：
+
 | Command | Action |
 |:---|:---|
-| `Antigravity Cockpit: Open Quota Dashboard` | Opens the full visual cockpit |
-| `Antigravity Cockpit: Quick Quota Overview` | Shows quick summary in command palette |
+| `Antigravity Cockpit: Open Quota Dashboard` | Opens the full visual cockpit dashboard |
+| `Antigravity Cockpit: Quick Quota Overview` | Shows quick summary in command palette menu |
 | `Antigravity Cockpit: Refresh Quota` | Force-syncs live quota from local Language Server |
-| `Antigravity Cockpit: Toggle Language (中/EN)` | Toggles display language globally |
-| `Antigravity Cockpit: Open Settings` | Opens extension configuration |
+| `Antigravity Cockpit: Toggle Language (中/EN)` | Toggles display language globally (ZH / EN) |
+| `Antigravity Cockpit: Open Settings` | Opens extension configuration panel |
 
 ---
 
@@ -80,13 +82,21 @@ You can open the extension configuration panel via any of the following ways:
 
 ### Available Configuration Options:
 
-- `agPrivateCockpit.refreshIntervalSeconds`: Auto-refresh interval in seconds (default: `15`).
+- `agPrivateCockpit.refreshIntervalSeconds`: Auto-refresh interval in seconds (default: `15`, minimum: `5`).
 - `agPrivateCockpit.compactStatusBar`: Compact status bar mode with abbreviated names (default: `false`).
 - `agPrivateCockpit.warningThreshold`: Quota % for orange warning alert (default: `50`).
 - `agPrivateCockpit.criticalThreshold`: Quota % for red critical alert (default: `20`).
-- `agPrivateCockpit.defaultLanguage`: Language preference (`auto` / `en` / `zh`).
-- `agPrivateCockpit.showGemini`: Toggle Gemini quota visibility on status bar (default: true).
-- `agPrivateCockpit.showClaude`: Toggle Claude/GPT quota visibility on status bar (default: true).
+- `agPrivateCockpit.defaultLanguage`: Default display language (`auto` / `zh` / `en`).
+- `agPrivateCockpit.showGemini`: Toggle Google Gemini quota visibility in the status bar (default: `true`).
+- `agPrivateCockpit.showClaude`: Toggle Anthropic Claude/GPT quota visibility in the status bar (default: `true`).
+
+---
+
+## 🔒 Privacy & Security Architecture
+
+- **100% Offline**: Never contacts any third-party server or analytics service.
+- **Zero Credentials**: Never stores, logs, or transmits API keys, passwords, or tokens.
+- **Local-Only Loopback**: All IPC queries are strictly bound to `127.0.0.1`.
 
 ---
 

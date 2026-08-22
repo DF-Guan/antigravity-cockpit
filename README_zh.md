@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 纯本地零泄露 · AI 配额实时驾驶舱 (Zero-Telemetry AI Quota Monitor)
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.4-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.10-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -32,10 +32,11 @@
 ### 1. ⚡ 原生进程实时同频 (无需手动复制粘贴)
 通过本地回环端口（Loopback IPC）自动同频 Antigravity IDE 核心进程，毫秒级响应额度变化，精准呈现剩余百分比与重置倒计时。
 
-### 2. 📊 常驻状态栏智能监控 (内置 3 阶预警)
-- 🟢 **健康状态 (>50%)**：常驻静默展示
-- 🟡 **注意状态 (<50%)**：状态栏橙色提醒
-- 🔴 **极危状态 (<20%)**：状态栏高亮警报
+### 2. 📊 仅百分比数字独立动态着色 (Digit-Only Alert Coloring)
+模型名称等文字完全保留原生主题色，只有百分比数字本身根据各自额度独立变色：
+- 🟢 **健康状态 (>50%)**：百分比数字呈活力翠绿 (`#3fb950`)
+- 🟡 **预警状态 (<50%)**：百分比数字单独变为警示橙黄 (`#e3b341`)
+- 🔴 **极危状态 (<20%)**：百分比数字单独变为极危绯红 (`#ff6b6b`)
 
 ### 3. 🎨 官方品牌矢量双语驾驶舱
 - **品牌级视觉**：内置 Google Gemini 极光星芒与 Anthropic 破晓星徽官方矢量 SVG；
@@ -73,7 +74,7 @@
 
 ---
 
-## ⚙️ 自由定制设置
+## ⚙️ 自由定制设置 (Settings)
 
 可通过以下任意方式进入插件专属配置面板：
 1. **方式 1（最推荐）**：在配额驾驶舱仪表盘顶部，直接点击 **`⚙️ 设置`** 按钮；
@@ -82,13 +83,21 @@
 
 ### 支持调整的配置项：
 
-- `agPrivateCockpit.refreshIntervalSeconds`: 自动刷新频率（默认: `15` 秒）
+- `agPrivateCockpit.refreshIntervalSeconds`: 自动刷新频率（默认: `15` 秒，最低 `5` 秒）
 - `agPrivateCockpit.compactStatusBar`: 开启紧凑模式以节省状态栏空间（默认: `关闭`）
 - `agPrivateCockpit.warningThreshold`: 橙色告警触发阈值（默认: `50%`）
 - `agPrivateCockpit.criticalThreshold`: 红色极危告警触发阈值（默认: `20%`）
 - `agPrivateCockpit.defaultLanguage`: 默认语言偏好（`auto` 自动跟随系统 / `zh` 中文 / `en` 英文）
-- `agPrivateCockpit.showGemini`: 是否在状态栏显示 Gemini 配额（默认: 开启）
-- `agPrivateCockpit.showClaude`: 是否在状态栏显示 Claude/GPT 配额（默认: 开启）
+- `agPrivateCockpit.showGemini`: 是否在状态栏显示 Gemini 配额（默认: `开启`）
+- `agPrivateCockpit.showClaude`: 是否在状态栏显示 Claude/GPT 配额（默认: `开启`）
+
+---
+
+## 🔒 隐私与安全保障
+
+- **100% 本地离线**：绝不向任何外部服务器发送数据，0 遥测；
+- **0 凭证存储**：绝不读取或存储任何用户 Token、密码或密钥；
+- **回环端口通信**：所有 IPC 请求严格限制在 `127.0.0.1` 闭环。
 
 ---
 
