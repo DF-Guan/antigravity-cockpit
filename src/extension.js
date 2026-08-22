@@ -9,7 +9,6 @@ let refreshTimer;
 let currentPanel = undefined;
 let currentLang = 'auto';
 
-// 初始状态：无虚假死数据，显示同步中状态
 let liveQuotaState = {
     isLive: false,
     isLoading: true,
@@ -45,11 +44,10 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] 秒级冷启动无缝对齐版激活');
+    console.log('[Antigravity Private Cockpit] 完整严密国际化版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     
-    // 读取上一次退出的持久化真实配额与端口缓存（实现 0ms 真实直出，拒绝假数据）
     cachedPort = context.globalState.get('agPrivateCockpit.cachedPort', null);
     cachedToken = context.globalState.get('agPrivateCockpit.cachedToken', null);
     const lastSavedState = context.globalState.get('agPrivateCockpit.lastLiveState', null);
@@ -102,7 +100,6 @@ function activate(context) {
         })
     );
 
-    // 立即初次渲染并启动直连探测
     renderStatusBar();
     fetchLiveQuota(context, false);
     restartAutoRefresh(context);
@@ -132,9 +129,6 @@ function setLanguage(context, lang) {
     vscode.window.showInformationMessage(lang === 'zh' ? '🌐 已切换至中文' : '🌐 Switched to English');
 }
 
-/**
- * 直接向指定端口和 Token 发起毫秒级查询
- */
 function queryEndpoint(port, token) {
     return new Promise((resolve, reject) => {
         const req = https.request({
@@ -177,11 +171,7 @@ function queryEndpoint(port, token) {
     });
 }
 
-/**
- * 智能双轨探测引擎：优先缓存直连 (0ms)，失败时并发多端口深度扫描
- */
 async function probeLanguageServerQuota() {
-    // 1. 如果有上次成功的缓存端口与 Token，直接 10ms 极速命中
     if (cachedPort && cachedToken) {
         try {
             const hit = await queryEndpoint(cachedPort, cachedToken);
@@ -192,7 +182,6 @@ async function probeLanguageServerQuota() {
         }
     }
 
-    // 2. 深度扫描本地进程
     return new Promise((resolve, reject) => {
         const isWin = process.platform === 'win32';
         const cmd = isWin
@@ -283,7 +272,6 @@ async function fetchLiveQuota(context, manual = false) {
                 }
             }
 
-            // 持久化保存有效状态与端口，下次启动瞬间 0ms 对齐
             if (context) {
                 context.globalState.update('agPrivateCockpit.lastLiveState', liveQuotaState);
                 if (cachedPort && cachedToken) {
@@ -306,16 +294,14 @@ async function fetchLiveQuota(context, manual = false) {
     }
 
     if (manual) {
+        const isZh = currentLang === 'zh';
         const statusText = liveQuotaState.isLive 
-            ? (currentLang === 'zh' ? '🟢 原生实时数据同步成功' : '🟢 Native live quota synced') 
-            : (currentLang === 'zh' ? '⚡ 配额已更新' : '⚡ Quota updated');
+            ? (isZh ? '🟢 原生实时数据同步成功' : '🟢 Native live quota synced') 
+            : (isZh ? '⚡ 配额已更新' : '⚡ Quota updated');
         vscode.window.showInformationMessage(`[Antigravity Private Cockpit] ${statusText} (${liveQuotaState.lastSyncTime})`);
     }
 }
 
-/**
- * 🎨 仅对【百分比数字】计算专属动态告警色
- */
 function getNumberAlertColor(pct, warnPct, critPct) {
     if (pct === null || pct === undefined) return undefined;
     if (pct < critPct) return '#ff6b6b'; // 红色告警
@@ -323,6 +309,9 @@ function getNumberAlertColor(pct, warnPct, critPct) {
     return '#3fb950';                   // 活力翠绿
 }
 
+/**
+ * 严格中英文双语 Tooltip 构建器（0 中文泄露至英文模式）
+ */
 function buildUnifiedTooltip() {
     const isZh = currentLang === 'zh';
     const tip = new vscode.MarkdownString();
@@ -332,11 +321,11 @@ function buildUnifiedTooltip() {
     const g5 = liveQuotaState.gemini.fiveHourPercent !== null ? `${liveQuotaState.gemini.fiveHourPercent}%` : '--%';
     const cW = liveQuotaState.claude.weeklyPercent !== null ? `${liveQuotaState.claude.weeklyPercent}%` : '--%';
     const c5 = liveQuotaState.claude.fiveHourPercent !== null ? `${liveQuotaState.claude.fiveHourPercent}%` : '--%';
-    const liveBadge = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
 
     if (isZh) {
+        const liveBadgeZh = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
         tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n\n`);
-        tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadge}*\n\n---\n`);
+        tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadgeZh}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini 原生系列**\n`);
         tip.appendMarkdown(`- 每周剩余额度: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
         tip.appendMarkdown(`- 5小时冲刺额度: **${g5}** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
@@ -345,8 +334,9 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`- 5小时冲刺额度: **${c5}** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
+        const liveBadgeEn = liveQuotaState.isLive ? '🟢 Native Live Synced' : (liveQuotaState.isLoading ? '🔄 Syncing...' : '⚡ Local Ready');
         tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n\n`);
-        tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadge}*\n\n---\n`);
+        tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini Suite**\n`);
         tip.appendMarkdown(`- Weekly Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
         tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn || 'calculating'}\`\n\n`);
@@ -358,9 +348,6 @@ function buildUnifiedTooltip() {
     return tip;
 }
 
-/**
- * 状态栏渲染器：严格展示真实同步数据，支持冷启动 loading 动画与独立数值着色
- */
 function renderStatusBar() {
     if (!sbGLabel || !sbGWeekVal || !sbG5hLabel || !sbG5hVal || !sbCLabel || !sbCWeekVal || !sbC5hLabel || !sbC5hVal) return;
 
@@ -465,10 +452,11 @@ function showQuickOverview(context) {
         placeHolder: isZh ? 'Antigravity AI 配额总览 (全自动实时探测)' : 'Antigravity AI Quota Overview (Auto Live Detection)'
     }).then(sel => {
         if (!sel) return;
-        if (sel.label.includes('打开可视化') || sel.label.includes('Open Visual')) showDashboard(context);
-        else if (sel.label.includes('切换') || sel.label.includes('Switch')) setLanguage(context, isZh ? 'en' : 'zh');
-        else if (sel.label.includes('设置') || sel.label.includes('Settings')) vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings');
-        else if (sel.label.includes('刷新') || sel.label.includes('Refresh')) fetchLiveQuota(context, true);
+        const txt = sel.label;
+        if (txt.includes('可视化') || txt.includes('Visual')) showDashboard(context);
+        else if (txt.includes('切换') || txt.includes('Switch')) setLanguage(context, isZh ? 'en' : 'zh');
+        else if (txt.includes('设置') || txt.includes('Settings')) vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings');
+        else if (txt.includes('刷新') || txt.includes('Refresh')) fetchLiveQuota(context, true);
     });
 }
 
@@ -524,7 +512,7 @@ function renderDashboardHtml(webview, data, lang) {
     const c5 = data.claude.fiveHourPercent !== null ? data.claude.fiveHourPercent : 0;
 
     const t = {
-        title:       isZh ? '配额驾驶舱' : 'Quota Cockpit',
+        title:       isZh ? '隐私配额驾驶舱' : 'Private Quota Cockpit',
         liveTag:     data.isLive ? (isZh ? '官方原生实时同频' : 'Native Live Synced') : (isZh ? '实时连接中' : 'Connected'),
         btnLang:     isZh ? '🌐 English' : '🌐 切换中文',
         btnSettings: isZh ? '⚙️ 设置' : '⚙️ Settings',
@@ -536,8 +524,8 @@ function renderDashboardHtml(webview, data, lang) {
         statusOk:    isZh ? '运行良好' : 'Optimal',
         statusWarn:  isZh ? '注意额度' : 'Watch',
         statusCrit:  isZh ? '额度偏低' : 'Low',
-        weekLabel:   'Weekly Limit Remaining',
-        fiveLabel:   'Five Hour Limit Remaining',
+        weekLabel:   isZh ? '每周额度剩余' : 'Weekly Limit Remaining',
+        fiveLabel:   isZh ? '5小时冲刺额度剩余' : 'Five Hour Limit Remaining',
         resetLabel:  isZh ? '满额重置' : 'Reset In',
         tierLabel:   isZh ? '算力服务' : 'Service',
         geminiTier:  isZh ? 'Google 原生 TPU 算力池' : 'Google Native TPU Cluster',
