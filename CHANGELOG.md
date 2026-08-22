@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.35] - 2026-08-22
+### Independent Official Icons & Pure Digit Dynamic Coloring
+- **Decoupled Neutral Icons & Labels**: Official Gemini and Claude vector icons, as well as `(5h:` bracket tags, remain in neutral theme colors.
+- **Independent Digit Alert Colors**: Only the actual quota percentages (`85%`, `99%`) dynamically switch between safe green, amber warning, and critical red independently.
+
 ## [1.0.34] - 2026-08-22
 ### Official Vector Icons & Ultra-Compact Status Bar Spacing
 - **Official Brand Icons**: Integrated custom vector font (`cockpit-icons.woff`) bringing official Google Gemini sparkle and Anthropic Claude asterisk icons to the VS Code status bar.
@@ -15,6 +20,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.35] - 2026-08-22
+### Independent Official Icons & Pure Digit Dynamic Coloring
+- **Decoupled Neutral Icons & Labels**: Official Gemini and Claude vector icons, as well as `(5h:` bracket tags, remain in neutral theme colors.
+- **Independent Digit Alert Colors**: Only the actual quota percentages (`85%`, `99%`) dynamically switch between safe green, amber warning, and critical red independently.
 
 ## [1.0.34] - 2026-08-22
 ### Official Vector Icons & Ultra-Compact Status Bar Spacing
