@@ -2,7 +2,6 @@ const vscode = require('vscode');
 const https = require('https');
 const { exec } = require('child_process');
 
-// 细粒度状态栏微结构：每个模型专属的 周额度(W) + 5小时冲刺额度(5h)，文字保色、数字独变
 let sbGLabel, sbGWeekVal, sbG5hLabel, sbG5hVal;
 let sbCLabel, sbCWeekVal, sbC5hLabel, sbC5hVal;
 
@@ -10,26 +9,31 @@ let refreshTimer;
 let currentPanel = undefined;
 let currentLang = 'auto';
 
+// 初始状态：无虚假死数据，显示同步中状态
 let liveQuotaState = {
     isLive: false,
-    lastSyncTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    isLoading: true,
+    lastSyncTime: '--:--',
     gemini: {
-        weeklyPercent: 96,
-        fiveHourPercent: 86,
-        weeklyResetTimeZh: '6天 17小时后',
-        weeklyResetTimeEn: 'in 6d 17h',
-        fiveHourResetTimeZh: '3小时 59分后',
-        fiveHourResetTimeEn: 'in 3h 59m'
+        weeklyPercent: null,
+        fiveHourPercent: null,
+        weeklyResetTimeZh: '同步中...',
+        weeklyResetTimeEn: 'Syncing...',
+        fiveHourResetTimeZh: '同步中...',
+        fiveHourResetTimeEn: 'Syncing...'
     },
     claude: {
-        weeklyPercent: 84,
-        fiveHourPercent: 54,
-        weeklyResetTimeZh: '6天 23小时后',
-        weeklyResetTimeEn: 'in 6d 23h',
-        fiveHourResetTimeZh: '4小时 40分后',
-        fiveHourResetTimeEn: 'in 4h 40m'
+        weeklyPercent: null,
+        fiveHourPercent: null,
+        weeklyResetTimeZh: '同步中...',
+        weeklyResetTimeEn: 'Syncing...',
+        fiveHourResetTimeZh: '同步中...',
+        fiveHourResetTimeEn: 'Syncing...'
     }
 };
+
+let cachedPort = null;
+let cachedToken = null;
 
 function getEffectiveLang() {
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
@@ -41,21 +45,26 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Cockpit] 双模型完整双周期(周+5h)独立着色版激活');
+    console.log('[Antigravity Cockpit] 秒级冷启动无缝对齐版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
-    const savedQuota = context.globalState.get('agPrivateCockpit.customQuota');
-    if (savedQuota) {
-        liveQuotaState = Object.assign(liveQuotaState, savedQuota);
+    
+    // 读取上一次退出的持久化真实配额与端口缓存（实现 0ms 真实直出，拒绝假数据）
+    cachedPort = context.globalState.get('agPrivateCockpit.cachedPort', null);
+    cachedToken = context.globalState.get('agPrivateCockpit.cachedToken', null);
+    const lastSavedState = context.globalState.get('agPrivateCockpit.lastLiveState', null);
+    if (lastSavedState && lastSavedState.gemini && lastSavedState.claude) {
+        liveQuotaState = Object.assign(liveQuotaState, lastSavedState);
+        liveQuotaState.isLoading = false;
     }
 
-    // 1. Google Gemini 槽位 (周额度 + 5h额度)
+    // 1. Google Gemini 槽位
     sbGLabel   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
     sbGWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
     sbG5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
     sbG5hVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
 
-    // 2. Claude & GPT 槽位 (周额度 + 5h额度)
+    // 2. Claude & GPT 槽位
     sbCLabel   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
     sbCWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
     sbC5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
@@ -70,7 +79,7 @@ function activate(context) {
     context.subscriptions.push(
         vscode.commands.registerCommand('agPrivateCockpit.openDashboard', () => showDashboard(context)),
         vscode.commands.registerCommand('agPrivateCockpit.quickOverview', () => showQuickOverview(context)),
-        vscode.commands.registerCommand('agPrivateCockpit.refresh', () => fetchLiveQuota(true)),
+        vscode.commands.registerCommand('agPrivateCockpit.refresh', () => fetchLiveQuota(context, true)),
         vscode.commands.registerCommand('agPrivateCockpit.toggleLang', () => {
             setLanguage(context, currentLang === 'zh' ? 'en' : 'zh');
         }),
@@ -93,7 +102,9 @@ function activate(context) {
         })
     );
 
-    fetchLiveQuota(false);
+    // 立即初次渲染并启动直连探测
+    renderStatusBar();
+    fetchLiveQuota(context, false);
     restartAutoRefresh(context);
 }
 
@@ -101,7 +112,7 @@ function restartAutoRefresh(context) {
     if (refreshTimer) clearInterval(refreshTimer);
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const interval = Math.max(5, cfg.get('refreshIntervalSeconds', 15)) * 1000;
-    refreshTimer = setInterval(() => fetchLiveQuota(false), interval);
+    refreshTimer = setInterval(() => fetchLiveQuota(context, false), interval);
     if (context && !context._cockpitDisposeAdded) {
         context._cockpitDisposeAdded = true;
         context.subscriptions.push({ dispose: () => { if (refreshTimer) clearInterval(refreshTimer); } });
@@ -121,15 +132,75 @@ function setLanguage(context, lang) {
     vscode.window.showInformationMessage(lang === 'zh' ? '🌐 已切换至中文' : '🌐 Switched to English');
 }
 
-function probeLanguageServerQuota() {
+/**
+ * 直接向指定端口和 Token 发起毫秒级查询
+ */
+function queryEndpoint(port, token) {
+    return new Promise((resolve, reject) => {
+        const req = https.request({
+            hostname: '127.0.0.1',
+            port: port,
+            path: '/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary',
+            method: 'POST',
+            rejectUnauthorized: false,
+            headers: {
+                'Content-Type': 'application/json',
+                'x-codeium-csrf-token': token,
+                'Connect-Protocol-Version': '1'
+            },
+            timeout: 1500
+        }, (res) => {
+            if (res.statusCode === 200) {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        resolve({ port, token, json });
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            } else {
+                reject(new Error(`HTTP ${res.statusCode}`));
+            }
+        });
+
+        req.on('error', reject);
+        req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
+        try {
+            req.write(JSON.stringify({ forceRefresh: true }));
+            req.end();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+/**
+ * 智能双轨探测引擎：优先缓存直连 (0ms)，失败时并发多端口深度扫描
+ */
+async function probeLanguageServerQuota() {
+    // 1. 如果有上次成功的缓存端口与 Token，直接 10ms 极速命中
+    if (cachedPort && cachedToken) {
+        try {
+            const hit = await queryEndpoint(cachedPort, cachedToken);
+            return hit;
+        } catch (_) {
+            cachedPort = null;
+            cachedToken = null;
+        }
+    }
+
+    // 2. 深度扫描本地进程
     return new Promise((resolve, reject) => {
         const isWin = process.platform === 'win32';
         const cmd = isWin
             ? 'powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -like \\"*language_server*\\" } | Select-Object -ExpandProperty CommandLine"'
             : 'ps -eo command | grep -i language_server';
 
-        exec(cmd, (err, stdout) => {
-            if (err || !stdout) return reject(err || new Error("No language_server process output"));
+        exec(cmd, { timeout: 8000 }, async (err, stdout) => {
+            if (err || !stdout) return reject(err || new Error("No language_server process found"));
 
             const tokens = [];
             const tokenRegex = /--csrf_token\s+([a-zA-Z0-9-]+)/g;
@@ -142,7 +213,7 @@ function probeLanguageServerQuota() {
             const portRegex = /--extension_server_port\s+(\d+)/g;
             while ((m = portRegex.exec(stdout)) !== null) {
                 const basePort = parseInt(m[1]);
-                ports.push(basePort, basePort + 1, basePort + 2, basePort + 8, basePort + 9, basePort + 10);
+                ports.push(basePort, basePort + 1, basePort + 2, basePort + 7, basePort + 8, basePort + 9, basePort + 10);
             }
 
             const allCandidatePorts = Array.from(new Set([...ports, 4178, 4179, 7682, 7683, 14450]));
@@ -152,48 +223,20 @@ function probeLanguageServerQuota() {
 
             for (const token of tokens) {
                 for (const port of allCandidatePorts) {
-                    const req = https.request({
-                        hostname: '127.0.0.1',
-                        port: port,
-                        path: '/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary',
-                        method: 'POST',
-                        rejectUnauthorized: false,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-codeium-csrf-token': token,
-                            'Connect-Protocol-Version': '1'
-                        },
-                        timeout: 1200
-                    }, (res) => {
-                        if (res.statusCode === 200) {
-                            let data = '';
-                            res.on('data', chunk => data += chunk);
-                            res.on('end', () => {
-                                if (!resolved) {
-                                    resolved = true;
-                                    try {
-                                        const json = JSON.parse(data);
-                                        resolve(json);
-                                    } catch (e) {
-                                        reject(e);
-                                    }
-                                }
-                            });
+                    queryEndpoint(port, token).then(res => {
+                        if (!resolved) {
+                            resolved = true;
+                            cachedPort = res.port;
+                            cachedToken = res.token;
+                            resolve(res);
                         }
-                    });
-
-                    req.on('error', () => {});
-                    req.on('timeout', () => req.destroy());
-                    try {
-                        req.write(JSON.stringify({ forceRefresh: true }));
-                        req.end();
-                    } catch (_) {}
+                    }).catch(() => {});
                 }
             }
 
             setTimeout(() => {
-                if (!resolved) reject(new Error("Timeout probing Language Server"));
-            }, 2500);
+                if (!resolved) reject(new Error("Language Server probe timeout"));
+            }, 6000);
         });
     });
 }
@@ -212,12 +255,14 @@ function parseRelativeTime(desc) {
     return { zh: desc, en: desc };
 }
 
-async function fetchLiveQuota(manual = false) {
+async function fetchLiveQuota(context, manual = false) {
     try {
-        const lsData = await probeLanguageServerQuota();
-        if (lsData && lsData.response && lsData.response.groups) {
+        const res = await probeLanguageServerQuota();
+        if (res && res.json && res.json.response && res.json.response.groups) {
             liveQuotaState.isLive = true;
-            for (const g of lsData.response.groups) {
+            liveQuotaState.isLoading = false;
+
+            for (const g of res.json.response.groups) {
                 const name = (g.displayName || '').toLowerCase();
                 const isGemini = name.includes('gemini');
                 const target = isGemini ? liveQuotaState.gemini : liveQuotaState.claude;
@@ -237,8 +282,19 @@ async function fetchLiveQuota(manual = false) {
                     }
                 }
             }
+
+            // 持久化保存有效状态与端口，下次启动瞬间 0ms 对齐
+            if (context) {
+                context.globalState.update('agPrivateCockpit.lastLiveState', liveQuotaState);
+                if (cachedPort && cachedToken) {
+                    context.globalState.update('agPrivateCockpit.cachedPort', cachedPort);
+                    context.globalState.update('agPrivateCockpit.cachedToken', cachedToken);
+                }
+            }
         }
-    } catch (_) {}
+    } catch (_) {
+        liveQuotaState.isLoading = false;
+    }
 
     liveQuotaState.lastSyncTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     renderStatusBar();
@@ -261,6 +317,7 @@ async function fetchLiveQuota(manual = false) {
  * 🎨 仅对【百分比数字】计算专属动态告警色
  */
 function getNumberAlertColor(pct, warnPct, critPct) {
+    if (pct === null || pct === undefined) return undefined;
     if (pct < critPct) return '#ff6b6b'; // 红色告警
     if (pct < warnPct) return '#e3b341'; // 橙黄预警
     return '#3fb950';                   // 活力翠绿
@@ -271,38 +328,38 @@ function buildUnifiedTooltip() {
     const tip = new vscode.MarkdownString();
     tip.isTrusted = true;
 
-    const gW = liveQuotaState.gemini.weeklyPercent;
-    const g5 = liveQuotaState.gemini.fiveHourPercent;
-    const cW = liveQuotaState.claude.weeklyPercent;
-    const c5 = liveQuotaState.claude.fiveHourPercent;
-    const liveBadge = liveQuotaState.isLive ? '🟢 官方原生实时同频' : '⚡ 本地连接就绪';
+    const gW = liveQuotaState.gemini.weeklyPercent !== null ? `${liveQuotaState.gemini.weeklyPercent}%` : '--%';
+    const g5 = liveQuotaState.gemini.fiveHourPercent !== null ? `${liveQuotaState.gemini.fiveHourPercent}%` : '--%';
+    const cW = liveQuotaState.claude.weeklyPercent !== null ? `${liveQuotaState.claude.weeklyPercent}%` : '--%';
+    const c5 = liveQuotaState.claude.fiveHourPercent !== null ? `${liveQuotaState.claude.fiveHourPercent}%` : '--%';
+    const liveBadge = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
 
     if (isZh) {
         tip.appendMarkdown(`### 🛸 Antigravity 实时配额驾驶舱\n\n`);
         tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadge}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini 原生系列**\n`);
-        tip.appendMarkdown(`- 每周剩余额度: **${gW}%** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度: **${g5}%** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
+        tip.appendMarkdown(`- 每周剩余额度: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
+        tip.appendMarkdown(`- 5小时冲刺额度: **${g5}** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列**\n`);
-        tip.appendMarkdown(`- 每周剩余额度: **${cW}%** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度: **${c5}%** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
+        tip.appendMarkdown(`- 每周剩余额度: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
+        tip.appendMarkdown(`- 5小时冲刺额度: **${c5}** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         tip.appendMarkdown(`### 🛸 Antigravity Live Quota Cockpit\n\n`);
-        tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveQuotaState.isLive ? '🟢 Native Live Synced' : 'Connected'}*\n\n---\n`);
+        tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadge}*\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini Suite**\n`);
-        tip.appendMarkdown(`- Weekly Remaining: **${gW}%** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}%** ｜ Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn || 'calculating'}\`\n\n`);
+        tip.appendMarkdown(`- Weekly Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn || 'calculating'}\`\n\n`);
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite**\n`);
-        tip.appendMarkdown(`- Weekly Remaining: **${cW}%** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}%** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
+        tip.appendMarkdown(`- Weekly Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
 }
 
 /**
- * 状态栏渲染器：展示 Gemini(周+5h) 和 Claude(周+5h)，数字独立着色
+ * 状态栏渲染器：严格展示真实同步数据，支持冷启动 loading 动画与独立数值着色
  */
 function renderStatusBar() {
     if (!sbGLabel || !sbGWeekVal || !sbG5hLabel || !sbG5hVal || !sbCLabel || !sbCWeekVal || !sbC5hLabel || !sbC5hVal) return;
@@ -321,14 +378,14 @@ function renderStatusBar() {
 
     const tip = buildUnifiedTooltip();
 
-    // 1. Google Gemini 槽位 (包含 Weekly 和 5h 冲刺两个数值)
+    // 1. Google Gemini 槽位
     if (showGemini) {
         sbGLabel.text = compact ? `$(sparkle) G:` : `✨ Gemini:`;
         sbGLabel.color = undefined;
         sbGLabel.tooltip = tip;
         sbGLabel.show();
 
-        sbGWeekVal.text = ` ${gW}%`;
+        sbGWeekVal.text = gW !== null ? ` ${gW}%` : (liveQuotaState.isLoading ? ` $(sync~spin)` : ` --%`);
         sbGWeekVal.color = getNumberAlertColor(gW, warnPct, critPct);
         sbGWeekVal.tooltip = tip;
         sbGWeekVal.show();
@@ -338,7 +395,7 @@ function renderStatusBar() {
         sbG5hLabel.tooltip = tip;
         sbG5hLabel.show();
 
-        sbG5hVal.text = `${g5}%)   `;
+        sbG5hVal.text = g5 !== null ? `${g5}%)   ` : (liveQuotaState.isLoading ? `...)   ` : `--%)   `);
         sbG5hVal.color = getNumberAlertColor(g5, warnPct, critPct);
         sbG5hVal.tooltip = tip;
         sbG5hVal.show();
@@ -349,14 +406,14 @@ function renderStatusBar() {
         sbG5hVal.hide();
     }
 
-    // 2. Claude & GPT 槽位 (包含 Weekly 和 5h 冲刺两个数值)
+    // 2. Claude & GPT 槽位
     if (showClaude) {
         sbCLabel.text = compact ? `$(organization) C:` : `🤖 Claude/GPT:`;
         sbCLabel.color = undefined;
         sbCLabel.tooltip = tip;
         sbCLabel.show();
 
-        sbCWeekVal.text = ` ${cW}%`;
+        sbCWeekVal.text = cW !== null ? ` ${cW}%` : (liveQuotaState.isLoading ? ` $(sync~spin)` : ` --%`);
         sbCWeekVal.color = getNumberAlertColor(cW, warnPct, critPct);
         sbCWeekVal.tooltip = tip;
         sbCWeekVal.show();
@@ -366,7 +423,7 @@ function renderStatusBar() {
         sbC5hLabel.tooltip = tip;
         sbC5hLabel.show();
 
-        sbC5hVal.text = `${c5}%)`;
+        sbC5hVal.text = c5 !== null ? `${c5}%)` : (liveQuotaState.isLoading ? `...)` : `--%)`);
         sbC5hVal.color = getNumberAlertColor(c5, warnPct, critPct);
         sbC5hVal.tooltip = tip;
         sbC5hVal.show();
@@ -383,16 +440,21 @@ function showQuickOverview(context) {
     const g = liveQuotaState.gemini;
     const c = liveQuotaState.claude;
 
+    const gW = g.weeklyPercent !== null ? `${g.weeklyPercent}%` : '--%';
+    const g5 = g.fiveHourPercent !== null ? `${g.fiveHourPercent}%` : '--%';
+    const cW = c.weeklyPercent !== null ? `${c.weeklyPercent}%` : '--%';
+    const c5 = c.fiveHourPercent !== null ? `${c.fiveHourPercent}%` : '--%';
+
     const items = isZh ? [
-        { label: `✨ Google Gemini: ${g.weeklyPercent}% (5h: ${g.fiveHourPercent}%)`, description: `重置: ${g.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
-        { label: `🎭 Claude 4.6 & GPT: ${c.weeklyPercent}% (5h: ${c.fiveHourPercent}%)`, description: `重置: ${c.weeklyResetTimeZh} | 5h重置: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `重置: ${g.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
+        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `重置: ${c.weeklyResetTimeZh} | 5h重置: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏图表' },
         { label: `🌐 切换为 English`, description: '当前: 中文' },
         { label: `⚙️ 打开插件设置`, description: '自定义预警阈值与刷新频率' }
     ] : [
-        { label: `✨ Google Gemini: ${g.weeklyPercent}% (5h: ${g.fiveHourPercent}%)`, description: `Reset: ${g.weeklyResetTimeEn} | 5h Reset: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
-        { label: `🎭 Claude 4.6 & GPT: ${c.weeklyPercent}% (5h: ${c.fiveHourPercent}%)`, description: `Reset: ${c.weeklyResetTimeEn} | 5h Reset: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Reset: ${g.weeklyResetTimeEn} | 5h Reset: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
+        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Reset: ${c.weeklyResetTimeEn} | 5h Reset: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `🔄 Force Refresh Now`, description: 'Probe latest quota from Language Server' },
         { label: `🖥️ Open Visual Dashboard`, description: 'View brand-accurate quota cockpit' },
         { label: `🌐 Switch to Chinese (中文)`, description: 'Current: English' },
@@ -406,7 +468,7 @@ function showQuickOverview(context) {
         if (sel.label.includes('打开可视化') || sel.label.includes('Open Visual')) showDashboard(context);
         else if (sel.label.includes('切换') || sel.label.includes('Switch')) setLanguage(context, isZh ? 'en' : 'zh');
         else if (sel.label.includes('设置') || sel.label.includes('Settings')) vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings');
-        else if (sel.label.includes('刷新') || sel.label.includes('Refresh')) fetchLiveQuota(true);
+        else if (sel.label.includes('刷新') || sel.label.includes('Refresh')) fetchLiveQuota(context, true);
     });
 }
 
@@ -436,7 +498,7 @@ function showDashboard(context) {
         currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, currentLang);
 
         currentPanel.webview.onDidReceiveMessage(msg => {
-            if (msg.command === 'refresh') fetchLiveQuota(true);
+            if (msg.command === 'refresh') fetchLiveQuota(context, true);
             else if (msg.command === 'openSettings') vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings');
             else if (msg.command === 'toggleLang') setLanguage(context, currentLang === 'zh' ? 'en' : 'zh');
         }, undefined, context.subscriptions);
@@ -455,6 +517,11 @@ function renderDashboardHtml(webview, data, lang) {
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const warnPct = cfg.get('warningThreshold', 50);
     const critPct = cfg.get('criticalThreshold', 20);
+
+    const gW = data.gemini.weeklyPercent !== null ? data.gemini.weeklyPercent : 0;
+    const g5 = data.gemini.fiveHourPercent !== null ? data.gemini.fiveHourPercent : 0;
+    const cW = data.claude.weeklyPercent !== null ? data.claude.weeklyPercent : 0;
+    const c5 = data.claude.fiveHourPercent !== null ? data.claude.fiveHourPercent : 0;
 
     const t = {
         title:       isZh ? '配额驾驶舱' : 'Quota Cockpit',
@@ -487,8 +554,8 @@ function renderDashboardHtml(webview, data, lang) {
         return { label: t.statusOk, color: '#3fb950' };
     }
 
-    const gStat = statusInfo(Math.min(data.gemini.weeklyPercent, data.gemini.fiveHourPercent));
-    const cStat = statusInfo(Math.min(data.claude.weeklyPercent, data.claude.fiveHourPercent));
+    const gStat = statusInfo(Math.min(gW, g5));
+    const cStat = statusInfo(Math.min(cW, c5));
 
     return `<!DOCTYPE html>
 <html lang="${isZh ? 'zh-CN' : 'en'}">
@@ -567,12 +634,12 @@ body{background:var(--vscode-editor-background,#0d1117);color:var(--text);font-f
       </div>
 
       <div class="metric">
-        <div class="metric-row"><span>${t.weekLabel}</span><span class="metric-val">${data.gemini.weeklyPercent}%</span></div>
-        <div class="track"><div class="fill-g" style="width:${data.gemini.weeklyPercent}%"></div></div>
+        <div class="metric-row"><span>${t.weekLabel}</span><span class="metric-val">${data.gemini.weeklyPercent !== null ? data.gemini.weeklyPercent + '%' : '--'}</span></div>
+        <div class="track"><div class="fill-g" style="width:${gW}%"></div></div>
       </div>
       <div class="metric">
-        <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.gemini.fiveHourPercent}%</span></div>
-        <div class="track"><div class="fill-g" style="width:${data.gemini.fiveHourPercent}%"></div></div>
+        <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.gemini.fiveHourPercent !== null ? data.gemini.fiveHourPercent + '%' : '--'}</span></div>
+        <div class="track"><div class="fill-g" style="width:${g5}%"></div></div>
       </div>
 
       <div class="meta">
@@ -599,12 +666,12 @@ body{background:var(--vscode-editor-background,#0d1117);color:var(--text);font-f
       </div>
 
       <div class="metric">
-        <div class="metric-row"><span>${t.weekLabel}</span><span class="metric-val">${data.claude.weeklyPercent}%</span></div>
-        <div class="track"><div class="fill-c" style="width:${data.claude.weeklyPercent}%"></div></div>
+        <div class="metric-row"><span>${t.weekLabel}</span><span class="metric-val">${data.claude.weeklyPercent !== null ? data.claude.weeklyPercent + '%' : '--'}</span></div>
+        <div class="track"><div class="fill-c" style="width:${cW}%"></div></div>
       </div>
       <div class="metric">
-        <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.claude.fiveHourPercent}%</span></div>
-        <div class="track"><div class="fill-c" style="width:${data.claude.fiveHourPercent}%"></div></div>
+        <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.claude.fiveHourPercent !== null ? data.claude.fiveHourPercent + '%' : '--'}</span></div>
+        <div class="track"><div class="fill-c" style="width:${c5}%"></div></div>
       </div>
 
       <div class="meta">
