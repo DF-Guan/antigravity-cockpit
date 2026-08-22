@@ -85,8 +85,8 @@ You can open the extension configuration panel via any of the following ways:
 - `agPrivateCockpit.warningThreshold`: Quota % for orange warning alert (default: `50`).
 - `agPrivateCockpit.criticalThreshold`: Quota % for red critical alert (default: `20`).
 - `agPrivateCockpit.defaultLanguage`: Language preference (`auto` / `en` / `zh`).
-- `agPrivateCockpit.showGemini`: Toggle Gemini quota visibility on status bar.
-- `agPrivateCockpit.showClaude`: Toggle Claude/GPT quota visibility on status bar.
+- `agPrivateCockpit.showGemini`: Toggle Gemini quota visibility on status bar (default: true).
+- `agPrivateCockpit.showClaude`: Toggle Claude/GPT quota visibility on status bar (default: true).
 
 ---
 

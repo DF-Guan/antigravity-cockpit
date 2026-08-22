@@ -87,8 +87,8 @@
 - `agPrivateCockpit.warningThreshold`: 橙色告警触发阈值（默认: `50%`）
 - `agPrivateCockpit.criticalThreshold`: 红色极危告警触发阈值（默认: `20%`）
 - `agPrivateCockpit.defaultLanguage`: 默认语言偏好（`auto` 自动跟随系统 / `zh` 中文 / `en` 英文）
-- `agPrivateCockpit.showGemini`: 是否在状态栏显示 Gemini 配额
-- `agPrivateCockpit.showClaude`: 是否在状态栏显示 Claude/GPT 配额
+- `agPrivateCockpit.showGemini`: 是否在状态栏显示 Gemini 配额（默认: 开启）
+- `agPrivateCockpit.showClaude`: 是否在状态栏显示 Claude/GPT 配额（默认: 开启）
 
 ---
 
