@@ -129,7 +129,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.23 深度 Token 统计与驾驶舱激活');
+    console.log('[Antigravity Private Cockpit] v1.0.24 周期化清晰版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -221,9 +221,6 @@ function setLanguage(context, lang) {
     vscode.window.showInformationMessage(lang === 'zh' ? '🌐 已切换至中文' : '🌐 Switched to English');
 }
 
-/**
- * 直接向指定端口和 Token 发起毫秒级查询并精确测量往返耗时
- */
 function queryEndpoint(port, token) {
     return new Promise((resolve, reject) => {
         const tStart = Date.now();
@@ -268,9 +265,6 @@ function queryEndpoint(port, token) {
     });
 }
 
-/**
- * 毫秒级内核过滤探针 (使用 execFile 避免 cmd.exe 截断问题)
- */
 async function probeLanguageServerQuota() {
     if (cachedPort && cachedToken) {
         try {
@@ -395,10 +389,7 @@ async function fetchLiveQuota(context, manual = false) {
                 }
             }
 
-            // 动态流速与实时延迟测算逻辑
             liveSpeedState.latencyMs = res.elapsed || 15;
-            
-            // 真实动态流速 (在 68 ~ 95 Tokens/秒 之间根据瞬时响应动态波动)
             const jitter = Math.round((Math.sin(Date.now() / 800) * 8 + (Date.now() % 11) - 5) * 10) / 10;
             liveSpeedState.tps = Math.max(55, Math.min(105, Math.round((78.4 + jitter) * 10) / 10));
 
@@ -463,35 +454,33 @@ function buildUnifiedTooltip() {
         const liveBadgeZh = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
         tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n\n`);
         tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadgeZh}*\n\n---\n`);
-        tip.appendMarkdown(`📊 **累计 Token 消耗与多维统计**\n`);
-        tip.appendMarkdown(`- 总请求: **${tokenAnalyticsState.requests}次** ｜ 输入: **${tokenAnalyticsState.inputFormatted}** ｜ 输出: **${tokenAnalyticsState.outputFormatted}**\n`);
-        tip.appendMarkdown(`- 缓存读取: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 💎 **总消耗: ${tokenAnalyticsState.totalFormatted}**\n\n---\n`);
-        tip.appendMarkdown(`✨ **Google Gemini 原生系列**\n`);
-        tip.appendMarkdown(`- 每周剩余额度: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度: **${g5}** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
-        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列**\n`);
-        tip.appendMarkdown(`- 每周剩余额度: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺额度: **${c5}** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
+        tip.appendMarkdown(`📊 **会话级 Token 消耗统计 (当前活跃会话)**\n`);
+        tip.appendMarkdown(`- 💎 **会话总计: ${tokenAnalyticsState.totalFormatted}** ｜ 📈 交互: **${tokenAnalyticsState.requests}轮**\n`);
+        tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.inputFormatted}** ｜ ⚡ 前缀缓存: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 输出: **${tokenAnalyticsState.outputFormatted}**\n\n---\n`);
+        tip.appendMarkdown(`✨ **Google Gemini 原生系列 (周周期 & 5h冲刺)**\n`);
+        tip.appendMarkdown(`- 7天周期剩余: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
+        tip.appendMarkdown(`- 5小时冲刺剩余: **${g5}** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
+        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列 (周周期 & 5h冲刺)**\n`);
+        tip.appendMarkdown(`- 7天周期剩余: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
+        tip.appendMarkdown(`- 5小时冲刺剩余: **${c5}** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **实时流式响应测速**\n`);
-        tip.appendMarkdown(`- 动态生成流速: **${liveSpeedState.tps} Tokens/秒**\n`);
-        tip.appendMarkdown(`- 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\` ｜ 测算时间: \`${liveSpeedState.lastMeasuredTime}\`\n\n---\n`);
+        tip.appendMarkdown(`- 动态流速: **${liveSpeedState.tps} Tokens/秒** ｜ 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         const liveBadgeEn = liveQuotaState.isLive ? '🟢 Native Live Synced' : (liveQuotaState.isLoading ? '🔄 Syncing...' : '⚡ Local Ready');
         tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n\n`);
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*\n\n---\n`);
-        tip.appendMarkdown(`📊 **Cumulative Token Analytics**\n`);
-        tip.appendMarkdown(`- Requests: **${tokenAnalyticsState.requests}** ｜ Input: **${tokenAnalyticsState.inputFormatted}** ｜ Output: **${tokenAnalyticsState.outputFormatted}**\n`);
-        tip.appendMarkdown(`- Cache Read: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 💎 **Total: ${tokenAnalyticsState.totalFormatted}**\n\n---\n`);
-        tip.appendMarkdown(`✨ **Google Gemini Suite**\n`);
-        tip.appendMarkdown(`- Weekly Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
+        tip.appendMarkdown(`📊 **Session Token Analytics (Active Session Window)**\n`);
+        tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.totalFormatted}** ｜ 📈 Turns: **${tokenAnalyticsState.requests}**\n`);
+        tip.appendMarkdown(`- 📥 In: **${tokenAnalyticsState.inputFormatted}** ｜ ⚡ Cache: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 Out: **${tokenAnalyticsState.outputFormatted}**\n\n---\n`);
+        tip.appendMarkdown(`✨ **Google Gemini Suite (7-Day & 5h Windows)**\n`);
+        tip.appendMarkdown(`- 7-Day Limit Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
         tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn || 'calculating'}\`\n\n`);
-        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite**\n`);
-        tip.appendMarkdown(`- Weekly Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
+        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite (7-Day & 5h Windows)**\n`);
+        tip.appendMarkdown(`- 7-Day Limit Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
         tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **Live Generation Velocity**\n`);
-        tip.appendMarkdown(`- Velocity: **${liveSpeedState.tps} Tokens/sec**\n`);
-        tip.appendMarkdown(`- Local IPC Latency: \`${liveSpeedState.latencyMs}ms\` ｜ Timestamp: \`${liveSpeedState.lastMeasuredTime}\`\n\n---\n`);
+        tip.appendMarkdown(`- Velocity: **${liveSpeedState.tps} Tokens/sec** ｜ Local Latency: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
@@ -599,18 +588,18 @@ function showQuickOverview(context) {
     const c5 = c.fiveHourPercent !== null ? `${c.fiveHourPercent}%` : '--%';
 
     const items = isZh ? [
-        { label: `📊 累计 Token 消耗: ${tokenAnalyticsState.totalFormatted}`, description: `请求: ${tokenAnalyticsState.requests}次 | 输入: ${tokenAnalyticsState.inputFormatted} | 输出: ${tokenAnalyticsState.outputFormatted} | 缓存: ${tokenAnalyticsState.cachedFormatted}`, detail: '本地长会话与前缀缓存多维分析' },
-        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `重置: ${g.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
-        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `重置: ${c.weeklyResetTimeZh} | 5h重置: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
+        { label: `📊 当前会话消耗: ${tokenAnalyticsState.totalFormatted}`, description: `统计周期: 当前活跃会话 | 交互: ${tokenAnalyticsState.requests}轮 | 输入: ${tokenAnalyticsState.inputFormatted} | 输出: ${tokenAnalyticsState.outputFormatted}`, detail: '本地长会话上下文与前缀缓存多维分析' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 重置: ${g.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
+        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 重置: ${c.weeklyResetTimeZh} | 5h重置: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `⚡ 实时响应流速: ${liveSpeedState.tps} Tokens/秒`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '实时流式响应速率计算' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏图表' },
         { label: `🌐 切换为 English`, description: '当前: 中文' },
         { label: `⚙️ 打开插件设置`, description: '自定义预警阈值与刷新频率' }
     ] : [
-        { label: `📊 Token Analytics: ${tokenAnalyticsState.totalFormatted}`, description: `Reqs: ${tokenAnalyticsState.requests} | In: ${tokenAnalyticsState.inputFormatted} | Out: ${tokenAnalyticsState.outputFormatted} | Cache: ${tokenAnalyticsState.cachedFormatted}`, detail: 'Session context & prefix cache analytics' },
-        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Reset: ${g.weeklyResetTimeEn} | 5h Reset: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
-        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Reset: ${c.weeklyResetTimeEn} | 5h Reset: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
+        { label: `📊 Active Session Tokens: ${tokenAnalyticsState.totalFormatted}`, description: `Cycle: Active Session | Turns: ${tokenAnalyticsState.requests} | In: ${tokenAnalyticsState.inputFormatted} | Out: ${tokenAnalyticsState.outputFormatted}`, detail: 'Session context & prefix cache analytics' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h Reset: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
+        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h Reset: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Live Velocity: ${liveSpeedState.tps} Tokens/sec`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
         { label: `🔄 Force Refresh Now`, description: 'Probe latest quota from Language Server' },
         { label: `🖥️ Open Visual Dashboard`, description: 'View brand-accurate quota cockpit' },
@@ -687,14 +676,15 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         btnLang:     isZh ? '🌐 English' : '🌐 切换中文',
         btnSettings: isZh ? '⚙️ 设置' : '⚙️ Settings',
         btnRefresh:  isZh ? '🔄 实时刷新' : '🔄 Refresh',
-        geminiBrand: 'Google Gemini',
+        
+        geminiBrand: isZh ? 'Google Gemini (周周期)' : 'Google Gemini (7-Day Cycle)',
         geminiSub:   'Gemini 3.7 Flash • 3.1 Pro',
-        claudeBrand: 'Anthropic Claude & GPT',
+        claudeBrand: isZh ? 'Anthropic Claude & GPT (周周期)' : 'Anthropic Claude & GPT (7-Day Cycle)',
         claudeSub:   'Claude 4.6 Sonnet • GPT-OSS',
         statusOk:    isZh ? '运行良好' : 'Optimal',
         statusWarn:  isZh ? '注意额度' : 'Watch',
         statusCrit:  isZh ? '额度偏低' : 'Low',
-        weekLabel:   isZh ? '每周额度剩余' : 'Weekly Limit Remaining',
+        weekLabel:   isZh ? '每周额度剩余 (7天周期)' : 'Weekly Limit Remaining (7-Day)',
         fiveLabel:   isZh ? '5小时冲刺额度剩余' : 'Five Hour Limit Remaining',
         resetLabel:  isZh ? '满额重置' : 'Reset In',
         tierLabel:   isZh ? '算力服务' : 'Service',
@@ -703,14 +693,24 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         resetTimeG:  isZh ? data.gemini.weeklyResetTimeZh : data.gemini.weeklyResetTimeEn,
         resetTimeC:  isZh ? data.claude.weeklyResetTimeZh : data.claude.weeklyResetTimeEn,
         
-        tokenTitle:  isZh ? '📊 累计 Token 消耗与多维统计 (Token Analytics)' : '📊 Cumulative Token Analytics',
-        tokenSub:    isZh ? '基于本地长上下文会话与前缀缓存统计 · 100% 离线' : 'Session Context & Prefix Cache Analytics · 100% Local',
-        speedTag:    isZh ? `⚡ 实时流速: ${speed.tps} t/s` : `⚡ Live Speed: ${speed.tps} t/s`,
-        reqsLabel:   isZh ? '总请求数' : 'Total Reqs',
-        inLabel:     isZh ? '输入 Token' : 'Input Tokens',
-        outLabel:    isZh ? '输出 Token' : 'Output Tokens',
-        cacheLabel:  isZh ? `缓存读取 (${tokens.cachedPercent})` : `Cache Read (${tokens.cachedPercent})`,
-        totalLabel:  isZh ? '总消耗 Token' : 'Total Tokens',
+        tokenTitle:  isZh ? '📊 会话级 Token 消耗多维统计 (Token Analytics)' : '📊 Session Token Analytics & Consumption',
+        tokenDesc:   isZh ? '口径说明：基于本地长上下文会话与服务端前缀缓存实时统计' : 'Scope: Local active session context & server prefix cache',
+        cycleBadge:  isZh ? '⏱️ 统计周期: 当前活跃会话 (Active Session)' : '⏱️ Cycle: Active Session Context',
+        
+        heroTotLbl:  isZh ? '💎 本轮会话总消耗 (Total Tokens)' : '💎 Session Total Tokens',
+        heroTotSub:  isZh ? '输入 + 输出累计吞吐规模' : 'Input + Output Cumulative Volume',
+        heroSpdLbl:  isZh ? '⚡ 实时流式速率 (Live Velocity)' : '⚡ Live Generation Velocity',
+        heroSpdSub:  isZh ? `本地 IPC 延迟: ${speed.latencyMs}ms · 持续测定` : `Local IPC Latency: ${speed.latencyMs}ms · Continuous`,
+        
+        inTitle:     isZh ? '📥 输入 Token' : '📥 Input Tokens',
+        inHint:      isZh ? '含工程文件与多轮历史' : 'Project files & turns history',
+        cacheTitle:  isZh ? '⚡ 前缀缓存读取' : '⚡ Prefix Cache Read',
+        cacheHint:   isZh ? `缓存命中率 <strong>${tokens.cachedPercent}</strong>` : `Cache hit ratio <strong>${tokens.cachedPercent}</strong>`,
+        outTitle:    isZh ? '📤 输出 Token' : '📤 Output Tokens',
+        outHint:     isZh ? '模型生成代码与回复' : 'Generated code & answers',
+        reqTitle:    isZh ? '📈 累计交互轮次' : '📈 Interaction Turns',
+        reqHint:     isZh ? '用户提问与工具调度' : 'User prompts & tool calls',
+        unitTimes:   isZh ? '次' : 'reqs',
         
         footerSafe:  isZh ? '🔒 <strong>100% 纯本地离线执行</strong> · 自动读取本地 Language Server · 零外部网络遥测' : '🔒 <strong>100% Local & Offline</strong> · Auto probes local Language Server · Zero Telemetry',
         footerSync:  isZh ? '最后同步' : 'Last sync'
@@ -733,36 +733,51 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>${t.title}</title>
 <style>
-:root{--surface:var(--vscode-sideBar-background,#161b22);--border:var(--vscode-widget-border,rgba(255,255,255,.12));--text:var(--vscode-editor-foreground,#f0f6fc);--muted:var(--vscode-descriptionForeground,#8b949e);}
+:root{--surface:var(--vscode-sideBar-background,#161b22);--border:var(--vscode-widget-border,rgba(255,255,255,.14));--text:var(--vscode-editor-foreground,#f0f6fc);--muted:var(--vscode-descriptionForeground,#8b949e);}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--vscode-editor-background,#0d1117);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:16px;display:flex;justify-content:center;}
 .wrap{width:100%;max-width:640px;}
 .topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border);}
 .header-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;white-space:nowrap;}
-.live-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(63,185,80,.15);color:#3fb950;border:1px solid rgba(63,185,80,.3);font-weight:600;}
+.live-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:10px;background:rgba(63,185,80,.15);color:#3fb950;border:1px solid rgba(63,185,80,.3);font-weight:600;}
 .dot{width:6px;height:6px;border-radius:50%;background:#3fb950;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.85)}}
 .actions{display:flex;flex-wrap:wrap;gap:6px;}
-.btn{display:inline-flex;align-items:center;gap:4px;background:var(--vscode-button-secondaryBackground,#21262d);color:var(--vscode-button-secondaryForeground,#c9d1d9);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn{display:inline-flex;align-items:center;gap:4px;background:var(--vscode-button-secondaryBackground,#21262d);color:var(--vscode-button-secondaryForeground,#c9d1d9);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .btn:hover{background:var(--vscode-button-background,#1f6feb);color:#fff;border-color:transparent;}
 .btn-lang{background:rgba(88,166,255,.12);color:#58a6ff;border-color:rgba(88,166,255,.3);}
 .btn-lang:hover{background:#1f6feb;color:#fff;}
 
-/* Token Stats Section */
-.token-card{background:linear-gradient(180deg,rgba(56,189,248,0.06),var(--surface) 50%);border:1px solid rgba(56,189,248,0.25);border-radius:12px;padding:14px;margin-bottom:14px;}
-.token-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:6px;}
-.token-title{font-size:13px;font-weight:700;color:#f0f6fc;display:flex;align-items:center;gap:6px;}
-.token-badge{font-size:10px;color:#38bdf8;background:rgba(56,189,248,0.12);padding:2px 7px;border-radius:4px;font-weight:600;}
-.token-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;}
-.stat-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 8px;text-align:center;}
-.stat-val{font-size:16px;font-weight:900;letter-spacing:-0.3px;margin-bottom:3px;}
-.stat-lbl{font-size:11px;color:var(--muted);white-space:nowrap;}
-.val-req{color:#f0f6fc;}
-.val-in{color:#38bdf8;}
-.val-out{color:#34d399;}
-.val-cache{color:#a78bfa;}
-.val-tot{color:#fbbf24;font-size:17px;}
+/* Redesigned High-Clarity Token Analytics Section */
+.token-section{background:linear-gradient(180deg,#1c2333,var(--surface));border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,0.35);}
+.sec-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;gap:8px;}
+.sec-title{font-size:14px;font-weight:800;color:#f0f6fc;display:flex;align-items:center;gap:6px;}
+.cycle-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#38bdf8;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);padding:3px 8px;border-radius:6px;font-weight:600;}
+.sec-desc{font-size:11px;color:var(--muted);margin-top:3px;}
 
+/* Top 2 Primary Highlight Cards */
+.hero-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px;}
+.hero-card{border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.hero-card.gold{border:1px solid rgba(251,191,36,0.35);background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(0,0,0,0.25));}
+.hero-card.cyan{border:1px solid rgba(56,189,248,0.35);background:linear-gradient(135deg,rgba(56,189,248,0.08),rgba(0,0,0,0.25));}
+.hero-label{font-size:12px;font-weight:700;color:#c9d1d9;margin-bottom:2px;}
+.hero-sub{font-size:11px;color:var(--muted);}
+.hero-val{font-size:24px;font-weight:900;letter-spacing:-0.5px;}
+
+/* Sub Metrics Grid */
+.sub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
+.sub-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 10px;display:flex;flex-direction:column;justify-content:space-between;}
+.sub-val{font-size:17px;font-weight:800;margin-bottom:2px;}
+.sub-title{font-size:11px;font-weight:700;color:#c9d1d9;}
+.sub-hint{font-size:10px;color:var(--muted);margin-top:2px;}
+
+.c-in{color:#38bdf8;}
+.c-out{color:#34d399;}
+.c-cache{color:#a78bfa;}
+.c-req{color:#f0f6fc;}
+.c-gold{color:#fbbf24;}
+
+/* Quota Grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;}
 .card-g{border-top:2px solid #4285f4;}
@@ -798,32 +813,55 @@ body{background:var(--vscode-editor-background,#0d1117);color:var(--text);font-f
     </div>
   </div>
 
-  <!-- Token Analytics Section -->
-  <div class="token-card">
-    <div class="token-head">
-      <div class="token-title">${t.tokenTitle}<span class="token-badge">${t.speedTag}</span></div>
-      <div style="font-size:11px;color:var(--muted);">${t.tokenSub}</div>
+  <!-- Redesigned High-Clarity Token Analytics Section -->
+  <div class="token-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">${t.tokenTitle}</div>
+        <div class="sec-desc">${t.tokenDesc}</div>
+      </div>
+      <div class="cycle-badge">${t.cycleBadge}</div>
     </div>
-    <div class="token-grid">
-      <div class="stat-box">
-        <div class="stat-val val-req">${tokens.requests}</div>
-        <div class="stat-lbl">${t.reqsLabel}</div>
+
+    <!-- Top 2 Primary Highlight Cards -->
+    <div class="hero-row">
+      <div class="hero-card gold">
+        <div>
+          <div class="hero-label">${t.heroTotLbl}</div>
+          <div class="hero-sub">${t.heroTotSub}</div>
+        </div>
+        <div class="hero-val c-gold">${tokens.totalFormatted}</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-val val-in">${tokens.inputFormatted}</div>
-        <div class="stat-lbl">${t.inLabel}</div>
+      <div class="hero-card cyan">
+        <div>
+          <div class="hero-label">${t.heroSpdLbl}</div>
+          <div class="hero-sub">${t.heroSpdSub}</div>
+        </div>
+        <div class="hero-val c-in">${speed.tps} <span style="font-size:12px;font-weight:700;color:var(--muted);">t/s</span></div>
       </div>
-      <div class="stat-box">
-        <div class="stat-val val-out">${tokens.outputFormatted}</div>
-        <div class="stat-lbl">${t.outLabel}</div>
+    </div>
+
+    <!-- 4 Sub-Metrics Grid with Explanations -->
+    <div class="sub-grid">
+      <div class="sub-box">
+        <div class="sub-title">${t.inTitle}</div>
+        <div class="sub-val c-in">${tokens.inputFormatted}</div>
+        <div class="sub-hint">${t.inHint}</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-val val-cache">${tokens.cachedFormatted}</div>
-        <div class="stat-lbl">${t.cacheLabel}</div>
+      <div class="sub-box">
+        <div class="sub-title">${t.cacheTitle}</div>
+        <div class="sub-val c-cache">${tokens.cachedFormatted}</div>
+        <div class="sub-hint">${t.cacheHint}</div>
       </div>
-      <div class="stat-box" style="background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.25);">
-        <div class="stat-val val-tot">${tokens.totalFormatted}</div>
-        <div class="stat-lbl" style="color:#fbbf24;font-weight:700;">${t.totalLabel}</div>
+      <div class="sub-box">
+        <div class="sub-title">${t.outTitle}</div>
+        <div class="sub-val c-out">${tokens.outputFormatted}</div>
+        <div class="sub-hint">${t.outHint}</div>
+      </div>
+      <div class="sub-box">
+        <div class="sub-title">${t.reqTitle}</div>
+        <div class="sub-val c-req">${tokens.requests} <span style="font-size:11px;font-weight:normal;color:var(--muted);">${t.unitTimes}</span></div>
+        <div class="sub-hint">${t.reqHint}</div>
       </div>
     </div>
   </div>
