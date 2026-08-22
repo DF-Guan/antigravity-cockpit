@@ -2,7 +2,9 @@ const vscode = require('vscode');
 const https = require('https');
 const { exec } = require('child_process');
 
-let statusBarItem;
+let statusBarGemini;
+let statusBarClaude;
+let statusBar5h;
 let refreshTimer;
 let currentPanel = undefined;
 let currentLang = 'auto';
@@ -38,7 +40,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Cockpit] 高健壮性生产版激活');
+    console.log('[Antigravity Cockpit] 独立数值精确着色版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     const savedQuota = context.globalState.get('agPrivateCockpit.customQuota');
@@ -46,9 +48,17 @@ function activate(context) {
         liveQuotaState = Object.assign(liveQuotaState, savedQuota);
     }
 
-    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
-    statusBarItem.command = 'agPrivateCockpit.openDashboard';
-    context.subscriptions.push(statusBarItem);
+    // 创建 3 个独立的细粒度状态栏项，使得每个数值拥有完全独立的专属告警颜色
+    statusBarGemini = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
+    statusBarGemini.command = 'agPrivateCockpit.openDashboard';
+
+    statusBarClaude = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
+    statusBarClaude.command = 'agPrivateCockpit.openDashboard';
+
+    statusBar5h = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
+    statusBar5h.command = 'agPrivateCockpit.openDashboard';
+
+    context.subscriptions.push(statusBarGemini, statusBarClaude, statusBar5h);
 
     context.subscriptions.push(
         vscode.commands.registerCommand('agPrivateCockpit.openDashboard', () => showDashboard(context)),
@@ -76,7 +86,6 @@ function activate(context) {
         })
     );
 
-    // 初始静默探测
     fetchLiveQuota(false);
     restartAutoRefresh(context);
 }
@@ -105,9 +114,6 @@ function setLanguage(context, lang) {
     vscode.window.showInformationMessage(lang === 'zh' ? '🌐 已切换至中文' : '🌐 Switched to English');
 }
 
-/**
- * 跨平台全自动 Language Server 实时配额探测器
- */
 function probeLanguageServerQuota() {
     return new Promise((resolve, reject) => {
         const isWin = process.platform === 'win32';
@@ -136,11 +142,9 @@ function probeLanguageServerQuota() {
             if (tokens.length === 0) return reject(new Error("No CSRF tokens found"));
 
             let resolved = false;
-            let activeRequests = 0;
 
             for (const token of tokens) {
                 for (const port of allCandidatePorts) {
-                    activeRequests++;
                     const req = https.request({
                         hostname: '127.0.0.1',
                         port: port,
@@ -227,9 +231,7 @@ async function fetchLiveQuota(manual = false) {
                 }
             }
         }
-    } catch (_) {
-        // 静默处理离线，平滑保留现有数值
-    }
+    } catch (_) {}
 
     liveQuotaState.lastSyncTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     renderStatusBar();
@@ -248,50 +250,36 @@ async function fetchLiveQuota(manual = false) {
     }
 }
 
-function renderStatusBar() {
-    if (!statusBarItem) return;
-
-    const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
-    const showGemini = cfg.get('showGemini', true);
-    const showClaude = cfg.get('showClaude', true);
-    const compact    = cfg.get('compactStatusBar', false);
-    const warnPct    = cfg.get('warningThreshold', 50);
-    const critPct    = cfg.get('criticalThreshold', 20);
-
-    const gW   = liveQuotaState.gemini.weeklyPercent;
-    const cW   = liveQuotaState.claude.weeklyPercent;
-    const fiveH = liveQuotaState.claude.fiveHourPercent;
-
-    const parts = [];
-    if (showGemini) parts.push(compact ? `$(sparkle) G:${gW}%` : `$(sparkle) Gemini: ${gW}%`);
-    if (showClaude) parts.push(compact ? `$(organization) C:${cW}%` : `$(organization) Claude/GPT: ${cW}%`);
-    if (showClaude) parts.push(compact ? `$(clock) 5h:${fiveH}%` : `$(clock) 5h: ${fiveH}%`);
-    
-    statusBarItem.text = parts.length > 0 ? parts.join('   ') : `$(dashboard) Cockpit`;
-    statusBarItem.color = undefined;
-
-    const minPct = Math.min(
-        showGemini ? gW : 100,
-        showClaude ? cW : 100,
-        showClaude ? fiveH : 100
-    );
-
-    // 视觉三阶色彩：不仅作用于背景，同时直接着色状态栏文字与百分比数值
-    if (minPct < critPct) {
-        statusBarItem.color = '#ff6b6b'; // 红色高亮告警数值
-        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
-    } else if (minPct < warnPct) {
-        statusBarItem.color = '#e3b341'; // 橙黄色高亮预警数值
-        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-    } else {
-        statusBarItem.color = '#3fb950'; // 绿色健康数值
-        statusBarItem.backgroundColor = undefined;
+/**
+ * 🎨 计算单个百分比数值的专属告警着色
+ */
+function getMetricColorStyle(pct, warnPct, critPct) {
+    if (pct < critPct) {
+        return {
+            color: '#ff6b6b', // 红色极危数值
+            bgColor: new vscode.ThemeColor('statusBarItem.errorBackground')
+        };
     }
+    if (pct < warnPct) {
+        return {
+            color: '#e3b341', // 橙黄色预警数值
+            bgColor: new vscode.ThemeColor('statusBarItem.warningBackground')
+        };
+    }
+    return {
+        color: '#3fb950',     // 绿色健康数值
+        bgColor: undefined
+    };
+}
 
+function buildUnifiedTooltip() {
     const isZh = currentLang === 'zh';
     const tip = new vscode.MarkdownString();
     tip.isTrusted = true;
 
+    const gW = liveQuotaState.gemini.weeklyPercent;
+    const cW = liveQuotaState.claude.weeklyPercent;
+    const fiveH = liveQuotaState.claude.fiveHourPercent;
     const liveBadge = liveQuotaState.isLive ? '🟢 官方原生实时同频' : '⚡ 本地连接就绪';
 
     if (isZh) {
@@ -303,7 +291,7 @@ function renderStatusBar() {
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列**\n`);
         tip.appendMarkdown(`- 每周剩余额度: **${cW}%** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
         tip.appendMarkdown(`- 5小时冲刺额度: **${fiveH}%** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
-        tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang)`);
+        tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         tip.appendMarkdown(`### 🛸 Antigravity Live Quota Cockpit\n\n`);
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveQuotaState.isLive ? '🟢 Native Live Synced' : 'Connected'}*\n\n---\n`);
@@ -313,11 +301,65 @@ function renderStatusBar() {
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite**\n`);
         tip.appendMarkdown(`- Weekly Remaining: **${cW}%** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
         tip.appendMarkdown(`- 5-Hour Sprint: **${fiveH}%** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
-        tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang)`);
+        tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
+    }
+    return tip;
+}
+
+/**
+ * 状态栏渲染器：每个数值独立根据自身配额实时计算告警颜色
+ */
+function renderStatusBar() {
+    if (!statusBarGemini || !statusBarClaude || !statusBar5h) return;
+
+    const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
+    const showGemini = cfg.get('showGemini', true);
+    const showClaude = cfg.get('showClaude', true);
+    const compact    = cfg.get('compactStatusBar', false);
+    const warnPct    = cfg.get('warningThreshold', 50);
+    const critPct    = cfg.get('criticalThreshold', 20);
+
+    const gW    = liveQuotaState.gemini.weeklyPercent;
+    const cW    = liveQuotaState.claude.weeklyPercent;
+    const fiveH = liveQuotaState.claude.fiveHourPercent;
+
+    const tip = buildUnifiedTooltip();
+
+    // 1. Google Gemini 独立项与数值着色
+    if (showGemini) {
+        const styleG = getMetricColorStyle(gW, warnPct, critPct);
+        statusBarGemini.text = compact ? `$(sparkle) G: ${gW}%` : `✨ Gemini: ${gW}%`;
+        statusBarGemini.color = styleG.color;
+        statusBarGemini.backgroundColor = styleG.bgColor;
+        statusBarGemini.tooltip = tip;
+        statusBarGemini.show();
+    } else {
+        statusBarGemini.hide();
     }
 
-    statusBarItem.tooltip = tip;
-    statusBarItem.show();
+    // 2. Claude & GPT 独立项与数值着色
+    if (showClaude) {
+        const styleC = getMetricColorStyle(cW, warnPct, critPct);
+        statusBarClaude.text = compact ? `$(organization) C: ${cW}%` : `🤖 Claude/GPT: ${cW}%`;
+        statusBarClaude.color = styleC.color;
+        statusBarClaude.backgroundColor = styleC.bgColor;
+        statusBarClaude.tooltip = tip;
+        statusBarClaude.show();
+    } else {
+        statusBarClaude.hide();
+    }
+
+    // 3. 5小时冲刺独立项与数值着色
+    if (showClaude || showGemini) {
+        const style5 = getMetricColorStyle(fiveH, warnPct, critPct);
+        statusBar5h.text = compact ? `$(clock) 5h: ${fiveH}%` : `⏱️ 5h: ${fiveH}%`;
+        statusBar5h.color = style5.color;
+        statusBar5h.backgroundColor = style5.bgColor;
+        statusBar5h.tooltip = tip;
+        statusBar5h.show();
+    } else {
+        statusBar5h.hide();
+    }
 }
 
 function showQuickOverview(context) {
