@@ -63,7 +63,7 @@ function scanRealTimeConversationActivity() {
         let latestMtime = 0;
         let totalBytes = 0;
 
-        // 1. 扫描实时 SQLite WAL 日志文件（用户每次对话或流式生成即时触发修改）
+        // 1. 扫描实时 SQLite WAL 日志文件
         if (fs.existsSync(convDir)) {
             try {
                 const files = fs.readdirSync(convDir);
@@ -170,8 +170,8 @@ function computeLiveTokenAnalytics() {
             }
         }
 
-        const requests = Math.max(49, totalMsgs);
-        const estOutputTokens = Math.max(128500, Math.round((totalOutputChars + totalArtifactChars) / 3.2));
+        const requests = totalMsgs > 0 ? totalMsgs : 49;
+        const estOutputTokens = totalOutputChars > 0 ? Math.round((totalOutputChars + totalArtifactChars) / 3.2) : 128500;
         const estInputTokens = Math.round((requests * 720000) / 3.8);
         const estCachedTokens = Math.round(estInputTokens * 0.986);
         const estTotalTokens = estInputTokens + estOutputTokens;
@@ -203,7 +203,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.30 SQLite-WAL 亚秒级流速感知引擎激活');
+    console.log('[Antigravity Private Cockpit] v1.0.31 全面体验与多级预警增强版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -747,6 +747,7 @@ function showDashboard(context) {
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
+                retainContextWhenHidden: true,
                 localResourceRoots: [context.extensionUri]
             }
         );
@@ -834,8 +835,19 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         return { label: t.statusOk, color: '#3fb950' };
     }
 
+    function getBarColor(pct, brandDefault) {
+        if (pct < critPct) return '#ef4444';
+        if (pct < warnPct) return '#f59e0b';
+        return brandDefault;
+    }
+
     const gStat = statusInfo(Math.min(gW, g5));
     const cStat = statusInfo(Math.min(cW, c5));
+
+    const gWColor  = getBarColor(gW, '#3b82f6');
+    const g5Color  = getBarColor(g5, '#3b82f6');
+    const cWColor  = getBarColor(cW, 'var(--c-terracotta)');
+    const c5Color  = getBarColor(c5, 'var(--c-terracotta)');
 
     const speedValDisplay = speed.isStreaming
         ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
@@ -892,6 +904,12 @@ body.vscode-dark {
   --c-blue: #60a5fa;
   --c-green: #4ade80;
   --c-purple: #c084fc;
+}
+
+body.vscode-high-contrast, body.vscode-high-contrast-light {
+  --border: var(--vscode-contrastBorder, #ffffff);
+  --bg-card: var(--vscode-sideBar-background, #000000);
+  --bg-sub: var(--vscode-editorWidget-background, #111111);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -972,15 +990,19 @@ body {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all .15s;
+  transition: all .15s ease;
+  user-select: none;
 }
 .btn:hover { background: var(--vscode-button-background, #1f6feb); color: #fff; border-color: transparent; }
+.btn:active { transform: scale(0.96); }
 .btn-lang {
   background: rgba(218, 119, 86, 0.12);
   color: var(--c-terracotta);
   border-color: rgba(218, 119, 86, 0.35);
 }
 .btn-lang:hover { background: var(--c-terracotta); color: #fff; }
+.spin-icon { display: inline-block; transition: transform 0.4s ease; }
+.btn:active .spin-icon { transform: rotate(180deg); }
 
 /* Claude Warm Minimalist Token Section */
 .token-section {
@@ -1224,10 +1246,11 @@ body {
   border-radius: 3px;
   overflow: hidden;
 }
-.fill-g { height: 100%; background: #3b82f6; width: 85%; }
-.fill-g5 { height: 100%; background: #3b82f6; width: 99%; }
-.fill-c { height: 100%; background: var(--c-terracotta); width: 85%; }
-.fill-c5 { height: 100%; background: var(--c-terracotta); width: 100%; }
+.fill-bar {
+  height: 100%;
+  transition: width 0.3s ease, background 0.3s ease;
+  border-radius: 3px;
+}
 
 .meta {
   display: flex;
@@ -1289,7 +1312,7 @@ body {
     <div class="actions">
       <button class="btn btn-lang" onclick="toggleLang()">${t.btnLang}</button>
       <button class="btn" onclick="openSettings()">${t.btnSettings}</button>
-      <button class="btn" onclick="refresh()">${t.btnRefresh}</button>
+      <button class="btn" onclick="refresh()"><span class="spin-icon">🔄</span> ${t.btnRefresh.replace('🔄 ', '')}</button>
     </div>
   </div>
 
@@ -1368,11 +1391,11 @@ body {
 
       <div class="metric">
         <div class="metric-row"><span>${t.weekLabel}</span><span class="metric-val">${data.gemini.weeklyPercent !== null ? data.gemini.weeklyPercent + '%' : '--'}</span></div>
-        <div class="track"><div class="fill-g" style="width:${gW}%"></div></div>
+        <div class="track"><div class="fill-bar" style="width:${gW}%; background:${gWColor};"></div></div>
       </div>
       <div class="metric">
         <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.gemini.fiveHourPercent !== null ? data.gemini.fiveHourPercent + '%' : '--'}</span></div>
-        <div class="track"><div class="fill-g5" style="width:${g5}%"></div></div>
+        <div class="track"><div class="fill-bar" style="width:${g5}%; background:${g5Color};"></div></div>
       </div>
 
       <div class="meta">
@@ -1400,11 +1423,11 @@ body {
 
       <div class="metric">
         <div class="metric-row"><span>${t.weekLabel}</span><span class="metric-val">${data.claude.weeklyPercent !== null ? data.claude.weeklyPercent + '%' : '--'}</span></div>
-        <div class="track"><div class="fill-c" style="width:${cW}%"></div></div>
+        <div class="track"><div class="fill-bar" style="width:${cW}%; background:${cWColor};"></div></div>
       </div>
       <div class="metric">
         <div class="metric-row"><span>${t.fiveLabel}</span><span class="metric-val">${data.claude.fiveHourPercent !== null ? data.claude.fiveHourPercent + '%' : '--'}</span></div>
-        <div class="track"><div class="fill-c5" style="width:${c5}%"></div></div>
+        <div class="track"><div class="fill-bar" style="width:${c5}%; background:${c5Color};"></div></div>
       </div>
 
       <div class="meta">

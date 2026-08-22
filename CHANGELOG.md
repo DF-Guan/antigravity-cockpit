@@ -2,6 +2,13 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.31] - 2026-08-22
+### Enhanced UX, Multi-Tier Quota Alerts & Zero-Flicker Webview
+- **Zero-Flicker Tab Switching**: Added `retainContextWhenHidden: true` to prevent Webview DOM reloads and state resets when toggling editor tabs.
+- **Dynamic Quota Alert Progress Bars**: Integrated multi-tier warning colors for quota bars (Amber for <50%, Red for <20%).
+- **Interactive Micro-Animations**: Enhanced tactile feedback with button compression and refresh spin animations.
+- **High-Contrast Accessibility**: Added explicit WCAG borders for high-contrast IDE themes.
+
 ## [1.0.30] - 2026-08-22
 ### Real-Time SQLite WAL Stream Sensing Engine
 - **Sub-Second Conversation Streaming**: Replaced directory polling with direct SQLite-WAL (`.db-wal`) mtime stream sensing (captures prompt & response tokens instantly across all dialogue turns).
