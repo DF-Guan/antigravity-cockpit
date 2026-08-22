@@ -131,7 +131,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.27 Claude 风与满额状态修复版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.28 端口广域嗅探与准确计时版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -237,7 +237,7 @@ function queryEndpoint(port, token) {
                 'x-codeium-csrf-token': token,
                 'Connect-Protocol-Version': '1'
             },
-            timeout: 2500
+            timeout: 1500
         }, (res) => {
             if (res.statusCode === 200) {
                 let data = '';
@@ -285,7 +285,7 @@ async function probeLanguageServerQuota() {
                 '-NoProfile',
                 '-NonInteractive',
                 '-Command',
-                '(Get-CimInstance Win32_Process -Filter "Name like \'%language_server%\'").CommandLine'
+                '(Get-CimInstance Win32_Process | Where-Object {$_.CommandLine -match "csrf_token"}).CommandLine'
             ], { timeout: 4000 }, async (err, stdout) => {
                 if (err || !stdout) return reject(err || new Error("No language server process found"));
 
@@ -298,10 +298,11 @@ async function probeLanguageServerQuota() {
                     if (tokenMatch && portMatch) {
                         const token = tokenMatch[1];
                         const basePort = parseInt(portMatch[1]);
-                        const candidatePorts = [basePort + 3, basePort, basePort + 1, basePort + 2, basePort + 4, basePort + 5, 9517, 7207, 13966];
-
-                        for (const port of candidatePorts) {
+                        
+                        // 广域嗅探 basePort ~ basePort + 20
+                        for (let delta = 0; delta <= 20; delta++) {
                             if (resolved) break;
+                            const port = basePort + delta;
                             try {
                                 const res = await queryEndpoint(port, token);
                                 if (!resolved) {
@@ -326,9 +327,9 @@ async function probeLanguageServerQuota() {
                 if (tokenMatch && portMatch) {
                     const token = tokenMatch[1];
                     const basePort = parseInt(portMatch[1]);
-                    for (const port of [basePort + 3, basePort, basePort + 1]) {
+                    for (let delta = 0; delta <= 20; delta++) {
                         try {
-                            const res = await queryEndpoint(port, token);
+                            const res = await queryEndpoint(basePort + delta, token);
                             cachedPort = res.port;
                             cachedToken = res.token;
                             return resolve(res);
@@ -341,18 +342,37 @@ async function probeLanguageServerQuota() {
     });
 }
 
-function parseRelativeTime(desc) {
-    if (!desc) return { zh: '', en: '' };
-    const match = desc.match(/refresh in\s+([^.]+)/i);
-    if (match) {
-        const raw = match[1].trim();
-        let zh = raw.replace(/days?/i, '天')
-                    .replace(/hours?/i, '小时')
-                    .replace(/minutes?/i, '分钟')
-                    .replace(/,\s*/g, ' ') + '后';
-        return { zh: zh, en: 'in ' + raw };
+function formatTime(desc, isoResetTime) {
+    if (desc) {
+        const match = desc.match(/refresh in\s+([^.]+)/i);
+        if (match) {
+            const raw = match[1].trim();
+            let zh = raw.replace(/less than a minute/i, '不足1分钟')
+                        .replace(/days?/i, '天')
+                        .replace(/hours?/i, '小时')
+                        .replace(/minutes?/i, '分钟')
+                        .replace(/,\s*/g, ' ') + '后';
+            return { zh: zh, en: 'in ' + raw };
+        }
     }
-    return { zh: desc, en: desc };
+    if (isoResetTime) {
+        try {
+            const diffMs = new Date(isoResetTime).getTime() - Date.now();
+            if (diffMs <= 0) return { zh: '即将满额', en: 'Refreshing now' };
+            const totalMins = Math.round(diffMs / 60000);
+            const days = Math.floor(totalMins / 1440);
+            const hours = Math.floor((totalMins % 1440) / 60);
+            const mins = totalMins % 60;
+            let zhParts = [];
+            let enParts = [];
+            if (days > 0) { zhParts.push(`${days}天`); enParts.push(`${days}d`); }
+            if (hours > 0) { zhParts.push(`${hours}小时`); enParts.push(`${hours}h`); }
+            if (mins > 0 && days === 0) { zhParts.push(`${mins}分钟`); enParts.push(`${mins}m`); }
+            if (zhParts.length === 0) return { zh: '不足1分钟后', en: 'in <1 min' };
+            return { zh: zhParts.join(' ') + '后', en: 'in ' + enParts.join(' ') };
+        } catch (_) {}
+    }
+    return { zh: '', en: '' };
 }
 
 async function fetchLiveQuota(context, manual = false) {
@@ -377,7 +397,7 @@ async function fetchLiveQuota(context, manual = false) {
                     const frac = b.remainingFraction || 0;
                     const pct = Math.round(frac * 100);
                     currentTotalRemaining += frac;
-                    const times = parseRelativeTime(b.description);
+                    const times = formatTime(b.description, b.resetTime);
 
                     if (b.window === 'weekly') {
                         target.weeklyPercent = pct;
@@ -385,11 +405,11 @@ async function fetchLiveQuota(context, manual = false) {
                         if (times.en) target.weeklyResetTimeEn = times.en;
                     } else if (b.window === '5h') {
                         target.fiveHourPercent = pct;
-                        // 当 5 小时额度为 100% 满额（未处于消耗倒计时）时，明确标识满额就绪，绝不卡在“同步中...”
+                        // 准确处理 5小时冲刺额度：100%满额显示满额就绪，<100%精确展示倒计时
                         if (pct >= 100) {
                             target.fiveHourResetTimeZh = '满额就绪 (100% 充足)';
                             target.fiveHourResetTimeEn = 'Full (100% Ready)';
-                        } else if (times.zh && times.zh.length > 0) {
+                        } else if (times.zh) {
                             target.fiveHourResetTimeZh = times.zh;
                             target.fiveHourResetTimeEn = times.en;
                         } else {
