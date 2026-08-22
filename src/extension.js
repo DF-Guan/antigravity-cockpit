@@ -19,18 +19,18 @@ let liveQuotaState = {
     gemini: {
         weeklyPercent: null,
         fiveHourPercent: null,
-        weeklyResetTimeZh: '同步中...',
-        weeklyResetTimeEn: 'Syncing...',
-        fiveHourResetTimeZh: '同步中...',
-        fiveHourResetTimeEn: 'Syncing...'
+        weeklyResetTimeZh: '计算中...',
+        weeklyResetTimeEn: 'Calculating...',
+        fiveHourResetTimeZh: '满额就绪 (100% 充足)',
+        fiveHourResetTimeEn: 'Full (100% Ready)'
     },
     claude: {
         weeklyPercent: null,
         fiveHourPercent: null,
-        weeklyResetTimeZh: '同步中...',
-        weeklyResetTimeEn: 'Syncing...',
-        fiveHourResetTimeZh: '同步中...',
-        fiveHourResetTimeEn: 'Syncing...'
+        weeklyResetTimeZh: '计算中...',
+        weeklyResetTimeEn: 'Calculating...',
+        fiveHourResetTimeZh: '满额就绪 (100% 充足)',
+        fiveHourResetTimeEn: 'Full (100% Ready)'
     }
 };
 
@@ -131,7 +131,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.26 全主题自适应版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.27 Claude 风与满额状态修复版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -385,8 +385,17 @@ async function fetchLiveQuota(context, manual = false) {
                         if (times.en) target.weeklyResetTimeEn = times.en;
                     } else if (b.window === '5h') {
                         target.fiveHourPercent = pct;
-                        if (times.zh) target.fiveHourResetTimeZh = times.zh;
-                        if (times.en) target.fiveHourResetTimeEn = times.en;
+                        // 当 5 小时额度为 100% 满额（未处于消耗倒计时）时，明确标识满额就绪，绝不卡在“同步中...”
+                        if (pct >= 100) {
+                            target.fiveHourResetTimeZh = '满额就绪 (100% 充足)';
+                            target.fiveHourResetTimeEn = 'Full (100% Ready)';
+                        } else if (times.zh && times.zh.length > 0) {
+                            target.fiveHourResetTimeZh = times.zh;
+                            target.fiveHourResetTimeEn = times.en;
+                        } else {
+                            target.fiveHourResetTimeZh = '5小时滚动刷新';
+                            target.fiveHourResetTimeEn = '5-hour rolling reset';
+                        }
                     }
                 }
             }
@@ -470,10 +479,10 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.inputFormatted}** ｜ ⚡ 前缀缓存: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 输出: **${tokenAnalyticsState.outputFormatted}**\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini 原生系列 (周周期 & 5h冲刺)**\n`);
         tip.appendMarkdown(`- 7天周期剩余: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺剩余: **${g5}** ｜ 刷新倒计时: \`${liveQuotaState.gemini.fiveHourResetTimeZh || '计算中'}\`\n\n`);
+        tip.appendMarkdown(`- 5小时冲刺剩余: **${g5}** ｜ 状态/刷新: \`${liveQuotaState.gemini.fiveHourResetTimeZh}\`\n\n`);
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列 (周周期 & 5h冲刺)**\n`);
         tip.appendMarkdown(`- 7天周期剩余: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺剩余: **${c5}** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
+        tip.appendMarkdown(`- 5小时冲刺剩余: **${c5}** ｜ 状态/刷新: \`${liveQuotaState.claude.fiveHourResetTimeZh}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **实时流式响应测速**\n`);
         tip.appendMarkdown(`- 状态: ${speedDesc} ｜ 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
@@ -490,10 +499,10 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`- 📥 In: **${tokenAnalyticsState.inputFormatted}** ｜ ⚡ Cache: **${tokenAnalyticsState.cachedFormatted}** (${tokenAnalyticsState.cachedPercent}) ｜ 📤 Out: **${tokenAnalyticsState.outputFormatted}**\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini Suite (7-Day & 5h Windows)**\n`);
         tip.appendMarkdown(`- 7-Day Limit Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn || 'calculating'}\`\n\n`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Status/Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn}\`\n\n`);
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite (7-Day & 5h Windows)**\n`);
         tip.appendMarkdown(`- 7-Day Limit Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Status/Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **Live Generation Velocity**\n`);
         tip.appendMarkdown(`- Status: ${speedDescEn} ｜ Local Latency: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
@@ -613,8 +622,8 @@ function showQuickOverview(context) {
 
     const items = isZh ? [
         { label: `📊 当前会话消耗: ${tokenAnalyticsState.totalFormatted}`, description: `统计周期: 当前活跃会话 | 交互: ${tokenAnalyticsState.requests}轮 | 输入: ${tokenAnalyticsState.inputFormatted} | 输出: ${tokenAnalyticsState.outputFormatted}`, detail: '本地长会话上下文与前缀缓存多维分析' },
-        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 重置: ${g.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
-        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 重置: ${c.weeklyResetTimeZh} | 5h重置: ${g.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
+        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `⚡ 实时响应速率: ${speedInfo}`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏图表' },
@@ -622,8 +631,8 @@ function showQuickOverview(context) {
         { label: `⚙️ 打开插件设置`, description: '自定义预警阈值与刷新频率' }
     ] : [
         { label: `📊 Active Session Tokens: ${tokenAnalyticsState.totalFormatted}`, description: `Cycle: Active Session | Turns: ${tokenAnalyticsState.requests} | In: ${tokenAnalyticsState.inputFormatted} | Out: ${tokenAnalyticsState.outputFormatted}`, detail: 'Session context & prefix cache analytics' },
-        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h Reset: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
-        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h Reset: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
+        { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Live Velocity: ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' t/s' : 'Idle (0 t/s)'}`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
         { label: `🔄 Force Refresh Now`, description: 'Probe latest quota from Language Server' },
         { label: `🖥️ Open Visual Dashboard`, description: 'View brand-accurate quota cockpit' },
@@ -711,19 +720,19 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         weekLabel:   isZh ? '每周额度剩余 (7天周期)' : 'Weekly Limit Remaining (7-Day)',
         fiveLabel:   isZh ? '5小时冲刺额度剩余' : 'Five Hour Limit Remaining',
         resetLabel:  isZh ? '满额重置' : 'Reset In',
-        tierLabel:   isZh ? '算力服务' : 'Service',
-        geminiTier:  isZh ? 'Google 原生 TPU 算力池' : 'Google Native TPU Cluster',
-        claudeTier:  isZh ? 'Anthropic 第三方配额池' : 'Third-Party Quota Pool',
+        fiveResetLbl:isZh ? '5小时刷新' : '5h Reset',
         resetTimeG:  isZh ? data.gemini.weeklyResetTimeZh : data.gemini.weeklyResetTimeEn,
         resetTimeC:  isZh ? data.claude.weeklyResetTimeZh : data.claude.weeklyResetTimeEn,
+        fiveResetG:  isZh ? data.gemini.fiveHourResetTimeZh : data.gemini.fiveHourResetTimeEn,
+        fiveResetC:  isZh ? data.claude.fiveHourResetTimeZh : data.claude.fiveHourResetTimeEn,
         
-        tokenTitle:  isZh ? '📊 会话级 Token 消耗多维统计' : '📊 Session Token Analytics & Usage',
-        tokenDesc:   isZh ? '统计口径：基于本地长上下文会话与前缀缓存统计' : 'Scope: Local active session context & prefix cache',
+        tokenTitle:  isZh ? '📊 会话级 Token 消耗统计' : '📊 Session Token Analytics & Usage',
+        tokenDesc:   isZh ? '统计口径：基于本地长上下文会话与服务端前缀缓存实时统计' : 'Scope: Local active session context & server prefix cache',
         cycleBadge:  isZh ? '⏱️ 统计周期: 当前活跃会话' : '⏱️ Cycle: Active Session',
         
         heroTotLbl:  isZh ? '💎 本轮会话总消耗 (Total Tokens)' : '💎 Session Total Tokens',
         heroTotSub:  isZh ? '输入 + 输出累计吞吐规模' : 'Input + Output Cumulative Volume',
-        heroSpdLbl:  isZh ? '⚡ 实时流式速率 (Live Velocity)' : '⚡ Live Generation Velocity',
+        heroSpdLbl:  isZh ? '⚡ 实时生成速率 (Live Velocity)' : '⚡ Live Generation Velocity',
         heroSpdSub:  isZh ? `上次峰值: ${speed.peakTps} t/s ｜ 本地 IPC: ${speed.latencyMs}ms` : `Last Peak: ${speed.peakTps} t/s ｜ Local IPC: ${speed.latencyMs}ms`,
         
         idleText:    isZh ? '💤 待机就绪' : '💤 Idle Ready',
@@ -753,8 +762,8 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const cStat = statusInfo(Math.min(cW, c5));
 
     const speedValDisplay = speed.isStreaming
-        ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
-        : `<span class="hero-val" style="color:var(--text-muted);">0 <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
+        ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:14px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
+        : `<span class="hero-val" style="color:var(--text-muted);">0 <span style="font-size:14px;font-weight:700;">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
 
     return `<!DOCTYPE html>
 <html lang="${isZh ? 'zh-CN' : 'en'}">
@@ -765,43 +774,46 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
 <title>${t.title}</title>
 <style>
 :root {
-  --bg-main: var(--vscode-editor-background, #0d1117);
-  --bg-card: var(--vscode-sideBar-background, #161b22);
-  --bg-sub: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.04));
-  --border: var(--vscode-widget-border, rgba(255, 255, 255, 0.18));
-  --text-title: var(--vscode-editor-foreground, #ffffff);
-  --text-body: var(--vscode-editor-foreground, #e2e8f0);
-  --text-muted: var(--vscode-descriptionForeground, #94a3b8);
-  --c-gold: #fbbf24;
-  --c-blue: #38bdf8;
+  --bg-main: var(--vscode-editor-background, #181715);
+  --bg-card: var(--vscode-sideBar-background, #21201c);
+  --bg-sub: var(--vscode-editorWidget-background, #2a2824);
+  --border: var(--vscode-widget-border, rgba(245, 240, 230, 0.14));
+  --text-title: var(--vscode-editor-foreground, #fbfaf7);
+  --text-body: var(--vscode-editor-foreground, #d4d0c7);
+  --text-muted: var(--vscode-descriptionForeground, #9e988e);
+  --c-terracotta: #da7756;
+  --c-gold: #f59e0b;
+  --c-blue: #60a5fa;
   --c-green: #4ade80;
   --c-purple: #c084fc;
 }
 
 body.vscode-light {
-  --bg-main: var(--vscode-editor-background, #f6f8fa);
+  --bg-main: var(--vscode-editor-background, #faf9f5);
   --bg-card: var(--vscode-sideBar-background, #ffffff);
-  --bg-sub: #f0f2f5;
-  --border: var(--vscode-widget-border, #d0d7de);
-  --text-title: #1f2328;
-  --text-body: #333d47;
-  --text-muted: #57606a;
+  --bg-sub: #f3f1eb;
+  --border: var(--vscode-widget-border, #e5e2da);
+  --text-title: #1f1e1b;
+  --text-body: #4a463e;
+  --text-muted: #7d786e;
+  --c-terracotta: #c15f3e;
   --c-gold: #b45309;
-  --c-blue: #0969da;
-  --c-green: #1a7f37;
-  --c-purple: #7c3aed;
+  --c-blue: #2563eb;
+  --c-green: #15803d;
+  --c-purple: #7e22ce;
 }
 
 body.vscode-dark {
-  --bg-main: var(--vscode-editor-background, #0d1117);
-  --bg-card: var(--vscode-sideBar-background, #161b22);
-  --bg-sub: rgba(255, 255, 255, 0.04);
-  --border: var(--vscode-widget-border, rgba(255, 255, 255, 0.18));
-  --text-title: #ffffff;
-  --text-body: #e2e8f0;
-  --text-muted: #94a3b8;
-  --c-gold: #fbbf24;
-  --c-blue: #38bdf8;
+  --bg-main: var(--vscode-editor-background, #181715);
+  --bg-card: var(--vscode-sideBar-background, #21201c);
+  --bg-sub: #2a2824;
+  --border: var(--vscode-widget-border, rgba(245, 240, 230, 0.14));
+  --text-title: #fbfaf7;
+  --text-body: #d4d0c7;
+  --text-muted: #9e988e;
+  --c-terracotta: #da7756;
+  --c-gold: #f59e0b;
+  --c-blue: #60a5fa;
   --c-green: #4ade80;
   --c-purple: #c084fc;
 }
@@ -820,7 +832,7 @@ body {
   max-width: 640px;
 }
 
-/* Top Navigation Bar */
+/* Claude Style Header */
 .topbar {
   display: flex;
   align-items: center;
@@ -835,22 +847,25 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
-  font-weight: 800;
+  font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--text-title);
+  letter-spacing: -0.2px;
   white-space: nowrap;
 }
 .live-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  font-family: -apple-system, sans-serif;
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 10px;
-  background: rgba(34, 197, 94, 0.15);
+  background: rgba(74, 222, 128, 0.12);
   color: var(--c-green);
-  border: 1px solid rgba(34, 197, 94, 0.35);
-  font-weight: 700;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  font-weight: 600;
 }
 .dot {
   width: 6px;
@@ -868,27 +883,27 @@ body {
   background: var(--bg-card);
   color: var(--text-title);
   border: 1px solid var(--border);
-  padding: 5px 10px;
-  border-radius: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all .15s;
   white-space: nowrap;
 }
 .btn:hover { background: var(--vscode-button-background, #1f6feb); color: #fff; border-color: transparent; }
 .btn-lang {
-  background: rgba(56, 189, 248, 0.12);
-  color: var(--c-blue);
-  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(218, 119, 86, 0.12);
+  color: var(--c-terracotta);
+  border-color: rgba(218, 119, 86, 0.35);
 }
-.btn-lang:hover { background: #1f6feb; color: #fff; }
+.btn-lang:hover { background: var(--c-terracotta); color: #fff; }
 
-/* Clean Conservative Token Section */
+/* Claude Warm Minimalist Token Section */
 .token-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 14px;
   margin-bottom: 14px;
 }
@@ -897,29 +912,30 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
   gap: 8px;
 }
 .sec-title {
-  font-size: 14px;
-  font-weight: 800;
+  font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text-title);
 }
 .sec-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 3px;
 }
 .cycle-badge {
   font-size: 11px;
-  color: var(--c-blue);
+  color: var(--c-terracotta);
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -927,23 +943,23 @@ body {
 .hero-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 .hero-card {
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: 10px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 4px;
-  min-height: 80px;
+  min-height: 84px;
 }
 .hero-label {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -953,9 +969,10 @@ body {
   gap: 8px;
 }
 .hero-val {
-  font-size: 24px;
-  font-weight: 900;
+  font-size: 26px;
+  font-weight: 800;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .hero-sub {
   font-size: 11px;
@@ -963,12 +980,12 @@ body {
 }
 .idle-badge {
   font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--bg-sub);
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -976,27 +993,28 @@ body {
 .sub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 .sub-box {
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
+  border-radius: 8px;
+  padding: 10px 12px;
 }
 .sub-title {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-muted);
 }
 .sub-val {
-  font-size: 16px;
-  font-weight: 900;
-  margin: 2px 0;
+  font-size: 17px;
+  font-weight: 800;
+  margin: 3px 0;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 .sub-hint {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -1004,20 +1022,20 @@ body {
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .card-g { border-top: 3px solid #3b82f6; }
-.card-c { border-top: 3px solid #d97706; }
+.card-c { border-top: 3px solid var(--c-terracotta); }
 .card-head {
   display: flex;
   align-items: center;
@@ -1027,12 +1045,12 @@ body {
 .brand-box {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .logo-wrap {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1041,62 +1059,63 @@ body {
   flex-shrink: 0;
 }
 .brand-name {
-  font-size: 12px;
-  font-weight: 800;
+  font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-title);
   white-space: nowrap;
 }
 .brand-sub {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
 }
 .pill {
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(34, 197, 94, 0.15);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(74, 222, 128, 0.12);
   color: var(--c-green);
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  border: 1px solid rgba(74, 222, 128, 0.3);
   white-space: nowrap;
   flex-shrink: 0;
 }
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 .metric-row {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .metric-val {
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--text-title);
 }
 .track {
   height: 6px;
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
 }
 .fill-g { height: 100%; background: #3b82f6; width: 96%; }
 .fill-g5 { height: 100%; background: #3b82f6; width: 86%; }
-.fill-c { height: 100%; background: #d97706; width: 84%; }
-.fill-c5 { height: 100%; background: #d97706; width: 54%; }
+.fill-c { height: 100%; background: var(--c-terracotta); width: 84%; }
+.fill-c5 { height: 100%; background: var(--c-terracotta); width: 100%; }
 
 .meta {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding-top: 6px;
+  gap: 4px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 .meta-row {
@@ -1105,14 +1124,14 @@ body {
 }
 .meta-val {
   color: var(--text-title);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .footer {
   background: var(--bg-sub);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 8px;
+  padding: 8px 12px;
   font-size: 11px;
   color: var(--text-muted);
   display: flex;
@@ -1196,7 +1215,7 @@ body {
       <div class="card-head">
         <div class="brand-box">
           <div class="logo-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
               <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#3b82f6"/>
             </svg>
           </div>
@@ -1219,7 +1238,7 @@ body {
 
       <div class="meta">
         <div class="meta-row"><span>${t.resetLabel}</span><span class="meta-val">${t.resetTimeG}</span></div>
-        <div class="meta-row"><span>${t.tierLabel}</span><span class="meta-val">${t.geminiTier}</span></div>
+        <div class="meta-row"><span>${t.fiveResetLbl}</span><span class="meta-val" style="color:${g5 >= 100 ? 'var(--c-green)' : 'inherit'}">${t.fiveResetG}</span></div>
       </div>
     </div>
 
@@ -1228,8 +1247,8 @@ body {
       <div class="card-head">
         <div class="brand-box">
           <div class="logo-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M13.5 2.5L12 7L10.5 2.5C10.3 1.9 9.7 1.5 9 1.5C8.2 1.5 7.5 2.2 7.5 3C7.5 3.3 7.6 3.6 7.8 3.9L10.2 8.5L5.5 6.2C5.2 6.1 4.9 6 4.6 6C3.7 6 3 6.7 3 7.6C3 8.3 3.5 8.9 4.1 9.1L8.7 10.6L4.2 12.1C3.6 12.3 3.1 12.9 3.1 13.6C3.1 14.5 3.8 15.2 4.7 15.2C5 15.2 5.3 15.1 5.6 15L10.2 12.7L7.8 17.3C7.6 17.6 7.5 17.9 7.5 18.2C7.5 19 8.2 19.7 9 19.7C9.7 19.7 10.3 19.3 10.5 18.7L12 14.2L13.5 18.7C13.7 19.3 14.3 19.7 15 19.7C15.8 19.7 16.5 19 16.5 18.2C16.5 17.9 16.4 17.6 16.2 17.3L13.8 12.7L18.4 15C18.7 15.1 19 15.2 19.3 15.2C20.2 15.2 20.9 14.5 20.9 13.6C20.9 12.9 20.4 12.3 19.8 12.1L15.3 10.6L19.9 9.1C20.5 8.9 21 8.3 21 7.6C21 6.7 20.3 6 19.4 6C19.1 6 18.8 6.1 18.5 6.2L13.8 8.5L16.2 3.9C16.4 3.6 16.5 3.3 16.5 3C16.5 2.2 15.8 1.5 15 1.5C14.3 1.5 13.7 1.9 13.5 2.5Z" fill="#d97706"/>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M13.5 2.5L12 7L10.5 2.5C10.3 1.9 9.7 1.5 9 1.5C8.2 1.5 7.5 2.2 7.5 3C7.5 3.3 7.6 3.6 7.8 3.9L10.2 8.5L5.5 6.2C5.2 6.1 4.9 6 4.6 6C3.7 6 3 6.7 3 7.6C3 8.3 3.5 8.9 4.1 9.1L8.7 10.6L4.2 12.1C3.6 12.3 3.1 12.9 3.1 13.6C3.1 14.5 3.8 15.2 4.7 15.2C5 15.2 5.3 15.1 5.6 15L10.2 12.7L7.8 17.3C7.6 17.6 7.5 17.9 7.5 18.2C7.5 19 8.2 19.7 9 19.7C9.7 19.7 10.3 19.3 10.5 18.7L12 14.2L13.5 18.7C13.7 19.3 14.3 19.7 15 19.7C15.8 19.7 16.5 19 16.5 18.2C16.5 17.9 16.4 17.6 16.2 17.3L13.8 12.7L18.4 15C18.7 15.1 19 15.2 19.3 15.2C20.2 15.2 20.9 14.5 20.9 13.6C20.9 12.9 20.4 12.3 19.8 12.1L15.3 10.6L19.9 9.1C20.5 8.9 21 8.3 21 7.6C21 6.7 20.3 6 19.4 6C19.1 6 18.8 6.1 18.5 6.2L13.8 8.5L16.2 3.9C16.4 3.6 16.5 3.3 16.5 3C16.5 2.2 15.8 1.5 15 1.5C14.3 1.5 13.7 1.9 13.5 2.5Z" fill="var(--c-terracotta)"/>
             </svg>
           </div>
           <div>
@@ -1251,7 +1270,7 @@ body {
 
       <div class="meta">
         <div class="meta-row"><span>${t.resetLabel}</span><span class="meta-val">${t.resetTimeC}</span></div>
-        <div class="meta-row"><span>${t.tierLabel}</span><span class="meta-val">${t.claudeTier}</span></div>
+        <div class="meta-row"><span>${t.fiveResetLbl}</span><span class="meta-val" style="color:${c5 >= 100 ? 'var(--c-green)' : 'inherit'}">${t.fiveResetC}</span></div>
       </div>
     </div>
   </div>
