@@ -73,7 +73,12 @@ Always visible in your status bar with intelligent color alerts:
 
 ## ⚙️ Configuration
 
-Customize in **Settings** ➔ Search `Antigravity Cockpit`:
+You can open the extension configuration panel via any of the following ways:
+1. **Option 1 (Recommended)**: Click the **`⚙️ Settings`** button directly at the top of the Cockpit Dashboard;
+2. **Option 2**: Press `Ctrl + Shift + P` (or `Cmd + Shift + P`) and execute **`Antigravity Cockpit: Open Settings`**;
+3. **Option 3**: In Extensions view (`Ctrl + Shift + X`), click the gear icon on Antigravity Cockpit ➔ **`Extension Settings`**.
+
+### Available Configuration Options:
 
 - `agPrivateCockpit.refreshIntervalSeconds`: Auto-refresh interval in seconds (default: `15`).
 - `agPrivateCockpit.compactStatusBar`: Compact status bar mode with abbreviated names (default: `false`).

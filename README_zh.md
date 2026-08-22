@@ -75,7 +75,12 @@
 
 ## ⚙️ 自由定制设置
 
-在 IDE 设置中搜索 **`Antigravity Cockpit`** 即可个性化调整：
+可通过以下任意方式进入插件专属配置面板：
+1. **方式 1（最推荐）**：在配额驾驶舱仪表盘顶部，直接点击 **`⚙️ 设置`** 按钮；
+2. **方式 2**：按 `Ctrl + Shift + P` 输入并执行 **`Antigravity Cockpit: Open Settings`**；
+3. **方式 3**：在扩展管理列表（`Ctrl + Shift + X`）中找到本插件，点击齿轮图标 ➔ **`扩展设置 (Extension Settings)`**。
+
+### 支持调整的配置项：
 
 - `agPrivateCockpit.refreshIntervalSeconds`: 自动刷新频率（默认: `15` 秒）
 - `agPrivateCockpit.compactStatusBar`: 开启紧凑模式以节省状态栏空间（默认: `关闭`）
