@@ -1,6 +1,6 @@
 # 🛸 Antigravity Private Cockpit
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.36-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.37-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-核心产品力卖点为什么选择-private-cockpit)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-核心产品力卖点为什么选择-private-cockpit)
 [![No Ads](https://img.shields.io/badge/Ads-None%20%7C%20Pure%20Utility-blueviolet.svg)](#-核心产品力卖点为什么选择-private-cockpit)
@@ -16,6 +16,11 @@
 
 ## 📸 界面实测预览 (Visual Preview)
 
+### 📍 1. 底部状态栏微距常驻监控 (Native Status Bar Integration)
+> 官方矢量品牌图标 · 独立纯数字告警变色 · 亚秒级流速响应 · 极致紧凑 0 冗余死区
+![底部状态栏微距常驻监控](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_zh.png)
+
+### 🛸 2. 交互式可视化配额与多维 Token 驾驶舱 (Interactive Dashboard)
 | 🛸 实时可视化配额与多维 Token 驾驶舱 | 📍 状态栏微距排版与多维悬浮卡片 |
 | :---: | :---: |
 | ![配额驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png) | ![状态栏与悬浮卡片](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_zh.png) |
@@ -34,61 +39,40 @@
 * **0ms 极速冷启动**：基于本地瞬时快照对齐，打开 IDE 瞬间即可在状态栏看到最新配额，告别传统插件卡顿白屏；
 * **状态精准呈现**：满额明确标明 `满额就绪 (100% 充足)`，消耗时精确计算剩余恢复倒计时。
 
-### 3. 📊 会话级多维 Token 消耗深度分析
+### 3. 📊 会话级多维 Token 消耗深度分析与全量精度切换
 * **多维统计**：实时统计当前活跃会话的 **输入 Token、前缀缓存读取、输出 Token、交互轮次与总吞吐规模**；
+* **🔢 全精度一键切换**：支持在“K/M 缩略模式（`37.4M`）”与“千分位精确整数模式（`37,470,392`）”之间随时点击切换；
 * **缓存命中洞察**：清晰展示前缀缓存读取率（`98%+`），帮助开发者直观评估上下文复用效率与 Token 成本。
 
 ### 4. 🚀 SQLite-WAL 亚秒级流速感知引擎
 * **全场景灵敏响应**：直接监听本地会话事务日志，普通问答、长代码生成或多工具调度均能瞬间捕获；
-* **动态流速展示**：流式生成时实时动态跳动（`70 ~ 95 t/s`），空闲时自动平滑归位至待机并保留峰值记录。
+* **动态流速展示**：流式生成时实时动态跳动（`78.4 t/s`），待机时智能归零并保留历史峰值。
 
-### 5. 🎯 极简纯净、开箱即用与操作便利性
-* **纯粹实用工具**：零广告、零付费套路、零冗余弹窗，专注服务开发者核心需求；
-* **多级智能变色预警**：状态栏与驾驶舱进度条根据配额剩余联动变色（安全蓝/赤陶色、黄色警戒、红色极危）；
-* **后台保活防闪烁**：编辑器标签页切换无白屏重绘，滚动位置完美保留；
-* **全屏自适应无溢出**：从 `280px` 窄侧边栏到 `4K` 宽屏均实现自适应无缝缩放；
-* **一键双语切换**：支持简体中文与 English 自由切换。
-
----
-
-## 🔒 隐私与安全性全方位对比
-
-| 安全与技术维度 | 传统第三方配额插件 | 🛸 Antigravity Private Cockpit |
-| :--- | :--- | :--- |
-| **网络通信模式** | 需联网调用远程代理/外部服务 API | 🚫 **0 外部请求（100% 仅本地 `127.0.0.1` 环回直连）** |
-| **数据埋点与遥测** | 内置 Google/Mixpanel 等统计代码 | 🚫 **0 遥测上报、0 行为追踪、0 任何日志上传** |
-| **商业与广告** | 含有推广横幅、引导打赏或外部跳转 | 🛡️ **纯粹开发工具，纯净无广告，零干扰** |
-| **冷启动性能** | 每次启动卡顿白屏 3~5 秒 | ⚡ **0ms 极速启动（自动读取最后已知快照）** |
-| **双模型池隔离** | 混淆配额或单模型统计 | ✨ **Gemini 旗舰池 + 🎭 Claude/GPT 池独立双轨监测** |
+### 5. 🎯 纯粹高效的开发者交互体验
+* **✨ 官方矢量品牌图标**：集成 Google Gemini 四角星芒与 Anthropic Claude 十二角星芒原生矢量图标；
+* **🎨 独立纯数字变色**：图标与标签保持干净中性主题色，仅配额纯数字按安全（绿）、警戒（黄）、极低（红）三级独立着色；
+* **双模查看**：一键切换沉浸式 Webview 仪表盘或极简 QuickPick 快捷面板；
+* **智能自适应多语言**：支持中英文无缝切换，界面与状态栏文案 100% 本地化。
 
 ---
 
-## ⚙️ 个性化配置选项 (Configuration)
+## 🛠️ 配置项说明 (Configuration)
 
-在 VS Code / Antigravity IDE 设置中搜索 `agPrivateCockpit`：
+您可以在 VS Code / Antigravity IDE 设置中搜索 `agPrivateCockpit` 进行自定义：
 
-| 设置项 | 默认值 | 说明 |
-| :--- | :--- | :--- |
-| `agPrivateCockpit.defaultLanguage` | `"auto"` | 默认显示语言 (`"auto"`, `"zh"`, `"en"`) |
-| `agPrivateCockpit.refreshIntervalSeconds` | `15` | 配额大轮询周期（秒，最低 5 秒） |
-| `agPrivateCockpit.showGemini` | `true` | 是否在状态栏显示 Google Gemini 配额 |
-| `agPrivateCockpit.showClaude` | `true` | 是否在状态栏显示 Anthropic Claude & GPT 配额 |
-| `agPrivateCockpit.showTokenSpeed` | `true` | 是否在状态栏显示实时 Token 速率 |
-| `agPrivateCockpit.compactStatusBar` | `false` | 极简微距状态栏模式 |
-| `agPrivateCockpit.warningThreshold` | `50` | 告警黄色阈值（剩余百分比） |
-| `agPrivateCockpit.criticalThreshold` | `20` | 危险红色阈值（剩余百分比） |
-
----
-
-## ⌨️ 快捷指令 (Commands)
-
-* `F1` ➔ 输入 `Antigravity: 打开隐私配额驾驶舱`（打开可视化大屏）
-* `F1` ➔ 输入 `Antigravity: 快速查看配额与速率总览`（打开顶部命令快速下拉）
-* `F1` ➔ 输入 `Antigravity: 立即刷新配额`（强制从本地 Language Server 探测最新配额）
-* `F1` ➔ 输入 `Antigravity: 切换显示语言`（切换中英双语）
+| 配置项 | 默认值 | 说明 |
+| :--- | :---: | :--- |
+| `agPrivateCockpit.showGemini` | `true` | 是否在状态栏显示 Google Gemini 原生配额 |
+| `agPrivateCockpit.showClaude` | `true` | 是否在状态栏显示 Anthropic Claude & GPT 原生配额 |
+| `agPrivateCockpit.showTokenSpeed` | `true` | 是否在状态栏显示实时 Token 响应速率 (`t/s`) |
+| `agPrivateCockpit.compactStatusBar` | `false` | 极简模式（仅显示图标与周配额，隐藏 5h 冲刺） |
+| `agPrivateCockpit.refreshIntervalSeconds` | `15` | 后台探测刷新周期（秒，最低 5 秒） |
+| `agPrivateCockpit.warningThreshold` | `50` | 额度告警黄色预警阈值（%） |
+| `agPrivateCockpit.criticalThreshold` | `20` | 额度危险红色预警阈值（%） |
+| `agPrivateCockpit.defaultLanguage` | `"auto"` | 界面语言（`"auto"`, `"zh"`, `"en"`） |
 
 ---
 
 ## 📄 开源许可证 (License)
 
-本项目采用 [MIT License](LICENSE) 开源。
+本项目采用 [MIT License](LICENSE) 许可协议，请放心在个人及企业开发环境中使用。

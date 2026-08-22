@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.37] - 2026-08-22
+### Showcase Bottom Status Bar Banner in Documentation First Position
+- **Status Bar Showcase Banner**: Added high-definition horizontal banner screenshots (`statusbar_banner_zh.png` & `statusbar_banner_en.png`) to the first position of extension documentation.
+- **Visual Showcase Restructuring**: Placed bottom status bar integration upfront as the primary developer highlight.
+
 ## [1.0.36] - 2026-08-22
 ### Exact Token Precision Mode & Interactive Inspector
 - **Exact Precision Toggle (🔢 精度切换)**: Switch between compact abbreviations (`37.4M`, `128.5K`) and exact comma-separated integers (`37,470,392`, `128,500`) with 1 click.
@@ -26,6 +31,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.37] - 2026-08-22
+### Showcase Bottom Status Bar Banner in Documentation First Position
+- **Status Bar Showcase Banner**: Added high-definition horizontal banner screenshots (`statusbar_banner_zh.png` & `statusbar_banner_en.png`) to the first position of extension documentation.
+- **Visual Showcase Restructuring**: Placed bottom status bar integration upfront as the primary developer highlight.
 
 ## [1.0.36] - 2026-08-22
 ### Exact Token Precision Mode & Interactive Inspector
