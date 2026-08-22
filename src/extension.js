@@ -211,33 +211,70 @@ async function probeLanguageServerQuota() {
     return new Promise((resolve, reject) => {
         const isWin = process.platform === 'win32';
         const cmd = isWin
-            ? 'powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -like \\"*language_server*\\" } | Select-Object -ExpandProperty CommandLine"'
-            : 'ps -eo command | grep -i language_server';
+            ? 'powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -like \"*language_server*\" } | Select-Object ProcessId, CommandLine | ConvertTo-Json"'
+            : 'ps -eo pid,command | grep -i language_server';
 
-        exec(cmd, { timeout: 8000 }, async (err, stdout) => {
+        exec(cmd, { maxBuffer: 1024 * 1024 * 5, timeout: 8000 }, async (err, stdout) => {
             if (err || !stdout) return reject(err || new Error("No language_server process found"));
 
-            const tokens = [];
-            const tokenRegex = /--csrf_token\s+([a-zA-Z0-9-]+)/g;
-            let m;
-            while ((m = tokenRegex.exec(stdout)) !== null) {
-                tokens.push(m[1]);
+            let procs = [];
+            try {
+                const parsed = JSON.parse(stdout);
+                procs = Array.isArray(parsed) ? parsed : [parsed];
+            } catch (_) {
+                // Fallback regex parsing if JSON fails
+                const tokenRegex = /--csrf_token\s+([a-zA-Z0-9-]+)/g;
+                let m;
+                while ((m = tokenRegex.exec(stdout)) !== null) {
+                    procs.push({ ProcessId: null, CommandLine: stdout });
+                    break;
+                }
             }
-
-            const ports = [];
-            const portRegex = /--extension_server_port\s+(\d+)/g;
-            while ((m = portRegex.exec(stdout)) !== null) {
-                const basePort = parseInt(m[1]);
-                ports.push(basePort, basePort + 1, basePort + 2, basePort + 7, basePort + 8, basePort + 9, basePort + 10);
-            }
-
-            const allCandidatePorts = Array.from(new Set([...ports, 4178, 4179, 7682, 7683, 14450]));
-            if (tokens.length === 0) return reject(new Error("No CSRF tokens found"));
 
             let resolved = false;
 
-            for (const token of tokens) {
-                for (const port of allCandidatePorts) {
+            for (const p of procs) {
+                const pid = p.ProcessId;
+                const cmdLine = p.CommandLine || '';
+                const tokenMatch = cmdLine.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                if (!tokenMatch) continue;
+                const token = tokenMatch[1];
+
+                const portCmd = pid && isWin
+                    ? `powershell -NoProfile -Command "(Get-NetTCPConnection -OwningProcess ${pid} -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort) -join ','"`
+                    : '';
+
+                if (portCmd) {
+                    try {
+                        await new Promise(resDone => {
+                            exec(portCmd, { timeout: 3000 }, async (err2, portOut) => {
+                                const detectedPorts = (portOut || '').trim().split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+                                for (const port of detectedPorts) {
+                                    if (resolved) break;
+                                    try {
+                                        const res = await queryEndpoint(port, token);
+                                        if (!resolved) {
+                                            resolved = true;
+                                            cachedPort = res.port;
+                                            cachedToken = res.token;
+                                            resolve(res);
+                                            resDone();
+                                            return;
+                                        }
+                                    } catch (_) {}
+                                }
+                                resDone();
+                            });
+                        });
+                    } catch (_) {}
+                }
+
+                if (resolved) return;
+
+                // Fallback port scans
+                const fallbackPorts = [9517, 9518, 7207, 7208, 11399, 4178, 4179, 7682, 7683, 14450];
+                for (const port of fallbackPorts) {
+                    if (resolved) return;
                     queryEndpoint(port, token).then(res => {
                         if (!resolved) {
                             resolved = true;

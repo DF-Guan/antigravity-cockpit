@@ -2,6 +2,10 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.20] - 2026-08-22
+### Dynamic Port Auto-Discovery Engine
+- **PID-to-Port Binding**: Automatically retrieves listening TCP ports directly from `Get-NetTCPConnection -OwningProcess` for active Language Server processes, guaranteeing 100% live synchronization regardless of random port allocations.
+
 ## [1.0.19] - 2026-08-22
 ### Marketplace Asset Compatibility
 - **Universal Absolute Image URLs**: Switched all documentation image links to GitHub raw CDN URLs (`https://raw.githubusercontent.com/...`) for 100% compatibility with Open VSX and VS Code marketplace renderers.
