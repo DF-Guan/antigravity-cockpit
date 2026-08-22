@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.34] - 2026-08-22
+### Official Vector Icons & Ultra-Compact Status Bar Spacing
+- **Official Brand Icons**: Integrated custom vector font (`cockpit-icons.woff`) bringing official Google Gemini sparkle and Anthropic Claude asterisk icons to the VS Code status bar.
+- **Optimized Status Bar Spacing**: Consolidated 10 fragmented status bar items into 3 cohesive items, completely eliminating artificial wide margins.
+
 ## [1.0.33] - 2026-08-22
 ### Synchronized Core Product Advantages on Open VSX
 - **Live Marketplace Metadata Synchronized**: Updated Open VSX embedded package README to highlight 100% offline privacy, sub-second SQLite-WAL sensing, and 0ms instant startup.
@@ -10,6 +15,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.34] - 2026-08-22
+### Official Vector Icons & Ultra-Compact Status Bar Spacing
+- **Official Brand Icons**: Integrated custom vector font (`cockpit-icons.woff`) bringing official Google Gemini sparkle and Anthropic Claude asterisk icons to the VS Code status bar.
+- **Optimized Status Bar Spacing**: Consolidated 10 fragmented status bar items into 3 cohesive items, completely eliminating artificial wide margins.
 
 ## [1.0.33] - 2026-08-22
 ### Synchronized Core Product Advantages on Open VSX

@@ -4,9 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const { execFile, exec } = require('child_process');
 
-let sbGLabel, sbGWeekVal, sbG5hLabel, sbG5hVal;
-let sbCLabel, sbCWeekVal, sbC5hLabel, sbC5hVal;
-let sbSpeedLabel, sbSpeedVal;
+let sbGemini;
+let sbClaude;
+let sbSpeed;
 
 let refreshTimer;
 let speedTimer;
@@ -63,7 +63,6 @@ function scanRealTimeConversationActivity() {
         let latestMtime = 0;
         let totalBytes = 0;
 
-        // 1. 扫描实时 SQLite WAL 日志文件
         if (fs.existsSync(convDir)) {
             try {
                 const files = fs.readdirSync(convDir);
@@ -80,7 +79,6 @@ function scanRealTimeConversationActivity() {
             } catch (_) {}
         }
 
-        // 2. 扫描 brain 运行日志
         if (fs.existsSync(brainDir)) {
             try {
                 const convs = fs.readdirSync(brainDir);
@@ -203,7 +201,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.33 全面体验与多级预警增强版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.34 状态栏紧凑排版与官方矢量图标版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -216,27 +214,20 @@ function activate(context) {
         liveQuotaState.isLoading = false;
     }
 
-    // 1. Google Gemini 槽位
-    sbGLabel   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
-    sbGWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9999);
-    sbG5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9998);
-    sbG5hVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9997);
+    // 1. Google Gemini 紧凑槽位 (官方图标 + 紧密数值)
+    sbGemini = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
+    sbGemini.command = 'agPrivateCockpit.openDashboard';
+    context.subscriptions.push(sbGemini);
 
-    // 2. Claude & GPT 槽位
-    sbCLabel   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9996);
-    sbCWeekVal = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
-    sbC5hLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
-    sbC5hVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9993);
+    // 2. Claude & GPT 紧凑槽位 (官方图标 + 紧密数值)
+    sbClaude = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9995);
+    sbClaude.command = 'agPrivateCockpit.openDashboard';
+    context.subscriptions.push(sbClaude);
 
-    // 3. 实时 Token 速率槽位
-    sbSpeedLabel = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9992);
-    sbSpeedVal   = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9991);
-
-    const allItems = [sbGLabel, sbGWeekVal, sbG5hLabel, sbG5hVal, sbCLabel, sbCWeekVal, sbC5hLabel, sbC5hVal, sbSpeedLabel, sbSpeedVal];
-    allItems.forEach(item => {
-        item.command = 'agPrivateCockpit.openDashboard';
-        context.subscriptions.push(item);
-    });
+    // 3. 实时 Token 流速槽位
+    sbSpeed = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9990);
+    sbSpeed.command = 'agPrivateCockpit.openDashboard';
+    context.subscriptions.push(sbSpeed);
 
     context.subscriptions.push(
         vscode.commands.registerCommand('agPrivateCockpit.openDashboard', () => showDashboard(context)),
@@ -268,7 +259,7 @@ function activate(context) {
     fetchLiveQuota(context, false);
     restartAutoRefresh(context);
 
-    // 启动 1.5 秒 SQLite-WAL 亚秒级流速感知定时器
+    // 1.5 秒 SQLite-WAL 亚秒级流速感知定时器
     speedTimer = setInterval(() => updateLiveSpeedEngine(), 1500);
     context.subscriptions.push({ dispose: () => { if (speedTimer) clearInterval(speedTimer); } });
 }
@@ -375,7 +366,6 @@ async function probeLanguageServerQuota() {
                         const token = tokenMatch[1];
                         const basePort = parseInt(portMatch[1]);
                         
-                        // 广域探测 basePort ~ basePort + 20
                         for (let delta = 0; delta <= 20; delta++) {
                             if (resolved) break;
                             const port = basePort + delta;
@@ -587,7 +577,7 @@ function buildUnifiedTooltip() {
 }
 
 function renderStatusBar() {
-    if (!sbGLabel || !sbGWeekVal || !sbG5hLabel || !sbG5hVal || !sbCLabel || !sbCWeekVal || !sbC5hLabel || !sbC5hVal || !sbSpeedLabel || !sbSpeedVal) return;
+    if (!sbGemini || !sbClaude || !sbSpeed) return;
 
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const showGemini = cfg.get('showGemini', true);
@@ -604,81 +594,57 @@ function renderStatusBar() {
 
     const tip = buildUnifiedTooltip();
 
-    // 1. Google Gemini 槽位
+    // 1. Google Gemini 紧凑槽位 (官方图标 + 紧凑数字)
     if (showGemini) {
-        sbGLabel.text = compact ? `$(sparkle)G:` : `✨Gemini:`;
-        sbGLabel.color = undefined;
-        sbGLabel.tooltip = tip;
-        sbGLabel.show();
-
-        sbGWeekVal.text = gW !== null ? `${gW}%` : (liveQuotaState.isLoading ? `$(sync~spin)` : `--%`);
-        sbGWeekVal.color = getNumberAlertColor(gW, warnPct, critPct);
-        sbGWeekVal.tooltip = tip;
-        sbGWeekVal.show();
-
-        sbG5hLabel.text = `(5h:`;
-        sbG5hLabel.color = undefined;
-        sbG5hLabel.tooltip = tip;
-        sbG5hLabel.show();
-
-        sbG5hVal.text = g5 !== null ? `${g5}%)  ` : (liveQuotaState.isLoading ? `...)  ` : `--%)  `);
-        sbG5hVal.color = getNumberAlertColor(g5, warnPct, critPct);
-        sbG5hVal.tooltip = tip;
-        sbG5hVal.show();
-    } else {
-        sbGLabel.hide();
-        sbGWeekVal.hide();
-        sbG5hLabel.hide();
-        sbG5hVal.hide();
-    }
-
-    // 2. Claude & GPT 槽位
-    if (showClaude) {
-        sbCLabel.text = compact ? `$(organization)C:` : `🤖Claude/GPT:`;
-        sbCLabel.color = undefined;
-        sbCLabel.tooltip = tip;
-        sbCLabel.show();
-
-        sbCWeekVal.text = cW !== null ? `${cW}%` : (liveQuotaState.isLoading ? `$(sync~spin)` : `--%`);
-        sbCWeekVal.color = getNumberAlertColor(cW, warnPct, critPct);
-        sbCWeekVal.tooltip = tip;
-        sbCWeekVal.show();
-
-        sbC5hLabel.text = `(5h:`;
-        sbC5hLabel.color = undefined;
-        sbC5hLabel.tooltip = tip;
-        sbC5hLabel.show();
-
-        sbC5hVal.text = c5 !== null ? `${c5}%)` : (liveQuotaState.isLoading ? `...)` : `--%)`);
-        sbC5hVal.color = getNumberAlertColor(c5, warnPct, critPct);
-        sbC5hVal.tooltip = tip;
-        sbC5hVal.show();
-    } else {
-        sbCLabel.hide();
-        sbCWeekVal.hide();
-        sbC5hLabel.hide();
-        sbC5hVal.hide();
-    }
-
-    // 3. 实时 Token 速率槽位
-    if (showSpeed) {
-        sbSpeedLabel.text = compact ? `  $(zap)` : `   ⚡`;
-        sbSpeedLabel.color = undefined;
-        sbSpeedLabel.tooltip = tip;
-        sbSpeedLabel.show();
-
-        if (liveSpeedState.isStreaming) {
-            sbSpeedVal.text = compact ? `${Math.round(liveSpeedState.currentTps)}t/s` : ` ${liveSpeedState.currentTps} t/s`;
-            sbSpeedVal.color = '#38bdf8';
+        const gwStr = gW !== null ? `${gW}%` : (liveQuotaState.isLoading ? `...` : `--%`);
+        const g5Str = g5 !== null ? `${g5}%` : (liveQuotaState.isLoading ? `...` : `--%`);
+        
+        if (compact) {
+            sbGemini.text = `$(gemini-icon) ${gwStr}`;
         } else {
-            sbSpeedVal.text = compact ? `待机` : ` 0 t/s`;
-            sbSpeedVal.color = '#94a3b8';
+            sbGemini.text = `$(gemini-icon) ${gwStr} (5h: ${g5Str})`;
         }
-        sbSpeedVal.tooltip = tip;
-        sbSpeedVal.show();
+        
+        const lowestG = Math.min(gW !== null ? gW : 100, g5 !== null ? g5 : 100);
+        sbGemini.color = getNumberAlertColor(lowestG, warnPct, critPct);
+        sbGemini.tooltip = tip;
+        sbGemini.show();
     } else {
-        sbSpeedLabel.hide();
-        sbSpeedVal.hide();
+        sbGemini.hide();
+    }
+
+    // 2. Claude & GPT 紧凑槽位 (官方图标 + 紧凑数字)
+    if (showClaude) {
+        const cwStr = cW !== null ? `${cW}%` : (liveQuotaState.isLoading ? `...` : `--%`);
+        const c5Str = c5 !== null ? `${c5}%` : (liveQuotaState.isLoading ? `...` : `--%`);
+
+        if (compact) {
+            sbClaude.text = `$(claude-icon) ${cwStr}`;
+        } else {
+            sbClaude.text = `$(claude-icon) ${cwStr} (5h: ${c5Str})`;
+        }
+
+        const lowestC = Math.min(cW !== null ? cW : 100, c5 !== null ? c5 : 100);
+        sbClaude.color = getNumberAlertColor(lowestC, warnPct, critPct);
+        sbClaude.tooltip = tip;
+        sbClaude.show();
+    } else {
+        sbClaude.hide();
+    }
+
+    // 3. 实时流速槽位 (紧凑原生)
+    if (showSpeed) {
+        if (liveSpeedState.isStreaming) {
+            sbSpeed.text = `$(zap) ${liveSpeedState.currentTps} t/s`;
+            sbSpeed.color = '#38bdf8';
+        } else {
+            sbSpeed.text = `$(zap) 0 t/s`;
+            sbSpeed.color = '#94a3b8';
+        }
+        sbSpeed.tooltip = tip;
+        sbSpeed.show();
+    } else {
+        sbSpeed.hide();
     }
 }
 
@@ -928,7 +894,6 @@ body {
   min-width: 0;
 }
 
-/* Cockpit Top Navigation */
 .topbar {
   display: flex;
   align-items: center;
@@ -1004,7 +969,6 @@ body {
 .spin-icon { display: inline-block; transition: transform 0.4s ease; }
 .btn:active .spin-icon { transform: rotate(180deg); }
 
-/* Warm Minimalist Token Section */
 .token-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -1049,7 +1013,6 @@ body {
   flex-shrink: 0;
 }
 
-/* 2 Hero Highlights */
 .hero-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1105,7 +1068,6 @@ body {
   white-space: nowrap;
 }
 
-/* 4 Sub Metrics Grid */
 .sub-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1141,7 +1103,6 @@ body {
   text-overflow: ellipsis;
 }
 
-/* 2 Model Cards */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1162,7 +1123,6 @@ body {
 .card-g { border-top: 3px solid #3b82f6; }
 .card-c { border-top: 3px solid var(--c-terracotta); }
 
-/* Card Header with Adaptive Layout */
 .card-head {
   display: flex;
   align-items: center;
@@ -1287,7 +1247,6 @@ body {
 }
 .sync { font-weight: 700; color: var(--text-title); }
 
-/* Responsive Layout Rules */
 @media (max-width: 560px) {
   .hero-row { grid-template-columns: 1fr; }
   .sub-grid { grid-template-columns: 1fr 1fr; }
@@ -1316,7 +1275,6 @@ body {
     </div>
   </div>
 
-  <!-- Token Analytics Section -->
   <div class="token-section">
     <div class="sec-header">
       <div class="sec-header-left">
@@ -1326,7 +1284,6 @@ body {
       <div class="cycle-badge">${t.cycleBadge}</div>
     </div>
 
-    <!-- 2 Top Hero Cards -->
     <div class="hero-row">
       <div class="hero-card">
         <div class="hero-label">${t.heroTotLbl}</div>
@@ -1345,7 +1302,6 @@ body {
       </div>
     </div>
 
-    <!-- 4 Sub-Metrics Grid -->
     <div class="sub-grid">
       <div class="sub-box">
         <div class="sub-title">${t.inTitle}</div>
@@ -1370,9 +1326,7 @@ body {
     </div>
   </div>
 
-  <!-- Quotas Grid -->
   <div class="grid">
-    <!-- Google Gemini -->
     <div class="card card-g">
       <div class="card-head">
         <div class="brand-box">
@@ -1404,7 +1358,6 @@ body {
       </div>
     </div>
 
-    <!-- Anthropic Claude & GPT -->
     <div class="card card-c">
       <div class="card-head">
         <div class="brand-box">
