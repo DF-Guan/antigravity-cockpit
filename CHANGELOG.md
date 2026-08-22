@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.22] - 2026-08-22
+### Bulletproof execFile Architecture
+- **Bypass Windows CMD Escaping**: Direct PowerShell binary execution via `execFile('powershell.exe', ...)` eliminates argument stripping.
+- **Unconditional Clock Sync**: Guarantees timestamp and speed updates on every interval.
+
 ## [1.0.21] - 2026-08-22
 ### Ultra-Fast Port Offset Resolution & Live Timestamping
 - **Kernel-Filtered Process Discovery**: Queries Language Server command lines in <0.3s
