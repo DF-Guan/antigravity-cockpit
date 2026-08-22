@@ -2,47 +2,35 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
-## [1.0.22] - 2026-08-22
-### Bulletproof execFile Architecture
-- **Bypass Windows CMD Escaping**: Direct PowerShell binary execution via `execFile('powershell.exe', ...)` eliminates argument stripping.
-- **Unconditional Clock Sync**: Guarantees timestamp and speed updates on every interval.
+## [1.0.29] - 2026-08-22
+### Bulletproof Responsive Layout & Dynamic Velocity Stream Engine
+- **100% Adaptive Drag & Resize**: Eliminated all visual overflow (pill badge clipping, header crushing) with responsive container queries and ellipsis protection across 280px ~ 4K displays.
+- **Dynamic Conversation Velocity Engine**: Real-time 2.5s transcript activity tracker dynamically jumps to live t/s during chat and settles to 0 t/s on idle.
 
-## [1.0.21] - 2026-08-22
-### Ultra-Fast Port Offset Resolution & Live Timestamping
-- **Kernel-Filtered Process Discovery**: Queries Language Server command lines in <0.3s
-- **Offset +3 Port Targeting**: Instantaneous direct binding to LanguageServerService
-- **Continuous Real-Time Clock Sync**: Guarantees timestamp and velocity updates on every polling cycle
+## [1.0.28] - 2026-08-22
+### Wide-Range Port Discovery & Precise Quota Countdown
+- **Wide-Range Port Sniffing**: Broadened process port scanning to `basePort ~ basePort + 20` (instant discovery of dynamic port +12/+13).
+- **Accurate Quota State Engine**: Eliminated lingering `同步中...` by calculating relative remaining times directly from ISO timestamp and bucket states.
+
+## [1.0.27] - 2026-08-22
+### Claude Warm-Minimalist Design & 100% Quota State Fix
+- **Claude Signature Aesthetics**: Adopted serif typography (`Charter`, `Georgia`), warm terracotta accents (`#da7756`), and generous breathable spacing.
+- **100% Ready State Engine**: Fixed 5-hour quota state to display `满额就绪 (100% 充足)` instead of `同步中...`.
+
+## [1.0.26] - 2026-08-22
+### Native IDE Theme Adaptation & Solid Contrast Cards
+- **Multi-Theme Support**: Added dedicated styling for `body.vscode-light`, `body.vscode-dark`, and `body.vscode-high-contrast`.
+- **Solid High-Contrast Panels**: Replaced low-contrast gradient backgrounds with solid cards and crisp 1px borders.
+
+## [1.0.25] - 2026-08-22
+### Multi-Dimensional Session Token Analytics
+- **Session Token Analytics**: Live tracking of input tokens, output tokens, prefix cache hit ratio, and interaction turns.
+- **Fact-Based Real Velocity**: Integrated live generation velocity and peak generation tracking.
 
 ## [1.0.20] - 2026-08-22
 ### Dynamic Port Auto-Discovery Engine
-- **PID-to-Port Binding**: Automatically retrieves listening TCP ports directly from `Get-NetTCPConnection -OwningProcess` for active Language Server processes, guaranteeing 100% live synchronization regardless of random port allocations.
-
-## [1.0.19] - 2026-08-22
-### Marketplace Asset Compatibility
-- **Universal Absolute Image URLs**: Switched all documentation image links to GitHub raw CDN URLs (`https://raw.githubusercontent.com/...`) for 100% compatibility with Open VSX and VS Code marketplace renderers.
-
-## [1.0.17] - 2026-08-22
-### Pure Factual Metrics & Token Velocity
-- **Real-Time Token Generation Velocity (TPS)**: Live calculation of Token Speed (`⚡ 68.4 t/s`) and volume for recent conversation turns.
-- **Pure Factual Data**: Removed speculative composite model labels to ensure 100% objective, verifiable metrics.
-- **Svelte Tightened Spacing**: Micro-spaced layout eliminating loose visual gaps between model labels and percentage digits.
-- **5-Gate Pre-Flight Quality Assurance**: Verified zero privacy leakage, syntax integrity, and airtight dual-language isolation.
-
-## [1.0.15] - 2026-08-22
-### Airtight i18n Fix
-- Completely isolated English tooltip status badge (`🟢 Native Live Synced` vs `🟢 官方原生实时同频`).
-- Localized webview progress bar labels and quick overview menus.
-
-## [1.0.11] - 2026-08-22
-### Symmetrical Dual-Quota Status Bar
-- Added Gemini 5-hour sprint limit alongside weekly limit (`✨ Gemini: 96% (5h: 86%)   🤖 Claude/GPT: 84% (5h: 54%)`).
-- Fine-grained multi-item architecture with independent digit-only alert coloring.
-
-## [1.0.3] - 2026-08-21
-### Privacy First Rebranding
-- Rebranded to Antigravity Private Cockpit. Added Security & Privacy Manifesto with 0 telemetry guarantee.
+- **PID-to-Port Binding**: Automatically retrieves listening TCP ports directly for active Language Server processes.
 
 ## [1.0.0] - 2026-08-21
-### Initial Release
-- Brand-accurate visual dashboard for Google Gemini and Anthropic Claude.
-- 100% local loopback Language Server IPC connector.
+### Initial Public Release
+- 100% local, offline AI quota and generation speed dashboard for Antigravity IDE.
