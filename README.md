@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 100% Offline & Zero-Telemetry AI Quota Monitor for Antigravity IDE
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.16-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.17-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-why-private-cockpit-security--privacy-manifesto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

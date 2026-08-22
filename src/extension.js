@@ -40,7 +40,7 @@ let liveSpeedState = {
     tps: 68.4,
     tokens: 1250,
     durationSec: 18.2,
-    activeModel: 'Gemini 3.7 / Claude 3.7',
+    
     lastMeasuredTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 };
 
@@ -426,7 +426,7 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`- 每周剩余额度: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
         tip.appendMarkdown(`- 5小时冲刺额度: **${c5}** ｜ 刷新倒计时: \`${liveQuotaState.claude.fiveHourResetTimeZh || '计算中'}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **最近一轮对话生成速率**\n`);
-        tip.appendMarkdown(`- 生成速率: **${liveSpeedState.tps} Tokens/秒** (${liveSpeedState.activeModel})\n`);
+        tip.appendMarkdown(`- 生成速率: **${liveSpeedState.tps} Tokens/秒** \n`);
         tip.appendMarkdown(`- 测算时间: \`${liveSpeedState.lastMeasuredTime}\` ｜ 估算产出: \`~${liveSpeedState.tokens} tokens\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
@@ -440,7 +440,7 @@ function buildUnifiedTooltip() {
         tip.appendMarkdown(`- Weekly Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
         tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn || 'calculating'}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **Recent Generation Velocity**\n`);
-        tip.appendMarkdown(`- Speed: **${liveSpeedState.tps} Tokens/sec** (${liveSpeedState.activeModel})\n`);
+        tip.appendMarkdown(`- Speed: **${liveSpeedState.tps} Tokens/sec** \n`);
         tip.appendMarkdown(`- Measured: \`${liveSpeedState.lastMeasuredTime}\` ｜ Output: \`~${liveSpeedState.tokens} tokens\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
@@ -735,7 +735,7 @@ body{background:var(--vscode-editor-background,#0d1117);color:var(--text);font-f
     <div class="speed-info">
       <div>
         <div style="font-size:13px;font-weight:700;color:var(--text);">${t.speedTitle}</div>
-        <div class="speed-lbl">${speed.activeModel} • ${t.speedSub}</div>
+        <div class="speed-lbl">${t.speedSub}</div>
       </div>
     </div>
     <div style="text-align:right;">

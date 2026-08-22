@@ -1,7 +1,7 @@
 # 🛸 Antigravity Private Cockpit
 ### 🔒 纯本地零泄露 · AI 配额实时驾驶舱 (Zero-Telemetry AI Quota Monitor)
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.16-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.17-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-为什么选择-private-cockpit-隐私安全宣言)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
