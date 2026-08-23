@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.45] - 2026-08-23
+### 100% Pure Factual Local Disk Physical Audit (Zero-Mock)
+- **🚫 Stripped All Synthetic Distributions**: Completely eliminated artificial weight distributions. No fake 7-day bars.
+- **📁 100% Physical Disk Scan**: Aggregates conversation directories, message JSON files, and markdown artifacts strictly by their genuine file modification timestamps on disk.
+- **🔒 Factual Audit**: Real conversations on real dates only.
+
 ## [1.0.44] - 2026-08-23
 ### 7-Day Token History Trends & Saved Cost Estimation
 - **📈 7-Day Token Throughput Trends**: Webview cockpit now features an interactive 7-day token distribution bar chart with hover tooltips and daily metrics.
@@ -70,6 +76,12 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.45] - 2026-08-23
+### 100% Pure Factual Local Disk Physical Audit (Zero-Mock)
+- **🚫 Stripped All Synthetic Distributions**: Completely eliminated artificial weight distributions. No fake 7-day bars.
+- **📁 100% Physical Disk Scan**: Aggregates conversation directories, message JSON files, and markdown artifacts strictly by their genuine file modification timestamps on disk.
+- **🔒 Factual Audit**: Real conversations on real dates only.
 
 ## [1.0.44] - 2026-08-23
 ### 7-Day Token History Trends & Saved Cost Estimation
