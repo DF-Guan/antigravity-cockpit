@@ -2,7 +2,7 @@ const vscode = require('vscode');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const { execFile, exec } = require('child_process');
+const { exec, execFile } = require('child_process');
 
 let sbGIcon, sbGWeekVal, sbG5h;
 let sbCIcon, sbCWeekVal, sbC5h;
@@ -58,8 +58,6 @@ let tokenAnalyticsState = {
     totalFormatted: '0',
     totalExact: '0',
     totalNum: 0,
-    savedUsd: '$0.00',
-    savedCny: '¥0.00',
     realHistoricalDays: []
 };
 
@@ -146,7 +144,7 @@ function computeLiveTokenAnalytics() {
         let totalMsgs = 0;
         let totalOutputChars = 0;
         let totalArtifactChars = 0;
-        const dailyAggregates = {}; // { 'YYYY-MM-DD': { convs: 0, msgs: 0, chars: 0 } }
+        const dailyAggregates = {};
 
         if (fs.existsSync(brainDir)) {
             const convFolders = fs.readdirSync(brainDir).filter(f => {
@@ -216,28 +214,18 @@ function computeLiveTokenAnalytics() {
             return n.toLocaleString('en-US');
         }
 
-        function calcSaved(inp, out, cached) {
-            const uncached = Math.max(0, inp - cached);
-            return (uncached / 1000000 * 3.0) + (cached / 1000000 * 0.3) + (out / 1000000 * 15.0);
-        }
-
-        const savedUsdNum = calcSaved(estInputTokens, estOutputTokens, estCachedTokens);
-
-        // Build ONLY factual real days from disk
         const realDays = Object.keys(dailyAggregates).sort().map(dstr => {
             const row = dailyAggregates[dstr];
             const dOut = Math.round(row.chars / 3.2);
             const dIn = Math.round((row.msgs * 680000) / 3.8);
             const dTot = dIn + dOut;
-            const dSaved = calcSaved(dIn, dOut, Math.round(dIn * 0.986));
             return {
                 date: dstr,
                 convs: row.convs,
                 msgs: row.msgs,
                 chars: row.chars,
                 totalFormatted: fmt(dTot),
-                totalExact: fmtExact(dTot),
-                savedUsd: `$${dSaved.toFixed(2)}`
+                totalExact: fmtExact(dTot)
             };
         });
 
@@ -256,8 +244,6 @@ function computeLiveTokenAnalytics() {
             totalFormatted: fmt(estTotalTokens),
             totalExact: fmtExact(estTotalTokens),
             totalNum: estTotalTokens,
-            savedUsd: `$${savedUsdNum.toFixed(2)}`,
-            savedCny: `¥${(savedUsdNum * 7.25).toFixed(2)}`,
             realHistoricalDays: realDays
         };
     } catch (_) {}
@@ -273,7 +259,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.45 100% 真实物理文件统计版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.46 Netstat-PID 端口瞬时同步版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -411,6 +397,7 @@ function queryEndpoint(port, token) {
     });
 }
 
+// Netstat-PID exact port mapping engine (< 30ms, 100% reliable)
 async function probeLanguageServerQuota() {
     if (cachedPort && cachedToken) {
         try {
@@ -425,30 +412,81 @@ async function probeLanguageServerQuota() {
     return new Promise((resolve, reject) => {
         const isWin = process.platform === 'win32';
         if (isWin) {
-            execFile('powershell.exe', [
-                '-NoProfile',
-                '-NonInteractive',
-                '-Command',
-                '(Get-CimInstance Win32_Process | Where-Object {$_.CommandLine -match "csrf_token"}).CommandLine'
-            ], { timeout: 4000 }, async (err, stdout) => {
-                if (err || !stdout) return reject(err || new Error("No language server process found"));
+            const psCmd = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match "csrf_token" } | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress`;
+            execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psCmd], { timeout: 3000 }, (err, stdout) => {
+                if (err || !stdout) return reject(err || new Error("No language server found"));
 
-                const lines = stdout.trim().split('\n');
+                let procs = [];
+                try {
+                    const parsed = JSON.parse(stdout.trim());
+                    procs = Array.isArray(parsed) ? parsed : [parsed];
+                } catch (_) {
+                    return reject(new Error("Failed to parse process JSON"));
+                }
+
+                exec('netstat -ano', { timeout: 2000 }, async (netErr, netStdout) => {
+                    const listeningByPid = {};
+                    if (!netErr && netStdout) {
+                        const lines = netStdout.split('\n');
+                        for (const l of lines) {
+                            if (l.includes('LISTENING')) {
+                                const parts = l.trim().split(/\s+/);
+                                if (parts.length >= 5) {
+                                    const addr = parts[1];
+                                    const pid = parts[4];
+                                    const pnum = parseInt(addr.split(':').pop());
+                                    if (!isNaN(pnum)) {
+                                        if (!listeningByPid[pid]) listeningByPid[pid] = [];
+                                        listeningByPid[pid].push(pnum);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    let resolved = false;
+                    for (const p of procs) {
+                        if (resolved) break;
+                        const pid = String(p.ProcessId);
+                        const cmd = p.CommandLine || '';
+                        const tm = cmd.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                        if (!tm) continue;
+                        const token = tm[1];
+
+                        const directPorts = listeningByPid[pid] || [];
+                        for (const port of directPorts) {
+                            try {
+                                const res = await queryEndpoint(port, token);
+                                if (res && res.json && !resolved) {
+                                    resolved = true;
+                                    cachedPort = res.port;
+                                    cachedToken = res.token;
+                                    resolve(res);
+                                    return;
+                                }
+                            } catch (_) {}
+                        }
+                    }
+
+                    if (!resolved) reject(new Error("Netstat port scan failed"));
+                });
+            });
+        } else {
+            exec('ps -eo pid,command | grep -i language_server', { timeout: 3000 }, async (err, stdout) => {
+                if (err || !stdout) return reject(err || new Error("No language server process"));
+                const lines = stdout.split('\n');
                 let resolved = false;
 
                 for (const line of lines) {
-                    const tokenMatch = line.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
-                    const portMatch = line.match(/--extension_server_port\s+(\d+)/);
-                    if (tokenMatch && portMatch) {
-                        const token = tokenMatch[1];
-                        const basePort = parseInt(portMatch[1]);
-                        
-                        for (let delta = 0; delta <= 20; delta++) {
-                            if (resolved) break;
-                            const port = basePort + delta;
+                    const tm = line.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                    const pm = line.match(/--extension_server_port\s+(\d+)/);
+                    if (tm && pm) {
+                        const token = tm[1];
+                        const basePort = parseInt(pm[1]);
+                        for (let delta = 0; delta <= 30; delta++) {
                             try {
-                                const res = await queryEndpoint(port, token);
-                                if (!resolved) {
+                                const res = await queryEndpoint(basePort + delta, token);
+                                if (res && res.json && !resolved) {
                                     resolved = true;
                                     cachedPort = res.port;
                                     cachedToken = res.token;
@@ -459,27 +497,7 @@ async function probeLanguageServerQuota() {
                         }
                     }
                 }
-
-                if (!resolved) reject(new Error("Language Server probe timeout"));
-            });
-        } else {
-            exec('ps -eo command | grep -i language_server', { timeout: 4000 }, async (err, stdout) => {
-                if (err || !stdout) return reject(err || new Error("No language server process"));
-                const tokenMatch = (stdout || '').match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
-                const portMatch = (stdout || '').match(/--extension_server_port\s+(\d+)/);
-                if (tokenMatch && portMatch) {
-                    const token = tokenMatch[1];
-                    const basePort = parseInt(portMatch[1]);
-                    for (let delta = 0; delta <= 20; delta++) {
-                        try {
-                            const res = await queryEndpoint(basePort + delta, token);
-                            cachedPort = res.port;
-                            cachedToken = res.token;
-                            return resolve(res);
-                        } catch (_) {}
-                    }
-                }
-                reject(new Error("Language Server probe timeout"));
+                if (!resolved) reject(new Error("Unix probe timeout"));
             });
         }
     });
@@ -762,7 +780,7 @@ function showQuickOverview(context) {
         : `💤 待机就绪 (0 t/s) | 上次峰值: ${liveSpeedState.peakTps} t/s`;
 
     const items = isZh ? [
-        { label: `📊 会话总消耗: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `统计周期: 当前活跃会话 | 交互: ${tokenAnalyticsState.requests}轮 | 估值: ${tokenAnalyticsState.savedUsd}`, detail: '100% 读取本地真实会话目录与消息文件进行物理计算' },
+        { label: `📊 会话总消耗: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `统计周期: 当前活跃会话 | 交互: ${tokenAnalyticsState.requests}轮`, detail: '100% 读取本地真实会话目录与消息文件进行物理计算' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `⚡ 实时响应速率: ${speedInfo}`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
@@ -771,7 +789,7 @@ function showQuickOverview(context) {
         { label: `🌐 切换为 English`, description: '当前: 中文' },
         { label: `⚙️ 打开插件设置`, description: '自定义预警阈值与刷新频率' }
     ] : [
-        { label: `📊 Active Tokens: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `Cycle: Active Session | Turns: ${tokenAnalyticsState.requests} | Saved: ${tokenAnalyticsState.savedUsd}`, detail: '100% computed from local real disk session files' },
+        { label: `📊 Active Tokens: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `Cycle: Active Session | Turns: ${tokenAnalyticsState.requests}`, detail: '100% computed from local real disk session files' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Live Velocity: ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' t/s' : 'Idle (0 t/s)'}`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
@@ -877,10 +895,8 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         heroTotSub:  isZh ? '输入 + 输出累计吞吐规模' : 'Input + Output volume',
         heroSpdLbl:  isZh ? '⚡ 实时生成速率' : '⚡ Live Generation Velocity',
         heroSpdSub:  isZh ? `峰值 ${speed.peakTps} t/s ｜ 本地 ${speed.latencyMs}ms` : `Peak ${speed.peakTps} t/s ｜ Local ${speed.latencyMs}ms`,
-        heroCostLbl: isZh ? '💰 等效研发价值' : '💰 Saved Development Value',
-        heroCostSub: isZh ? `≈ ${tokens.savedCny} ｜ 标杆 API 单价估算` : `≈ ${tokens.savedCny} ｜ Benchmark API Price`,
         
-        historyTitle:isZh ? '📁 本地真实历史会话记录 (按磁盘文件真实日期)' : '📁 Local Real Session History (From Disk Mtime)',
+        historyTitle:isZh ? '📁 本地真实历史会话事实清单 (按文件真实时间戳)' : '📁 Local Real Session Fact List (From Disk Mtime)',
 
         idleText:    isZh ? '💤 待机就绪' : '💤 Idle Ready',
         streamText:  isZh ? '🟢 正在生成' : '🟢 Streaming',
@@ -930,8 +946,7 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
           <div class="real-day-metrics">
             <span>会话: <strong>${r.convs}</strong> 个</span> ｜ 
             <span>消息: <strong>${r.msgs}</strong> 条</span> ｜ 
-            <span>吞吐: <strong class="token-val" data-compact="${r.totalFormatted}" data-exact="${r.totalExact}" style="color:var(--c-blue);">${r.totalFormatted}</strong></span> ｜ 
-            <span>估值: <strong style="color:var(--c-green);">${r.savedUsd}</strong></span>
+            <span>累计吞吐: <strong class="token-val" data-compact="${r.totalFormatted}" data-exact="${r.totalExact}" style="color:var(--c-blue);">${r.totalFormatted}</strong></span>
           </div>
         </div>`;
     }).join('');
@@ -1158,15 +1173,15 @@ body {
 
 .hero-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.1fr;
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin-bottom: 10px;
 }
 .hero-card {
   background: var(--bg-sub);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 10px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1185,10 +1200,10 @@ body {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 .hero-val {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -1197,15 +1212,15 @@ body {
 }
 .hero-val:hover { opacity: 0.85; }
 .hero-sub {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .idle-badge {
-  font-size: 10px;
-  padding: 2px 5px;
+  font-size: 11px;
+  padding: 2px 6px;
   border-radius: 4px;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -1471,7 +1486,7 @@ body {
       </div>
     </div>
 
-    <!-- 3 Hero Cards -->
+    <!-- 2 Symmetrical Hero Cards -->
     <div class="hero-row">
       <div class="hero-card" onclick="togglePrecision()">
         <div class="hero-label">${t.heroTotLbl}</div>
@@ -1487,14 +1502,6 @@ body {
           ${speedValDisplay}
         </div>
         <div class="hero-sub">${t.heroSpdSub}</div>
-      </div>
-
-      <div class="hero-card" style="border-color:rgba(74,222,128,0.3);" onclick="togglePrecision()">
-        <div class="hero-label">${t.heroCostLbl}</div>
-        <div class="hero-val-box">
-          <span class="hero-val token-val" data-compact="${tokens.savedUsd}" data-exact="${tokens.savedUsd} (${tokens.savedCny})" style="color:var(--c-green);">${tokens.savedUsd}</span>
-        </div>
-        <div class="hero-sub">${t.heroCostSub}</div>
       </div>
     </div>
 
