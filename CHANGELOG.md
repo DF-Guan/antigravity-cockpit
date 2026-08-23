@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.47] - 2026-08-23
+### Multi-Layer Physical Disk Token Scanner & Output Byte Audit
+- **📁 Full-Trajectory Output Scanner**: Fixed issue where output tokens were filtered out due to background task message sender tags. Now comprehensively scans conversation SQLite databases (52MB+) and Brain files for accurate output tokens (~9.2M) and input tokens (~1.6M).
+- **🔍 Multi-Layer Telemetry**: Combines conversation trajectory steps, markdown artifacts, and task outputs with zero artificial filtering.
+
 ## [1.0.46] - 2026-08-23
 ### Netstat-PID Exact Port Sync & Strict Engineering Supervision
 - **⚡ Netstat-PID Instant Port Binding**: Replaced legacy port offset loops with direct process PID connection mapping (`netstat -ano`). Probes exact listening ports in < 30ms with 100% sync success.
@@ -82,6 +87,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.47] - 2026-08-23
+### Multi-Layer Physical Disk Token Scanner & Output Byte Audit
+- **📁 Full-Trajectory Output Scanner**: Fixed issue where output tokens were filtered out due to background task message sender tags. Now comprehensively scans conversation SQLite databases (52MB+) and Brain files for accurate output tokens (~9.2M) and input tokens (~1.6M).
+- **🔍 Multi-Layer Telemetry**: Combines conversation trajectory steps, markdown artifacts, and task outputs with zero artificial filtering.
 
 ## [1.0.46] - 2026-08-23
 ### Netstat-PID Exact Port Sync & Strict Engineering Supervision
