@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.44] - 2026-08-23
+### 7-Day Token History Trends & Saved Cost Estimation
+- **📈 7-Day Token Throughput Trends**: Webview cockpit now features an interactive 7-day token distribution bar chart with hover tooltips and daily metrics.
+- **💰 Equivalent Saved Value Calculator**: Computes equivalent industry-standard API development cost savings ($/¥) based on input, prefix cache hits, and output tokens.
+- **💎 Symmetrical 3-Card Hero Layout**: Total Session Tokens, Live Speed Velocity, and 7-Day Saved Value displayed in an ultra-clean header grid.
+
 ## [1.0.43] - 2026-08-22
 ### Restore Proven Native Clean Hover Tooltip
 - **100% Reliable Native Tooltip**: Completely restored the rock-solid, zero-CSP-error, high-readability native Markdown tooltip.
@@ -64,6 +70,12 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.44] - 2026-08-23
+### 7-Day Token History Trends & Saved Cost Estimation
+- **📈 7-Day Token Throughput Trends**: Webview cockpit now features an interactive 7-day token distribution bar chart with hover tooltips and daily metrics.
+- **💰 Equivalent Saved Value Calculator**: Computes equivalent industry-standard API development cost savings ($/¥) based on input, prefix cache hits, and output tokens.
+- **💎 Symmetrical 3-Card Hero Layout**: Total Session Tokens, Live Speed Velocity, and 7-Day Saved Value displayed in an ultra-clean header grid.
 
 ## [1.0.43] - 2026-08-22
 ### Restore Proven Native Clean Hover Tooltip
