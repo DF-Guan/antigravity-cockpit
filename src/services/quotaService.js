@@ -2,7 +2,7 @@ const https = require('https');
 const { exec, execFile } = require('child_process');
 const { formatTime } = require('../utils/i18n');
 
-let liveQuotaState = {
+const liveQuotaState = {
     isLive: false,
     isLoading: true,
     lastSyncTime: '--:--',
@@ -26,6 +26,10 @@ let liveQuotaState = {
 
 let cachedPort = null;
 let cachedToken = null;
+
+function getLiveQuotaState() {
+    return liveQuotaState;
+}
 
 function queryEndpoint(port, token) {
     return new Promise((resolve, reject) => {
@@ -237,6 +241,7 @@ async function fetchLiveQuota(context, speedState, tokenState) {
 
 module.exports = {
     liveQuotaState,
+    getLiveQuotaState,
     queryEndpoint,
     probeLanguageServerQuota,
     fetchLiveQuota

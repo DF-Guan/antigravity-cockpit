@@ -1,13 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 
-let liveSpeedState = {
+const liveSpeedState = {
     currentTps: 0,
     peakTps: 78.4,
     latencyMs: 16,
     isStreaming: false,
     lastMeasuredTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 };
+
+function getLiveSpeedState() {
+    return liveSpeedState;
+}
 
 function scanRealTimeConversationActivity() {
     try {
@@ -76,6 +80,7 @@ function updateLiveSpeedEngine() {
 
 module.exports = {
     liveSpeedState,
+    getLiveSpeedState,
     scanRealTimeConversationActivity,
     updateLiveSpeedEngine
 };

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-let tokenAnalyticsState = {
+const tokenAnalyticsState = {
     activeConvId: '',
     activeConvShort: '当前会话',
     activeRequests: 0,
@@ -26,6 +26,10 @@ let tokenAnalyticsState = {
     
     conversationsList: []
 };
+
+function getTokenAnalyticsState() {
+    return tokenAnalyticsState;
+}
 
 function computeLiveTokenAnalytics() {
     try {
@@ -107,7 +111,6 @@ function computeLiveTokenAnalytics() {
         const convList = Object.values(convMap).sort((a, b) => b.mtime - a.mtime);
         if (convList.length === 0) return tokenAnalyticsState;
 
-        // Active conversation is the most recently updated one
         const active = convList[0];
         const activeGenBytes = (active.dbSize * 0.55) + active.brainSize;
         const activeOutTokens = Math.max(1000, Math.round(activeGenBytes / 3.4));
@@ -145,7 +148,8 @@ function computeLiveTokenAnalytics() {
             };
         });
 
-        tokenAnalyticsState = {
+        // 🛡️ CRITICAL: Use Object.assign to preserve object reference across modules
+        Object.assign(tokenAnalyticsState, {
             activeConvId: active.cid,
             activeConvShort: active.cid.slice(0, 8) + '...',
             activeRequests: active.msgCount,
@@ -169,7 +173,8 @@ function computeLiveTokenAnalytics() {
             globalTotalNum: globalTotTokens,
 
             conversationsList: renderedList
-        };
+        });
+
         return tokenAnalyticsState;
     } catch (_) {
         return tokenAnalyticsState;
@@ -178,5 +183,6 @@ function computeLiveTokenAnalytics() {
 
 module.exports = {
     tokenAnalyticsState,
+    getTokenAnalyticsState,
     computeLiveTokenAnalytics
 };
