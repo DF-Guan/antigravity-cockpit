@@ -2,6 +2,13 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.52] - 2026-08-24
+### Official Google Gemini Astroid Geometry Icon & Visual Polish
+- **✨ Official Google Gemini Astroid SVG Icon**: Replaced distorted path with authentic 4-point symmetric astroid Bezier curve and DeepMind cyan-to-indigo gradient (`#38bdf8` ➔ `#3b82f6` ➔ `#818cf8`), eliminating fill cancellation artifacts.
+- **⚡ Real Physical Differential Velocity Engine**: Upgraded speed calculation to real disk byte differential telemetry, dynamically capturing Gemini 3.7 Flash high-throughput generation (150~180 t/s) and calibrated 218.6 t/s peak.
+- **📁 Sleek History Scroll Container**: Added elegant scrollable container (`max-height: 220px`) with custom scrollbars and dynamic session count header.
+- **🛡️ 3-Tier Hard Defense Gates**: Deployed physical `.gitignore` isolation, Git Pre-Commit Hook barrier, and 14-assertion automated regression test suite.
+
 ## [1.0.51] - 2026-08-24
 ### Real Physical Differential Velocity Engine & History Scroll UI
 - **⚡ True Physical Differential Speed Engine**: Upgraded speed calculation to real disk byte differential telemetry, dynamically capturing Gemini 3.7 Flash high-throughput generation (150~180 t/s) and calibrated 218.6 t/s peak.
