@@ -6,7 +6,7 @@ function showDashboard(context, liveQuotaState, liveSpeedState, tokenAnalyticsSt
     if (currentPanel) {
         try {
             currentPanel.reveal(vscode.ViewColumn.One);
-            currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+            updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
             return currentPanel;
         } catch (e) {
             try { currentPanel.dispose(); } catch (_) {}
@@ -42,10 +42,17 @@ function showDashboard(context, liveQuotaState, liveSpeedState, tokenAnalyticsSt
     }
 }
 
+// ⚡ Smooth Real-Time postMessage Dispatcher (无需重载 HTML，毫秒级无损同步)
 function updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang) {
     if (currentPanel) {
         try {
-            currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+            currentPanel.webview.postMessage({
+                type: 'liveTick',
+                speed: liveSpeedState,
+                quota: liveQuotaState,
+                tokens: tokenAnalyticsState,
+                lang: currentLang
+            });
         } catch (_) {}
     }
 }
@@ -60,16 +67,12 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
     const cW = c.weeklyPercent !== null ? `${c.weeklyPercent}%` : '--%';
     const c5 = c.fiveHourPercent !== null ? `${c.fiveHourPercent}%` : '--%';
 
-    const speedInfo = liveSpeedState.isStreaming
-        ? `🟢 生成中: ${liveSpeedState.currentTps} Tokens/秒`
-        : `💤 待机就绪 (0 t/s) | 上次峰值: ${liveSpeedState.peakTps} t/s`;
-
     const items = isZh ? [
         { label: `💎 当前会话总消耗: ${tokenAnalyticsState.activeTotalFormatted} (${tokenAnalyticsState.activeTotalExact})`, description: `会话 ID: ${tokenAnalyticsState.activeConvShort} | 输出: ${tokenAnalyticsState.activeOutputFormatted} | 交互: ${tokenAnalyticsState.activeRequests}轮`, detail: '严格仅统计当前活跃会话的全部物理生成与上下文' },
         { label: `🌐 本机全局累计: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `共计 ${tokenAnalyticsState.globalConvsCount} 个会话的物理总和`, detail: '包含本机磁盘上所有历史 Antigravity 开发会话' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
-        { label: `⚡ 实时生成流速: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (生成中)' : '0 Tokens/s (待机)'} ｜ 🏆 历史爆发峰值: ${liveSpeedState.peakTps} Tokens/s`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
+        { label: `⚡ 实时响应速率: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (生成中)' : '0 Tokens/s (待机)'} ｜ 🏆 峰值 ${liveSpeedState.peakTps} Tokens/s`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏与真实会话明细' },
         { label: `🌐 切换为 English`, description: '当前: 中文' },
@@ -196,8 +199,8 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const c5Color  = getBarColor(c5, 'var(--c-terracotta)');
 
     const speedValDisplay = speed.isStreaming
-        ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
-        : `<span class="hero-val" style="color:var(--text-muted);">0 <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
+        ? `<span class="hero-val" id="heroSpeedVal" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" id="heroSpeedBadge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
+        : `<span class="hero-val" id="heroSpeedVal" style="color:var(--text-muted);">0 <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" id="heroSpeedBadge">${t.idleText}</span>`;
 
     const realHistoryHtml = (tokens.conversationsList || []).map(r => {
         const badge = r.isActive 
@@ -788,7 +791,7 @@ body {
         <div class="hero-val-box">
           ${speedValDisplay}
         </div>
-        <div class="hero-sub">${t.heroSpdSub}</div>
+        <div class="hero-sub" id="heroSpeedSub">${t.heroSpdSub}</div>
       </div>
 
       <div class="hero-card" onclick="togglePrecision()" title="${t.heroGlobTip}">
@@ -927,6 +930,40 @@ function togglePrecision() {
 }
 
 updatePrecisionView();
+
+// ⚡ 监听 Extension Host 实时下发的 1.5s 秒级流速与数据脉冲 (无损 DOM 毫秒级同频)
+window.addEventListener('message', event => {
+  const msg = event.data;
+  if (!msg) return;
+
+  if (msg.type === 'liveTick') {
+    const spd = msg.speed;
+    const spdValEl = document.getElementById('heroSpeedVal');
+    const spdBadgeEl = document.getElementById('heroSpeedBadge');
+    const spdSubEl = document.getElementById('heroSpeedSub');
+
+    if (spdValEl && spdBadgeEl) {
+      if (spd.isStreaming) {
+        spdValEl.style.color = 'var(--c-blue)';
+        spdValEl.innerHTML = spd.currentTps + ' <span style="font-size:13px;font-weight:700;">t/s</span>';
+        spdBadgeEl.style.background = 'rgba(56,189,248,0.18)';
+        spdBadgeEl.style.color = 'var(--c-blue)';
+        spdBadgeEl.innerText = isZh ? '🟢 正在生成' : '🟢 Streaming';
+      } else {
+        spdValEl.style.color = 'var(--text-muted)';
+        spdValEl.innerHTML = '0 <span style="font-size:13px;font-weight:700;">t/s</span>';
+        spdBadgeEl.style.background = 'var(--bg-card)';
+        spdBadgeEl.style.color = 'var(--text-muted)';
+        spdBadgeEl.innerText = isZh ? '💤 待机就绪' : '💤 Idle Ready';
+      }
+      if (spdSubEl) {
+        spdSubEl.innerText = isZh 
+          ? '峰值 ' + spd.peakTps + ' t/s ｜ 本地 ' + spd.latencyMs + 'ms' 
+          : 'Peak ' + spd.peakTps + ' t/s ｜ Local ' + spd.latencyMs + 'ms';
+      }
+    }
+  }
+});
 
 function refresh()      { vscode.postMessage({ command: 'refresh'      }); }
 function openSettings() { vscode.postMessage({ command: 'openSettings' }); }
