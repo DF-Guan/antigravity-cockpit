@@ -25,7 +25,7 @@ function activate(context) {
     // 1. 初始化状态栏槽位
     initStatusBarItems(context, 'agPrivateCockpit.openDashboard');
 
-    // 2. 注册核心指令
+    // 2. 注册核心交互指令
     context.subscriptions.push(
         vscode.commands.registerCommand('agPrivateCockpit.openDashboard', () => {
             showDashboard(context, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, (cmd) => {
@@ -51,10 +51,14 @@ function activate(context) {
         })
     );
 
-    // 3. 配置监听
+    // 3. 全局配置热监听
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('agPrivateCockpit')) {
+                if (e.affectsConfiguration('agPrivateCockpit.defaultLanguage')) {
+                    currentLang = getEffectiveLang();
+                    context.globalState.update('agPrivateCockpit.lang', currentLang);
+                }
                 restartAutoRefresh(context);
                 renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
                 updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
@@ -66,7 +70,7 @@ function activate(context) {
     fetchAndRefresh(context, false);
     restartAutoRefresh(context);
 
-    // 1.5 秒 SQLite-WAL 亚秒级流速感知定时器
+    // 4. 1.5 秒 SQLite-WAL 亚秒级流速感知定时器
     speedTimer = setInterval(() => {
         updateLiveSpeedEngine();
         renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
