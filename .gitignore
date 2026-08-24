@@ -1,7 +1,10 @@
-# AI Agent & Private Scaffolding Files (100% Local Only)
+# 🤖 AI Agent 本地私密脚手架与指令 (100% 纯本地，严禁提交 Git)
 agent.md
+**/agent.md
 memory.md
+**/memory.md
 docs/
+**/docs/
 inputs/
 *.log
 scratch/
