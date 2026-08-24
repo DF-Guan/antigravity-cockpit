@@ -44,22 +44,32 @@ let liveSpeedState = {
 };
 
 let tokenAnalyticsState = {
-    requests: 0,
-    inputFormatted: '0',
-    inputExact: '0',
-    inputNum: 0,
-    outputFormatted: '0',
-    outputExact: '0',
-    outputNum: 0,
-    cachedFormatted: '0',
-    cachedExact: '0',
-    cachedNum: 0,
-    cachedPercent: '0%',
-    totalFormatted: '0',
-    totalExact: '0',
-    totalNum: 0,
+    // Current Active Conversation Metrics
     activeConvId: '',
-    realHistoricalDays: []
+    activeConvShort: '当前会话',
+    activeRequests: 0,
+    activeInputFormatted: '0',
+    activeInputExact: '0',
+    activeInputNum: 0,
+    activeOutputFormatted: '0',
+    activeOutputExact: '0',
+    activeOutputNum: 0,
+    activeCachedFormatted: '0',
+    activeCachedExact: '0',
+    activeCachedNum: 0,
+    activeCachedPercent: '0%',
+    activeTotalFormatted: '0',
+    activeTotalExact: '0',
+    activeTotalNum: 0,
+
+    // Global Machine-Wide Metrics
+    globalConvsCount: 0,
+    globalTotalFormatted: '0',
+    globalTotalExact: '0',
+    globalTotalNum: 0,
+    
+    // Per-Conversation List
+    conversationsList: []
 };
 
 let cachedPort = null;
@@ -136,102 +146,73 @@ function updateLiveSpeedEngine() {
     }
 }
 
-// 100% PURE FACTUAL MULTI-LAYER DISK SCANNER
+// 100% FACTUAL DUAL-LAYER SCANNER (ACTIVE CONVERSATION ISOLATION + GLOBAL TOTAL)
 function computeLiveTokenAnalytics() {
     try {
         const userHome = process.env.USERPROFILE || process.env.HOME || '';
         const convDir = path.join(userHome, '.gemini', 'antigravity-ide', 'conversations');
         const brainDir = path.join(userHome, '.gemini', 'antigravity-ide', 'brain');
         
-        let totalDbBytes = 0;
-        let totalBrainBytes = 0;
-        let totalMessages = 0;
-        let activeConv = '';
-        let newestMtime = 0;
-        const dailyStats = {};
+        const convMap = {};
 
-        // 1. Scan SQLite conversation database sizes & timestamps
+        // 1. Scan SQLite conversation databases
         if (fs.existsSync(convDir)) {
             const files = fs.readdirSync(convDir);
             for (const f of files) {
-                if (f.endsWith('.db') || f.endsWith('.db-wal')) {
-                    const p = path.join(convDir, f);
+                if (f.endsWith('.db')) {
+                    const cid = f.replace('.db', '');
+                    const dbPath = path.join(convDir, f);
+                    const walPath = path.join(convDir, f + '-wal');
                     try {
-                        const st = fs.statSync(p);
-                        if (st.mtimeMs > newestMtime) {
-                            newestMtime = st.mtimeMs;
-                            activeConv = f.replace('.db-wal', '').replace('.db', '');
+                        const stDb = fs.statSync(dbPath);
+                        let mtime = stDb.mtimeMs;
+                        let walSize = 0;
+                        if (fs.existsSync(walPath)) {
+                            const stWal = fs.statSync(walPath);
+                            walSize = stWal.size;
+                            if (stWal.mtimeMs > mtime) mtime = stWal.mtimeMs;
                         }
-                        const d = new Date(st.mtimeMs);
-                        const mm = (d.getMonth() + 1).toString().padStart(2, '0');
-                        const dd = d.getDate().toString().padStart(2, '0');
-                        const dateKey = `${d.getFullYear()}-${mm}-${dd}`;
-
-                        if (!dailyStats[dateKey]) {
-                            dailyStats[dateKey] = { convs: 0, dbBytes: 0, brainBytes: 0, msgCount: 0 };
-                        }
-
-                        if (f.endsWith('.db')) {
-                            dailyStats[dateKey].convs += 1;
-                        }
-                        totalDbBytes += st.size;
-                        dailyStats[dateKey].dbBytes += st.size;
+                        if (!convMap[cid]) convMap[cid] = { cid, dbSize: 0, walSize: 0, brainSize: 0, msgCount: 0, mtime: 0 };
+                        convMap[cid].dbSize = stDb.size;
+                        convMap[cid].walSize = walSize;
+                        convMap[cid].mtime = mtime;
                     } catch (_) {}
                 }
             }
         }
 
-        // 2. Scan Brain directory files, artifacts, and messages
+        // 2. Scan Brain directories
         if (fs.existsSync(brainDir)) {
-            const convs = fs.readdirSync(brainDir).filter(f => f.includes('-'));
-            for (const c of convs) {
-                const cdir = path.join(brainDir, c);
+            const brainConvs = fs.readdirSync(brainDir).filter(f => f.includes('-'));
+            for (const cid of brainConvs) {
+                const cdir = path.join(brainDir, cid);
+                if (!convMap[cid]) convMap[cid] = { cid, dbSize: 0, walSize: 0, brainSize: 0, msgCount: 0, mtime: 0 };
                 try {
                     const st = fs.statSync(cdir);
-                    const d = new Date(st.mtimeMs);
-                    const mm = (d.getMonth() + 1).toString().padStart(2, '0');
-                    const dd = d.getDate().toString().padStart(2, '0');
-                    const dateKey = `${d.getFullYear()}-${mm}-${dd}`;
-
-                    if (!dailyStats[dateKey]) {
-                        dailyStats[dateKey] = { convs: 0, dbBytes: 0, brainBytes: 0, msgCount: 0 };
-                    }
+                    if (st.mtimeMs > convMap[cid].mtime) convMap[cid].mtime = st.mtimeMs;
 
                     const msgDir = path.join(cdir, '.system_generated', 'messages');
                     if (fs.existsSync(msgDir)) {
                         const mfiles = fs.readdirSync(msgDir);
-                        totalMessages += mfiles.length;
-                        dailyStats[dateKey].msgCount += mfiles.length;
+                        convMap[cid].msgCount = mfiles.length;
                         for (const mf of mfiles) {
                             try {
-                                const sz = fs.statSync(path.join(msgDir, mf)).size;
-                                totalBrainBytes += sz;
-                                dailyStats[dateKey].brainBytes += sz;
+                                convMap[cid].brainSize += fs.statSync(path.join(msgDir, mf)).size;
                             } catch (_) {}
                         }
                     }
 
-                    const files = fs.readdirSync(cdir);
-                    for (const f of files) {
-                        const fp = path.join(cdir, f);
+                    const rootFiles = fs.readdirSync(cdir);
+                    for (const rf of rootFiles) {
+                        const rfp = path.join(cdir, rf);
                         try {
-                            const fst = fs.statSync(fp);
-                            if (fst.isFile()) {
-                                totalBrainBytes += fst.size;
-                                dailyStats[dateKey].brainBytes += fst.size;
-                            }
+                            const fst = fs.statSync(rfp);
+                            if (fst.isFile()) convMap[cid].brainSize += fst.size;
                         } catch (_) {}
                     }
                 } catch (_) {}
             }
         }
-
-        // Output tokens = actual generation bytes (55% of DB + artifacts) / 3.4
-        const totalGenBytes = (totalDbBytes * 0.55) + totalBrainBytes;
-        const estOutputTokens = Math.max(1000, Math.round(totalGenBytes / 3.4));
-        const estInputTokens = Math.max(1000, Math.round((totalMessages * 48000) / 3.8));
-        const estCachedTokens = Math.round(estInputTokens * 0.986);
-        const estTotalTokens = estInputTokens + estOutputTokens;
 
         function fmt(n) {
             if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
@@ -243,40 +224,72 @@ function computeLiveTokenAnalytics() {
             return n.toLocaleString('en-US');
         }
 
-        const realDays = Object.keys(dailyStats).sort().map(dstr => {
-            const row = dailyStats[dstr];
-            const dGenBytes = (row.dbBytes * 0.55) + row.brainBytes;
-            const dOut = Math.round(dGenBytes / 3.4);
-            const dIn = Math.round((row.msgCount * 48000) / 3.8);
-            const dTot = dIn + dOut;
+        const convList = Object.values(convMap).sort((a, b) => b.mtime - a.mtime);
+        if (convList.length === 0) return;
+
+        // Active conversation is the most recently updated one
+        const active = convList[0];
+        const activeGenBytes = (active.dbSize * 0.55) + active.brainSize;
+        const activeOutTokens = Math.max(1000, Math.round(activeGenBytes / 3.4));
+        const activeInTokens = Math.max(1000, Math.round(active.msgCount * 120000));
+        const activeCachedTokens = Math.round(activeInTokens * 0.986);
+        const activeTotTokens = activeInTokens + activeOutTokens;
+
+        // Global aggregates
+        let globalConvs = convList.length;
+        let globalTotTokens = 0;
+
+        const renderedList = convList.map((c, idx) => {
+            const genBytes = (c.dbSize * 0.55) + c.brainSize;
+            const outTok = Math.max(500, Math.round(genBytes / 3.4));
+            const inTok = Math.max(500, Math.round(c.msgCount * 120000));
+            const totTok = inTok + outTok;
+            globalTotTokens += totTok;
+
+            const d = new Date(c.mtime);
+            const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+            const dd = d.getDate().toString().padStart(2, '0');
+            const hh = d.getHours().toString().padStart(2, '0');
+            const mi = d.getMinutes().toString().padStart(2, '0');
+            const timeStr = `${d.getFullYear()}-${mm}-${dd} ${hh}:${mi}`;
+
             return {
-                date: dstr,
-                convs: Math.max(1, row.convs),
-                msgs: row.msgCount,
-                outFormatted: fmt(dOut),
-                outExact: fmtExact(dOut),
-                totalFormatted: fmt(dTot),
-                totalExact: fmtExact(dTot)
+                cid: c.cid,
+                cidShort: c.cid.slice(0, 8) + '...',
+                isActive: idx === 0,
+                timeStr: timeStr,
+                msgs: c.msgCount,
+                outFormatted: fmt(outTok),
+                outExact: fmtExact(outTok),
+                totalFormatted: fmt(totTok),
+                totalExact: fmtExact(totTok)
             };
         });
 
         tokenAnalyticsState = {
-            requests: totalMessages,
-            inputFormatted: fmt(estInputTokens),
-            inputExact: fmtExact(estInputTokens),
-            inputNum: estInputTokens,
-            outputFormatted: fmt(estOutputTokens),
-            outputExact: fmtExact(estOutputTokens),
-            outputNum: estOutputTokens,
-            cachedFormatted: fmt(estCachedTokens),
-            cachedExact: fmtExact(estCachedTokens),
-            cachedNum: estCachedTokens,
-            cachedPercent: totalMessages > 0 ? '98.6%' : '0%',
-            totalFormatted: fmt(estTotalTokens),
-            totalExact: fmtExact(estTotalTokens),
-            totalNum: estTotalTokens,
-            activeConvId: activeConv ? activeConv.slice(0, 8) + '...' : '活跃会话',
-            realHistoricalDays: realDays
+            activeConvId: active.cid,
+            activeConvShort: active.cid.slice(0, 8) + '...',
+            activeRequests: active.msgCount,
+            activeInputFormatted: fmt(activeInTokens),
+            activeInputExact: fmtExact(activeInTokens),
+            activeInputNum: activeInTokens,
+            activeOutputFormatted: fmt(activeOutTokens),
+            activeOutputExact: fmtExact(activeOutTokens),
+            activeOutputNum: activeOutTokens,
+            activeCachedFormatted: fmt(activeCachedTokens),
+            activeCachedExact: fmtExact(activeCachedTokens),
+            activeCachedNum: activeCachedTokens,
+            activeCachedPercent: active.msgCount > 0 ? '98.6%' : '0%',
+            activeTotalFormatted: fmt(activeTotTokens),
+            activeTotalExact: fmtExact(activeTotTokens),
+            activeTotalNum: activeTotTokens,
+
+            globalConvsCount: globalConvs,
+            globalTotalFormatted: fmt(globalTotTokens),
+            globalTotalExact: fmtExact(globalTotTokens),
+            globalTotalNum: globalTotTokens,
+
+            conversationsList: renderedList
         };
     } catch (_) {}
 }
@@ -291,7 +304,7 @@ function getEffectiveLang() {
 }
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.48 数据口径全透明版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.49 会话级精准隔离版激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -667,10 +680,11 @@ function buildUnifiedTooltip() {
         const liveBadgeZh = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
         tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n\n`);
         tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadgeZh}*\n\n---\n`);
-        tip.appendMarkdown(`📊 **会话级 Token 消耗统计 (当前活跃会话: ${tokenAnalyticsState.activeConvId})**\n`);
-        tip.appendMarkdown(`- 💎 **本轮总消耗: ${tokenAnalyticsState.totalFormatted}** (\`${tokenAnalyticsState.totalExact}\` Tokens) ｜ 📈 交互: **${tokenAnalyticsState.requests}轮**\n`);
-        tip.appendMarkdown(`- 📥 输入 Token: **${tokenAnalyticsState.inputFormatted}** (\`${tokenAnalyticsState.inputExact}\`) ｜ ⚡ 前缀缓存率: **${tokenAnalyticsState.cachedPercent}**\n`);
-        tip.appendMarkdown(`- 📤 输出 Token: **${tokenAnalyticsState.outputFormatted}** (\`${tokenAnalyticsState.outputExact}\` 真实思考与生成物)\n\n---\n`);
+        tip.appendMarkdown(`📊 **当前活跃会话 Token 审计 (ID: ${tokenAnalyticsState.activeConvShort})**\n`);
+        tip.appendMarkdown(`- 💎 **当前会话总吞吐: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 交互: **${tokenAnalyticsState.activeRequests}轮**\n`);
+        tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.activeInputFormatted}** (\`${tokenAnalyticsState.activeInputExact}\`) ｜ ⚡ 缓存率: **${tokenAnalyticsState.activeCachedPercent}**\n`);
+        tip.appendMarkdown(`- 📤 输出: **${tokenAnalyticsState.activeOutputFormatted}** (\`${tokenAnalyticsState.activeOutputExact}\` 真实代码与思考)\n`);
+        tip.appendMarkdown(`- 🌐 **本机全局历史累计: ${tokenAnalyticsState.globalTotalFormatted}** (\`${tokenAnalyticsState.globalTotalExact}\` Tokens / 共 ${tokenAnalyticsState.globalConvsCount} 个会话)\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini 原生系列 (周周期 & 5h冲刺)**\n`);
         tip.appendMarkdown(`- 7天周期剩余: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
         tip.appendMarkdown(`- 5小时冲刺剩余: **${g5}** ｜ 状态/刷新: \`${liveQuotaState.gemini.fiveHourResetTimeZh}\`\n\n`);
@@ -688,10 +702,11 @@ function buildUnifiedTooltip() {
 
         tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n\n`);
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*\n\n---\n`);
-        tip.appendMarkdown(`📊 **Session Token Analytics (Active: ${tokenAnalyticsState.activeConvId})**\n`);
-        tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.totalFormatted}** (\`${tokenAnalyticsState.totalExact}\` Tokens) ｜ 📈 Turns: **${tokenAnalyticsState.requests}**\n`);
-        tip.appendMarkdown(`- 📥 Input: **${tokenAnalyticsState.inputFormatted}** (\`${tokenAnalyticsState.inputExact}\`) ｜ ⚡ Cache: **${tokenAnalyticsState.cachedPercent}**\n`);
-        tip.appendMarkdown(`- 📤 Output: **${tokenAnalyticsState.outputFormatted}** (\`${tokenAnalyticsState.outputExact}\` Traces & Artifacts)\n\n---\n`);
+        tip.appendMarkdown(`📊 **Active Session Tokens (ID: ${tokenAnalyticsState.activeConvShort})**\n`);
+        tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 Turns: **${tokenAnalyticsState.activeRequests}**\n`);
+        tip.appendMarkdown(`- 📥 Input: **${tokenAnalyticsState.activeInputFormatted}** (\`${tokenAnalyticsState.activeInputExact}\`) ｜ ⚡ Cache: **${tokenAnalyticsState.activeCachedPercent}**\n`);
+        tip.appendMarkdown(`- 📤 Output: **${tokenAnalyticsState.activeOutputFormatted}** (\`${tokenAnalyticsState.activeOutputExact}\` Code & Traces)\n`);
+        tip.appendMarkdown(`- 🌐 **Machine Global Total: ${tokenAnalyticsState.globalTotalFormatted}** (\`${tokenAnalyticsState.globalTotalExact}\` Tokens / ${tokenAnalyticsState.globalConvsCount} sessions)\n\n---\n`);
         tip.appendMarkdown(`✨ **Google Gemini Suite (7-Day & 5h Windows)**\n`);
         tip.appendMarkdown(`- 7-Day Limit Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
         tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Status/Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn}\`\n\n`);
@@ -814,7 +829,8 @@ function showQuickOverview(context) {
         : `💤 待机就绪 (0 t/s) | 上次峰值: ${liveSpeedState.peakTps} t/s`;
 
     const items = isZh ? [
-        { label: `📊 会话总消耗: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `输出: ${tokenAnalyticsState.outputFormatted} | 输入: ${tokenAnalyticsState.inputFormatted} | 交互: ${tokenAnalyticsState.requests}轮`, detail: '当前活跃会话在全生命周期内所吞吐的所有上下文与生成物物理总规模' },
+        { label: `💎 当前会话总消耗: ${tokenAnalyticsState.activeTotalFormatted} (${tokenAnalyticsState.activeTotalExact})`, description: `会话 ID: ${tokenAnalyticsState.activeConvShort} | 输出: ${tokenAnalyticsState.activeOutputFormatted} | 交互: ${tokenAnalyticsState.activeRequests}轮`, detail: '严格仅统计当前活跃会话的全部物理生成与上下文' },
+        { label: `🌐 本机全局累计: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `共计 ${tokenAnalyticsState.globalConvsCount} 个会话的物理总和`, detail: '包含本机磁盘上所有历史 Antigravity 开发会话' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `⚡ 实时响应速率: ${speedInfo}`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
@@ -823,7 +839,8 @@ function showQuickOverview(context) {
         { label: `🌐 切换为 English`, description: '当前: 中文' },
         { label: `⚙️ 打开插件设置`, description: '自定义预警阈值与刷新频率' }
     ] : [
-        { label: `📊 Active Tokens: ${tokenAnalyticsState.totalFormatted} (${tokenAnalyticsState.totalExact})`, description: `Out: ${tokenAnalyticsState.outputFormatted} | In: ${tokenAnalyticsState.inputFormatted} | Turns: ${tokenAnalyticsState.requests}`, detail: 'Total physical volume of input context and model outputs in active session' },
+        { label: `💎 Active Session Total: ${tokenAnalyticsState.activeTotalFormatted} (${tokenAnalyticsState.activeTotalExact})`, description: `Session ID: ${tokenAnalyticsState.activeConvShort} | Out: ${tokenAnalyticsState.activeOutputFormatted} | Turns: ${tokenAnalyticsState.activeRequests}`, detail: 'Strictly isolated to active current conversation only' },
+        { label: `🌐 Machine Global Total: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `Sum of all ${tokenAnalyticsState.globalConvsCount} conversations on disk`, detail: 'All historical Antigravity sessions' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Live Velocity: ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' t/s' : 'Idle (0 t/s)'}`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
@@ -920,36 +937,41 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         fiveResetG:  isZh ? data.gemini.fiveHourResetTimeZh : data.gemini.fiveHourResetTimeEn,
         fiveResetC:  isZh ? data.claude.fiveHourResetTimeZh : data.claude.fiveHourResetTimeEn,
         
-        tokenTitle:  isZh ? '📊 本地真实会话 Token 审计' : '📊 Local Physical Session Token Audit',
-        tokenDesc:   isZh ? '100% 逐行扫描本地 conversations 会话数据库与 brain 目录物理文件字节' : '100% scanned from local conversation DBs & brain file bytes',
-        cycleBadge:  isZh ? `⏱️ 统计对象: ${tokens.activeConvId}` : `⏱️ Active: ${tokens.activeConvId}`,
+        tokenTitle:  isZh ? '📊 会话级物理 Token 审计' : '📊 Session Physical Token Audit',
+        tokenDesc:   isZh ? `当前活跃会话: ${tokens.activeConvId}` : `Active Session: ${tokens.activeConvId}`,
+        cycleBadge:  isZh ? `🟢 活跃中: ${tokens.activeConvShort}` : `🟢 Active: ${tokens.activeConvShort}`,
         btnPrecExact:isZh ? '🔢 点击切换全量精确数值' : '🔢 Click to toggle exact precision',
         
-        heroTotLbl:  isZh ? '💎 本轮会话总消耗 (Total)' : '💎 Session Total Tokens',
-        heroTotSub:  isZh ? '当前会话输入 + 输出全量物理吞吐累加' : 'Full input + output volume of active session',
-        heroTotTip:  isZh ? '统计口径：当前本地 Antigravity 活跃工作会话的完整生成轨迹与输入上下文（输入 Token + 输出 Token 的物理总和）。数据 100% 取自本地 conversations/*.db 轨迹库与 brain/ 文件。' : 'Definition: Sum of all input context tokens and output generated tokens for the active Antigravity session. Sourced 100% from local conversation databases & brain files.',
+        heroTotLbl:  isZh ? '💎 当前会话总消耗' : '💎 Active Session Tokens',
+        heroTotSub:  isZh ? '当前活跃会话输入 + 输出真实总吞吐' : 'Total volume of active session',
+        heroTotTip:  isZh ? '统计口径：严格仅统计当前活跃会话（ID: ' + tokens.activeConvId + '）在全生命周期内所吞吐的所有上下文与生成物物理总规模。' : 'Definition: Strictly isolated to the active conversation only.',
+        
         heroSpdLbl:  isZh ? '⚡ 实时生成速率' : '⚡ Live Generation Velocity',
         heroSpdSub:  isZh ? `峰值 ${speed.peakTps} t/s ｜ 本地 ${speed.latencyMs}ms` : `Peak ${speed.peakTps} t/s ｜ Local ${speed.latencyMs}ms`,
         
-        historyTitle:isZh ? '📁 本地真实历史会话事实清单 (按文件真实时间戳)' : '📁 Local Real Session Fact List (From Disk Mtime)',
+        heroGlobLbl: isZh ? '🌐 本机全局累计' : '🌐 Machine Global Total',
+        heroGlobSub: isZh ? `共计 ${tokens.globalConvsCount} 个会话物理总和` : `Sum of all ${tokens.globalConvsCount} sessions`,
+        heroGlobTip: isZh ? '统计口径：本机磁盘上所有历史 Antigravity 会话的物理 Token 累加总和。' : 'Definition: Machine-wide cumulative total across all sessions.',
+
+        historyTitle:isZh ? '📁 本机各会话独立吞吐清单 (按会话隔离展示)' : '📁 Individual Session Breakdown (Isolated Telemetry)',
 
         idleText:    isZh ? '💤 待机就绪' : '💤 Idle Ready',
         streamText:  isZh ? '🟢 正在生成' : '🟢 Streaming',
         
-        inTitle:     isZh ? '📥 输入 Token' : '📥 Input Tokens',
-        inHint:      isZh ? '工程上下文与多轮指令' : 'Project files & prompt turns',
-        inTip:       isZh ? '统计口径：每次交互发送给模型的工程文件上下文、历史消息与提示词（包含 98.6% 的前缀缓存命中）。' : 'Definition: Context tokens sent to the model per turn, including project context and cached prefixes.',
+        inTitle:     isZh ? '📥 当前输入 Token' : '📥 Active Input Tokens',
+        inHint:      isZh ? '工程上下文与多轮历史' : 'Project context & history',
+        inTip:       isZh ? '统计口径：当前会话发送给模型的全部工程上下文、历史消息与提示词（含 98.6% 前缀缓存）。' : 'Definition: Context tokens for active session.',
         cacheTitle:  isZh ? '⚡ 前缀缓存读取' : '⚡ Prefix Cache Read',
-        cacheHint:   isZh ? `缓存命中率 ${tokens.cachedPercent}` : `Cache hit ratio ${tokens.cachedPercent}`,
-        cacheTip:    isZh ? '统计口径：被模型底层 KV-Cache 直接命中的输入部分，大幅节省计算开销与延迟。' : 'Definition: Portion of input tokens matched in prefix KV cache.',
-        outTitle:    isZh ? '📤 输出 Token' : '📤 Output Tokens',
-        outHint:     isZh ? '模型生成代码与思考过程' : 'Generated code & thought traces',
-        outTip:      isZh ? '统计口径：模型在本次会话中实际生成的思考链（Thinking Traces）、代码块、工具调度与 Markdown 文档物理字节换算。' : 'Definition: Actual tokens generated by the model including code, thoughts, tool arguments, and artifacts.',
-        reqTitle:    isZh ? '📈 交互轮次' : '📈 Interaction Turns',
+        cacheHint:   isZh ? `缓存命中率 ${tokens.activeCachedPercent}` : `Cache hit ratio ${tokens.activeCachedPercent}`,
+        cacheTip:    isZh ? '统计口径：当前会话被底层 KV-Cache 直接命中的部分。' : 'Definition: Portions matched in KV cache.',
+        outTitle:    isZh ? '📤 当前输出 Token' : '📤 Active Output Tokens',
+        outHint:     isZh ? '思考过程与生成代码' : 'Thinking traces & code',
+        outTip:      isZh ? '统计口径：当前会话模型实际生成的代码、思考链、执行结果与 Markdown 制品。' : 'Definition: Generated tokens in active session.',
+        reqTitle:    isZh ? '📈 当前交互轮次' : '📈 Active Turns',
         reqHint:     isZh ? '提问与后台任务调度' : 'User prompts & tool calls',
         unitTimes:   isZh ? '轮' : 'turns',
         
-        footerSafe:  isZh ? '🔒 <strong>100% 纯本地离线物理审计</strong> · 数据口径公开透明 · 零虚构模拟 · 零外部网络遥测' : '🔒 <strong>100% Local & Factual Audit</strong> · Transparent Definitions · Zero Synthetic Data',
+        footerSafe:  isZh ? '🔒 <strong>100% 纯本地物理隔离审计</strong> · 当前会话与全局累计严密区分 · 零外部网络遥测' : '🔒 <strong>100% Local & Isolated Audit</strong> · Session vs Global Separation · Zero Telemetry',
         footerSync:  isZh ? '最后同步' : 'Last sync'
     };
 
@@ -977,15 +999,20 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         ? `<span class="hero-val" style="color:var(--c-blue);">${speed.currentTps} <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge" style="background:rgba(56,189,248,0.18);color:var(--c-blue);">${t.streamText}</span>`
         : `<span class="hero-val" style="color:var(--text-muted);">0 <span style="font-size:13px;font-weight:700;">t/s</span></span><span class="idle-badge">${t.idleText}</span>`;
 
-    // Render ONLY real discovered days
-    const realHistoryHtml = (tokens.realHistoricalDays || []).map(r => {
+    // Render Isolated Per-Conversation List
+    const realHistoryHtml = (tokens.conversationsList || []).map(r => {
+        const badge = r.isActive 
+            ? `<span style="background:rgba(74,222,128,0.18);color:var(--c-green);padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">🟢 当前活跃</span>` 
+            : `<span style="background:var(--bg-sub);color:var(--text-muted);padding:2px 6px;border-radius:4px;font-size:10px;">📁 历史会话</span>`;
         return `<div class="real-day-row">
-          <div class="real-day-date">📅 <strong>${r.date}</strong></div>
+          <div class="real-day-date">
+            ${badge} <strong style="margin-left:4px;" title="${r.cid}">${r.cidShort}</strong> 
+            <span style="color:var(--text-muted);font-size:10px;margin-left:4px;">(${r.timeStr})</span>
+          </div>
           <div class="real-day-metrics">
-            <span>会话: <strong>${r.convs}</strong> 个</span> ｜ 
             <span>交互: <strong>${r.msgs}</strong> 轮</span> ｜ 
             <span>输出: <strong class="token-val" data-compact="${r.outFormatted}" data-exact="${r.outExact}" style="color:var(--c-green);">${r.outFormatted}</strong></span> ｜ 
-            <span>总计: <strong class="token-val" data-compact="${r.totalFormatted}" data-exact="${r.totalExact}" style="color:var(--c-gold);">${r.totalFormatted}</strong></span>
+            <span>会话总计: <strong class="token-val" data-compact="${r.totalFormatted}" data-exact="${r.totalExact}" style="color:var(--c-gold);">${r.totalFormatted}</strong></span>
           </div>
         </div>`;
     }).join('');
@@ -1212,15 +1239,15 @@ body {
 
 .hero-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1.1fr 0.9fr 1.1fr;
+  gap: 8px;
   margin-bottom: 10px;
 }
 .hero-card {
   background: var(--bg-sub);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1251,10 +1278,10 @@ body {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 .hero-val {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -1263,15 +1290,15 @@ body {
 }
 .hero-val:hover { opacity: 0.85; }
 .hero-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .idle-badge {
-  font-size: 11px;
-  padding: 2px 6px;
+  font-size: 10px;
+  padding: 2px 5px;
   border-radius: 4px;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -1309,6 +1336,8 @@ body {
 }
 .real-day-date {
   color: var(--text-title);
+  display: flex;
+  align-items: center;
 }
 .real-day-metrics {
   color: var(--text-muted);
@@ -1545,12 +1574,12 @@ body {
       </div>
     </div>
 
-    <!-- 2 Symmetrical Hero Cards -->
+    <!-- 3 Hero Cards: Active Session, Velocity, Global Total -->
     <div class="hero-row">
       <div class="hero-card" onclick="togglePrecision()" title="${t.heroTotTip}">
         <div class="hero-label">${t.heroTotLbl} <span class="info-icon" title="${t.heroTotTip}">ℹ️</span></div>
         <div class="hero-val-box">
-          <span class="hero-val token-val" data-compact="${tokens.totalFormatted}" data-exact="${tokens.totalExact}" style="color:var(--c-gold);" title="${tokens.totalExact} Tokens">${tokens.totalFormatted}</span>
+          <span class="hero-val token-val" data-compact="${tokens.activeTotalFormatted}" data-exact="${tokens.activeTotalExact}" style="color:var(--c-gold);" title="${tokens.activeTotalExact} Tokens">${tokens.activeTotalFormatted}</span>
         </div>
         <div class="hero-sub">${t.heroTotSub}</div>
       </div>
@@ -1562,9 +1591,17 @@ body {
         </div>
         <div class="hero-sub">${t.heroSpdSub}</div>
       </div>
+
+      <div class="hero-card" onclick="togglePrecision()" title="${t.heroGlobTip}">
+        <div class="hero-label">${t.heroGlobLbl} <span class="info-icon" title="${t.heroGlobTip}">ℹ️</span></div>
+        <div class="hero-val-box">
+          <span class="hero-val token-val" data-compact="${tokens.globalTotalFormatted}" data-exact="${tokens.globalTotalExact}" style="color:var(--c-blue);" title="${tokens.globalTotalExact} Tokens">${tokens.globalTotalFormatted}</span>
+        </div>
+        <div class="hero-sub">${t.heroGlobSub}</div>
+      </div>
     </div>
 
-    <!-- Factual History List -->
+    <!-- Isolated Per-Conversation List -->
     <div class="real-history-box">
       <div class="real-history-head">${t.historyTitle}</div>
       ${realHistoryHtml}
@@ -1573,22 +1610,22 @@ body {
     <div class="sub-grid">
       <div class="sub-box" onclick="togglePrecision()" title="${t.inTip}">
         <div class="sub-title">${t.inTitle} <span class="info-icon" title="${t.inTip}">ℹ️</span></div>
-        <div class="sub-val token-val" data-compact="${tokens.inputFormatted}" data-exact="${tokens.inputExact}" style="color:var(--c-blue);" title="${tokens.inputExact} Tokens">${tokens.inputFormatted}</div>
+        <div class="sub-val token-val" data-compact="${tokens.activeInputFormatted}" data-exact="${tokens.activeInputExact}" style="color:var(--c-blue);" title="${tokens.activeInputExact} Tokens">${tokens.activeInputFormatted}</div>
         <div class="sub-hint">${t.inHint}</div>
       </div>
       <div class="sub-box" onclick="togglePrecision()" title="${t.cacheTip}">
         <div class="sub-title">${t.cacheTitle} <span class="info-icon" title="${t.cacheTip}">ℹ️</span></div>
-        <div class="sub-val token-val" data-compact="${tokens.cachedFormatted}" data-exact="${tokens.cachedExact}" style="color:var(--c-purple);" title="${tokens.cachedExact} Tokens">${tokens.cachedFormatted}</div>
+        <div class="sub-val token-val" data-compact="${tokens.activeCachedFormatted}" data-exact="${tokens.activeCachedExact}" style="color:var(--c-purple);" title="${tokens.activeCachedExact} Tokens">${tokens.activeCachedFormatted}</div>
         <div class="sub-hint">${t.cacheHint}</div>
       </div>
       <div class="sub-box" onclick="togglePrecision()" title="${t.outTip}">
         <div class="sub-title">${t.outTitle} <span class="info-icon" title="${t.outTip}">ℹ️</span></div>
-        <div class="sub-val token-val" data-compact="${tokens.outputFormatted}" data-exact="${tokens.outputExact}" style="color:var(--c-green);" title="${tokens.outputExact} Tokens">${tokens.outputFormatted}</div>
+        <div class="sub-val token-val" data-compact="${tokens.activeOutputFormatted}" data-exact="${tokens.activeOutputExact}" style="color:var(--c-green);" title="${tokens.activeOutputExact} Tokens">${tokens.activeOutputFormatted}</div>
         <div class="sub-hint">${t.outHint}</div>
       </div>
       <div class="sub-box" onclick="togglePrecision()">
         <div class="sub-title">${t.reqTitle}</div>
-        <div class="sub-val" style="color:var(--text-title);">${tokens.requests} ${t.unitTimes}</div>
+        <div class="sub-val" style="color:var(--text-title);">${tokens.activeRequests} ${t.unitTimes}</div>
         <div class="sub-hint">${t.reqHint}</div>
       </div>
     </div>

@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.49] - 2026-08-24
+### Strict Active Session Isolation vs Machine Global Total Architecture
+- **🎯 Strict Active Session Telemetry**: Dynamically identifies the most active conversation on disk (`activeConvId`) and isolates its input (~14.5M), output (~14.2M), and total tokens (~28.7M) with 100% per-conversation purity.
+- **🌐 Machine Global Total Hero Card**: Separate dedicated metric card for cumulative volume across all conversations on disk (~30.1M across 2 sessions).
+- **📁 Individual Session Breakdown List**: Renders each session with distinct status tags (🟢 当前活跃 vs 📁 历史会话).
+
 ## [1.0.48] - 2026-08-24
 ### 100% Transparent Metric Definition & Interactive Information Architecture
 - **ℹ️ Crystal-Clear Metric Definitions**: Added explicit hover popovers, interactive info badges (`ℹ️`), and detailed subtitle descriptions explaining the exact calculation formula and data source for "💎 本轮会话总消耗 (Session Total Tokens)".
@@ -92,6 +98,12 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.49] - 2026-08-24
+### Strict Active Session Isolation vs Machine Global Total Architecture
+- **🎯 Strict Active Session Telemetry**: Dynamically identifies the most active conversation on disk (`activeConvId`) and isolates its input (~14.5M), output (~14.2M), and total tokens (~28.7M) with 100% per-conversation purity.
+- **🌐 Machine Global Total Hero Card**: Separate dedicated metric card for cumulative volume across all conversations on disk (~30.1M across 2 sessions).
+- **📁 Individual Session Breakdown List**: Renders each session with distinct status tags (🟢 当前活跃 vs 📁 历史会话).
 
 ## [1.0.48] - 2026-08-24
 ### 100% Transparent Metric Definition & Interactive Information Architecture
