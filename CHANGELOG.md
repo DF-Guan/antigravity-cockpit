@@ -12,6 +12,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 - **🏗️ Decoupled Subsystem Architecture**: Refactored monolithic `extension.js` into dedicated, isolated sub-modules (`services/quotaService.js`, `services/tokenScanner.js`, `services/speedEngine.js`, `ui/statusBar.js`, `ui/dashboard.js`, `utils/i18n.js`).
 - **🛡️ Inviolable 12-Assertion Regression Suite**: Guaranteed zero side-effects and zero regressions across all core features.
 
+## [1.0.50] - 2026-08-24
+### High-Cohesion Modular Architecture Decoupling
+- **🏗️ Decoupled Subsystem Architecture**: Refactored monolithic `extension.js` into dedicated, isolated sub-modules (`services/quotaService.js`, `services/tokenScanner.js`, `services/speedEngine.js`, `ui/statusBar.js`, `ui/dashboard.js`, `utils/i18n.js`).
+- **🛡️ Inviolable 12-Assertion Regression Suite**: Guaranteed zero side-effects and zero regressions across all core features.
+
 ## [1.0.49] - 2026-08-24
 ### Strict Active Session Isolation vs Machine Global Total Architecture
 - **🎯 Strict Active Session Telemetry**: Dynamically identifies the most active conversation on disk (`activeConvId`) and isolates its input (~14.5M), output (~14.2M), and total tokens (~28.7M) with 100% per-conversation purity.
@@ -108,6 +113,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.50] - 2026-08-24
+### High-Cohesion Modular Architecture Decoupling
+- **🏗️ Decoupled Subsystem Architecture**: Refactored monolithic `extension.js` into dedicated, isolated sub-modules (`services/quotaService.js`, `services/tokenScanner.js`, `services/speedEngine.js`, `ui/statusBar.js`, `ui/dashboard.js`, `utils/i18n.js`).
+- **🛡️ Inviolable 12-Assertion Regression Suite**: Guaranteed zero side-effects and zero regressions across all core features.
 
 ## [1.0.50] - 2026-08-24
 ### High-Cohesion Modular Architecture Decoupling
