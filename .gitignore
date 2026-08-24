@@ -1,5 +1,7 @@
-# Development & Memory Files (Private)
+# AI Agent & Private Scaffolding Files (100% Local Only)
+agent.md
 memory.md
+docs/
 inputs/
 *.log
 scratch/
