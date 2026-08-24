@@ -2,6 +2,11 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.48] - 2026-08-24
+### 100% Transparent Metric Definition & Interactive Information Architecture
+- **ℹ️ Crystal-Clear Metric Definitions**: Added explicit hover popovers, interactive info badges (`ℹ️`), and detailed subtitle descriptions explaining the exact calculation formula and data source for "💎 本轮会话总消耗 (Session Total Tokens)".
+- **🔍 Granular Scope Clarification**: Displays active conversation identifier (`activeConvId`) and specifies that Total = Input Context + Model Output Generated across the entire session lifecycle.
+
 ## [1.0.47] - 2026-08-23
 ### Multi-Layer Physical Disk Token Scanner & Output Byte Audit
 - **📁 Full-Trajectory Output Scanner**: Fixed issue where output tokens were filtered out due to background task message sender tags. Now comprehensively scans conversation SQLite databases (52MB+) and Brain files for accurate output tokens (~9.2M) and input tokens (~1.6M).
@@ -87,6 +92,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 ### Product-First Documentation & Zero-Telemetry Transparency
 - **Comprehensive Documentation Overhaul**: Shifted all public documentation and Marketplace highlights to focus on core developer value (100% offline privacy, sub-second SQLite-WAL sensing, multi-dimensional session Token analytics, 0ms instant startup, ad-free utility).
 - **Open VSX Synchronized**: Fully aligned Open VSX package metadata and embedded README.
+
+## [1.0.48] - 2026-08-24
+### 100% Transparent Metric Definition & Interactive Information Architecture
+- **ℹ️ Crystal-Clear Metric Definitions**: Added explicit hover popovers, interactive info badges (`ℹ️`), and detailed subtitle descriptions explaining the exact calculation formula and data source for "💎 本轮会话总消耗 (Session Total Tokens)".
+- **🔍 Granular Scope Clarification**: Displays active conversation identifier (`activeConvId`) and specifies that Total = Input Context + Model Output Generated across the entire session lifecycle.
 
 ## [1.0.47] - 2026-08-23
 ### Multi-Layer Physical Disk Token Scanner & Output Byte Audit
