@@ -852,8 +852,15 @@ body {
       <div class="card-head">
         <div class="brand-box">
           <div class="logo-wrap">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#3b82f6"/>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <defs>
+                <linearGradient id="geminiLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="50%" stop-color="#3b82f6" />
+                  <stop offset="100%" stop-color="#818cf8" />
+                </linearGradient>
+              </defs>
+              <path d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" fill="url(#geminiLogoGrad)"/>
             </svg>
           </div>
           <div class="brand-info">
