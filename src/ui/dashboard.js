@@ -150,7 +150,7 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         heroGlobSub: isZh ? `共计 ${tokens.globalConvsCount} 个会话物理总和` : `Sum of all ${tokens.globalConvsCount} sessions`,
         heroGlobTip: isZh ? '统计口径：本机磁盘上所有历史 Antigravity 会话的物理 Token 累加总和。' : 'Definition: Machine-wide cumulative total across all sessions.',
 
-        historyTitle:isZh ? '📁 本机各会话独立吞吐清单 (按会话隔离展示)' : '📁 Individual Session Breakdown (Isolated Telemetry)',
+        historyTitle:isZh ? `📁 本机各会话独立吞吐清单 (共 ${tokens.globalConvsCount} 个会话 · 自动物理隔离)` : `📁 Individual Session Breakdown (${tokens.globalConvsCount} sessions · Isolated)`,
 
         idleText:    isZh ? '💤 待机就绪' : '💤 Idle Ready',
         streamText:  isZh ? '🟢 正在生成' : '🟢 Streaming',
@@ -510,6 +510,27 @@ body {
   padding: 10px 12px;
   margin-bottom: 10px;
 }
+.real-history-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.real-history-list::-webkit-scrollbar {
+  width: 5px;
+}
+.real-history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.real-history-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+.real-history-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
 .real-history-head {
   font-size: 11.5px;
   font-weight: 700;
@@ -797,7 +818,9 @@ body {
 
     <div class="real-history-box">
       <div class="real-history-head">${t.historyTitle}</div>
-      ${realHistoryHtml}
+      <div class="real-history-list">
+        ${realHistoryHtml}
+      </div>
     </div>
 
     <div class="sub-grid">
