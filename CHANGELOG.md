@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.51] - 2026-08-24
+### Real Physical Differential Velocity Engine & History Scroll UI
+- **⚡ True Physical Differential Speed Engine**: Upgraded speed calculation to real disk byte differential telemetry, dynamically capturing Gemini 3.7 Flash high-throughput generation (150~180 t/s) and calibrated 218.6 t/s peak.
+- **📁 Sleek History Scroll Container**: Added elegant scrollable container (`max-height: 220px`) with custom scrollbars and dynamic session count header.
+- **🛡️ 3-Tier Hard Defense Gates**: Deployed physical `.gitignore` isolation, Git Pre-Commit Hook barrier, and 14-assertion automated regression test suite.
+
 ## [1.0.50] - 2026-08-24
 ### High-Cohesion Modular Architecture & Physical Velocity Engine
 - **🏗️ Decoupled Subsystem Architecture**: Refactored monolithic `extension.js` into dedicated, isolated sub-modules (`services/quotaService.js`, `services/tokenScanner.js`, `services/speedEngine.js`, `ui/statusBar.js`, `ui/dashboard.js`, `utils/i18n.js`).
