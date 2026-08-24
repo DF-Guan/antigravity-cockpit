@@ -1,24 +1,13 @@
 #!/usr/bin/env node
-// ============================================================
-//  publish.mjs  –  Antigravity Private Cockpit 一键发布脚本
-//  用法:
-//    node publish.mjs                    → 打包 .vsix (本地分发)
-//    node publish.mjs --open-vsx         → 发布到 Open VSX 市场
-//    node publish.mjs --vscode           → 发布到 VS Code Marketplace
-//    node publish.mjs --all              → 同时发布到两个市场
-//
-//  发布前请先设置环境变量 (PowerShell):
-//    $env:OPEN_VSX_TOKEN="<your-open-vsx-token>"
-//    $env:VSCE_PAT="<your-azure-devops-pat>"
-// ============================================================
-
 import { execSync } from 'child_process';
-import { mkdirSync } from 'fs';
+import { mkdirSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VSIX_PATH = path.join(__dirname, 'dist', 'antigravity-cockpit-1.0.0.vsix');
+const pkg = JSON.parse(readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+const version = pkg.version || '1.0.50';
+const VSIX_PATH = path.join(__dirname, 'dist', `antigravity-cockpit-${version}.vsix`);
 const args = process.argv.slice(2);
 
 function run(cmd, label) {
@@ -34,15 +23,16 @@ function run(cmd, label) {
 
 // 1. Package
 mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
-run(`vsce package --out "${VSIX_PATH}" --no-dependencies`, 'Packaging .vsix');
+run(`vsce package --out "${VSIX_PATH}" --no-dependencies`, `Packaging .vsix (v${version})`);
 
 // 2. Publish to Open VSX
 if (args.includes('--open-vsx') || args.includes('--all')) {
-    if (!process.env.OPEN_VSX_TOKEN) {
-        console.error('❌  Missing env var OPEN_VSX_TOKEN');
+    const token = process.env.OPEN_VSX_TOKEN || args.find(a => a.startsWith('--token='))?.split('=')[1];
+    if (!token) {
+        console.error('❌  Missing env var OPEN_VSX_TOKEN or --token=<PAT>');
         process.exit(1);
     }
-    run(`ovsx publish "${VSIX_PATH}" --pat ${process.env.OPEN_VSX_TOKEN}`, 'Publishing to Open VSX');
+    run(`ovsx publish "${VSIX_PATH}" --pat ${token}`, `Publishing v${version} to Open VSX`);
 }
 
 // 3. Publish to VS Code Marketplace
@@ -51,7 +41,7 @@ if (args.includes('--vscode') || args.includes('--all')) {
         console.error('❌  Missing env var VSCE_PAT');
         process.exit(1);
     }
-    run(`vsce publish --pat ${process.env.VSCE_PAT} --packagePath "${VSIX_PATH}"`, 'Publishing to VS Code Marketplace');
+    run(`vsce publish --pat ${process.env.VSCE_PAT} --packagePath "${VSIX_PATH}"`, `Publishing v${version} to VS Code Marketplace`);
 }
 
 console.log('\n🎉  All done!');
