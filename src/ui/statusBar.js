@@ -40,10 +40,6 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
     const cW = liveQuotaState.claude.weeklyPercent !== null ? `${liveQuotaState.claude.weeklyPercent}%` : '--%';
     const c5 = liveQuotaState.claude.fiveHourPercent !== null ? `${liveQuotaState.claude.fiveHourPercent}%` : '--%';
 
-    const speedDesc = liveSpeedState.isStreaming
-        ? `🟢 生成中: **${liveSpeedState.currentTps} t/s**`
-        : `💤 待机就绪: **0 t/s** ｜ 上次峰值: **${liveSpeedState.peakTps} t/s**`;
-
     if (isZh) {
         const liveBadgeZh = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
         tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n\n`);
@@ -60,14 +56,12 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
         tip.appendMarkdown(`- 7天周期剩余: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
         tip.appendMarkdown(`- 5小时冲刺剩余: **${c5}** ｜ 状态/刷新: \`${liveQuotaState.claude.fiveHourResetTimeZh}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **实时流式响应测速**\n`);
-        tip.appendMarkdown(`- 状态: ${speedDesc} ｜ 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
+        tip.appendMarkdown(`- 🚀 **实时生成流速**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 生成中)' : '0 Tokens/s (💤 待机就绪)'}**\n`);
+        tip.appendMarkdown(`- 🏆 **历史爆发峰值**: **${liveSpeedState.peakTps} Tokens/s**\n`);
+        tip.appendMarkdown(`- ⏱️ 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         const liveBadgeEn = liveQuotaState.isLive ? '🟢 Native Live Synced' : (liveQuotaState.isLoading ? '🔄 Syncing...' : '⚡ Local Ready');
-        const speedDescEn = liveSpeedState.isStreaming
-            ? `🟢 Streaming: **${liveSpeedState.currentTps} t/s**`
-            : `💤 Idle: **0 t/s** ｜ Peak: **${liveSpeedState.peakTps} t/s**`;
-
         tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n\n`);
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*\n\n---\n`);
         tip.appendMarkdown(`📊 **Active Session Tokens (ID: ${tokenAnalyticsState.activeConvShort})**\n`);
@@ -80,9 +74,11 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
         tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Status/Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn}\`\n\n`);
         tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite (7-Day & 5h Windows)**\n`);
         tip.appendMarkdown(`- 7-Day Limit Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Status/Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn}\`\n\n`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Status/Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn}\`\n\n---\n`);
         tip.appendMarkdown(`⚡ **Live Generation Velocity**\n`);
-        tip.appendMarkdown(`- Status: ${speedDescEn} ｜ Local Latency: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
+        tip.appendMarkdown(`- 🚀 **Live Generation Speed**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 Streaming)' : '0 Tokens/s (💤 Idle)'}**\n`);
+        tip.appendMarkdown(`- 🏆 **Peak Burst Speed**: **${liveSpeedState.peakTps} Tokens/s**\n`);
+        tip.appendMarkdown(`- ⏱️ Local Latency: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
         tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
