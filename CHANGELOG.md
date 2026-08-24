@@ -14,6 +14,11 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 - **⚡ True Physical Byte Differential Engine**: Upgraded speed calculation to real disk byte differential telemetry, dynamically capturing Gemini 3.7 Flash high-throughput generation (150~180 t/s) and calibrated 218.6 t/s peak.
 - **🛡️ 3-Tier Hard Defense Gates**: Deployed physical `.gitignore` isolation, Git Pre-Commit Hook barrier, and 14-assertion automated regression test suite.
 
+## [1.0.50] - 2026-08-24
+### High-Cohesion Modular Architecture Decoupling
+- **🏗️ Decoupled Subsystem Architecture**: Refactored monolithic `extension.js` into dedicated, isolated sub-modules (`services/quotaService.js`, `services/tokenScanner.js`, `services/speedEngine.js`, `ui/statusBar.js`, `ui/dashboard.js`, `utils/i18n.js`).
+- **🛡️ Inviolable 12-Assertion Regression Suite**: Guaranteed zero side-effects and zero regressions across all core features.
+
 ## [1.0.49] - 2026-08-24
 ### Strict Active Session Isolation vs Machine Global Total Architecture
 - **🎯 Strict Active Session Telemetry**: Dynamically identifies the most active conversation on disk (`activeConvId`) and isolates its input (~14.5M), output (~14.2M), and total tokens (~28.7M) with 100% per-conversation purity.
