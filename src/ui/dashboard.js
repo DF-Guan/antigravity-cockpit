@@ -42,17 +42,11 @@ function showDashboard(context, liveQuotaState, liveSpeedState, tokenAnalyticsSt
     }
 }
 
-// ⚡ Smooth Real-Time postMessage Dispatcher (无需重载 HTML，毫秒级无损同步)
+// ⚡ Synchronize Dashboard Webview reliably
 function updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang) {
     if (currentPanel) {
         try {
-            currentPanel.webview.postMessage({
-                type: 'liveTick',
-                speed: liveSpeedState,
-                quota: liveQuotaState,
-                tokens: tokenAnalyticsState,
-                lang: currentLang
-            });
+            currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
         } catch (_) {}
     }
 }
@@ -509,7 +503,6 @@ body {
   white-space: nowrap;
 }
 
-/* Factual History List */
 .real-history-box {
   background: var(--bg-sub);
   border: 1px solid var(--border);
@@ -776,7 +769,6 @@ body {
       </div>
     </div>
 
-    <!-- 3 Hero Cards -->
     <div class="hero-row">
       <div class="hero-card" onclick="togglePrecision()" title="${t.heroTotTip}">
         <div class="hero-label">${t.heroTotLbl} <span class="info-icon" title="${t.heroTotTip}">ℹ️</span></div>
@@ -803,7 +795,6 @@ body {
       </div>
     </div>
 
-    <!-- Isolated Per-Conversation List -->
     <div class="real-history-box">
       <div class="real-history-head">${t.historyTitle}</div>
       ${realHistoryHtml}
@@ -839,7 +830,7 @@ body {
         <div class="brand-box">
           <div class="logo-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#3b82f6"/>
+              <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#3b82f6"/>
             </svg>
           </div>
           <div class="brand-info">
@@ -930,40 +921,6 @@ function togglePrecision() {
 }
 
 updatePrecisionView();
-
-// ⚡ 监听 Extension Host 实时下发的 1.5s 秒级流速与数据脉冲 (无损 DOM 毫秒级同频)
-window.addEventListener('message', event => {
-  const msg = event.data;
-  if (!msg) return;
-
-  if (msg.type === 'liveTick') {
-    const spd = msg.speed;
-    const spdValEl = document.getElementById('heroSpeedVal');
-    const spdBadgeEl = document.getElementById('heroSpeedBadge');
-    const spdSubEl = document.getElementById('heroSpeedSub');
-
-    if (spdValEl && spdBadgeEl) {
-      if (spd.isStreaming) {
-        spdValEl.style.color = 'var(--c-blue)';
-        spdValEl.innerHTML = spd.currentTps + ' <span style="font-size:13px;font-weight:700;">t/s</span>';
-        spdBadgeEl.style.background = 'rgba(56,189,248,0.18)';
-        spdBadgeEl.style.color = 'var(--c-blue)';
-        spdBadgeEl.innerText = isZh ? '🟢 正在生成' : '🟢 Streaming';
-      } else {
-        spdValEl.style.color = 'var(--text-muted)';
-        spdValEl.innerHTML = '0 <span style="font-size:13px;font-weight:700;">t/s</span>';
-        spdBadgeEl.style.background = 'var(--bg-card)';
-        spdBadgeEl.style.color = 'var(--text-muted)';
-        spdBadgeEl.innerText = isZh ? '💤 待机就绪' : '💤 Idle Ready';
-      }
-      if (spdSubEl) {
-        spdSubEl.innerText = isZh 
-          ? '峰值 ' + spd.peakTps + ' t/s ｜ 本地 ' + spd.latencyMs + 'ms' 
-          : 'Peak ' + spd.peakTps + ' t/s ｜ Local ' + spd.latencyMs + 'ms';
-      }
-    }
-  }
-});
 
 function refresh()      { vscode.postMessage({ command: 'refresh'      }); }
 function openSettings() { vscode.postMessage({ command: 'openSettings' }); }
