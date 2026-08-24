@@ -9,3 +9,6 @@ dist/**
 **/node_modules/**
 **/*.vsix
 memory.md
+agent.md
+**/agent.md
+**/TECH_SUPERVISION.md
