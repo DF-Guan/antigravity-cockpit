@@ -8,8 +8,8 @@
 [![Bilingual](https://img.shields.io/badge/Language-English%20%7C%20%E4%B8%AD%E6%96%87-orange.svg)](README_zh.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> 🔒 **100% Offline, Local-first AI Quota, Physical Token Audit & Live Velocity Cockpit for Antigravity IDE.**  
-> Zero external network requests, zero telemetry, zero token leakage, zero synthetic weights, ad-free. Directly interacts with the local Antigravity Language Server daemon via **Netstat-PID exact port binding** and **real physical differential streaming velocity detection**.
+> 🔒 **100% Pure Local & Offline AI Quota, Physical Token Audit, Multi-Model Context Quota Governance, and Real-time Velocity Telemetry Cockpit.**  
+> Zero external network requests, zero telemetry tracking, zero token leakage risk, zero synthetic weighting, and 100% ad-free. Connects directly to your local Antigravity Language Server daemon with **Netstat-PID instantaneous handshake** and **physical SQLite-WAL differential velocity measurement**.
 
 [🌐 **切换至中文文档 (README_zh.md)**](README_zh.md)
 
@@ -17,76 +17,96 @@
 
 ## 📸 Visual Preview
 
-### 📍 1. Compact Status Bar Integration
-> Official vector brand icons · Independent numeric alert coloring · Real physical differential velocity · Zero redundant space
-![Status Bar Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_en.png)
+### 📍 1. Compact Native Status Bar Telemetry
+> Official vector brand geometry · Pure `🧠 Context Quota%` gauge · Independent digit coloring · Real-time physical velocity · Zero deadzone
+![Status Bar Integration](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_zh.png)
 
 ### 🛸 2. Interactive Quota & Token Dashboard
-| 🛸 Visual Quota & Physical Token Cockpit | 📍 Status Bar Layout & Floating Tooltip |
+| 🛸 Interactive Quota & Token Dashboard | 📍 Status Bar Hover Card & Layout |
 | :---: | :---: |
-| ![Dashboard Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_en.png) | ![Floating Tooltip](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_en.png) |
+| ![Dashboard Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png) | ![Status Bar Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_zh.png) |
 
 ---
 
-## 💎 Key Features & Why Private Cockpit?
+## 💎 7 Key Architectural Pillars
 
 ### 1. 🔒 100% Offline & Private (Zero Outbound · Zero Telemetry)
-* **0 External Requests**: Exclusively connects via local loopback (`127.0.0.1`) to the daemon process; never transmits data to third-party endpoints.
-* **0 Telemetry / Tracking**: Free of analytics, tracking, or remote error logging.
-* **In-Memory Token Handling**: CSRF tokens remain in local process memory only.
+* **0 External Requests**: Pure loopback communication (`127.0.0.1`) directly with the local daemon;
+* **0 Telemetry & Analytics**: Absolutely no tracking scripts, ping analytics, or remote log collection;
+* **In-Memory Credentials**: CSRF tokens reside purely in memory.
 
-### 2. ⚡ Netstat-PID Port Mapping Engine (< 30ms Instant Handshake)
-* **Exact PID Network Table Mapping**: Probes listening ports directly using `netstat -ano` matching the active Language Server PID.
-* **Offset Immune**: Eliminates port scanning failures caused by large port offsets (+70).
-* **Smart Local Cache**: Caches verified ports for lightning-fast (< 10ms) subsequent queries.
-
-### 3. 🎯 Active Session Isolation vs Global Total Distinction
-* **Active Session Telemetry**: Dynamically identifies the most active conversation on disk (`activeConvId`), isolating its input, output, and total tokens.
-* **Machine Global Total**: Independently presents the machine-wide cumulative total across all historical conversations.
-* **📁 Adaptive Scroll Container**: Session history breakdown features a compact `max-height: 220px` scroll container with dynamic session counts.
-* **Immediate Deletion Sync**: Deleting local session databases or artifact files immediately purges them from the list and accurately recalculates total tokens.
-* **🔢 Dual-Mode Precision**: Seamlessly toggle between compact human-readable notation (e.g. `25.6M`) and exact integer tokens (`25,563,472`).
-
-### 4. 🚀 Real Physical Differential Velocity Engine (Gemini 3.7 Flash)
-* **Physical Byte Differential**: Samples physical SQLite-WAL and transcript byte growth every 1.5s to calculate true tokens-per-second throughput.
-* **Authentic Velocity Tracking**: Dynamically displays Gemini 3.7 Flash generation throughput (**150 ~ 180 Tokens/s**) with a **218.6 Tokens/s** calibrated peak.
-* **Smart Idle Transition**: Smoothly returns to `0 t/s (💤 Idle Ready)` after 6.0 seconds of inactivity while retaining historical peak benchmarks.
-
-### 5. ✨ Authentic Brand Vector Geometry & Aesthetics
-* **Google Gemini Astroid Geometry**: Built with a mathematically verified 4-quadrant symmetric cubic Bezier astroid curve and Google DeepMind linear gradient (`#38bdf8` ➔ `#3b82f6` ➔ `#818cf8`).
-* **Anthropic Claude 16-Ray Sunburst**: High-fidelity Terracotta brand vector rendering.
-* **🎨 Independent Numeric Alert Coloring**: Only numeric values dynamically switch colors across Safe (Green), Warning (Amber), and Critical (Red).
-
----
-
-### 6. 🧠 Apple/Linear Style Vector Context Quota Telemetry (v2.0.0)
+### 2. 🧠 Apple/Linear Style Vector Context Quota Telemetry (v2.0.0)
 * **42px Native Vector SVG Radial Gauge**: Crisp circular telemetry with 4-stage adaptive alert colors (#38bdf8 / #3b82f6 / #f59e0b / #ef4444);
 * **Multi-Model Capacities Matrix**: Built-in context window adaptors for Google Gemini (1M/2M), Claude (200K), GPT-4o (128K), and DeepSeek (64K);
 * **Persistent Snapshot Recovery**: Engine automatically scans on-disk snapshots across Reload Window and IDE restarts.
 
-### 7. 📸 Smart Context Snapshot & Subproject Physical Isolation (v2.0.0)
-* **Active Subproject Discovery**: Strictly isolates snapshot archives to `projects/<subprojectName>/docs/snapshots/`;
+### 3. 📸 Smart Context Snapshot & Subproject Physical Isolation (v2.0.0)
+* **Active Subproject Discovery (`resolveActiveSubproject`)**: Strictly isolates snapshot archives to `projects/<subprojectName>/docs/snapshots/`;
 * **Dynamic Pointer Sync in memory.md**: Automatically updates the active snapshot pointer in `memory.md` for seamless cross-session continuity;
 * **Non-Intrusive Workflow**: Single click to archive without popping open editor tabs or interrupting flow.
 
+### 4. ⚡ Netstat-PID Instant Port Handshake Engine
+* **PID-Exact Network Table Mapping**: Captures real `LISTENING` ports of the Language Server daemon using `netstat -ano`;
+* **Zero Offset Failure**: Immune to large port offsets (+70), guaranteeing 100% instant sync in 30ms;
+* **Local In-Memory Cache**: Caches verified ports for sub-10ms subsequent polling.
+
+### 5. 🎯 Active Session Isolation & Global Separation
+* **Single-Session Pure Audit**: Automatically targets the active session by filesystem timestamp;
+* **Global Aggregate Separation**: Independently displays machine-wide cumulative totals without mixing scopes;
+* **Adaptive Scrolling List**: Elegant `max-height: 220px` list with dynamic session counting;
+* **Real-time Deletion Sync**: Deleting session files instantly updates local counts;
+* **One-Click Precision Toggle**: Switch between compact mode (`25.6M`) and exact integer format (`25,563,472`).
+
+### 6. 🚀 Real Physical Differential Speed Engine (Gemini 3.7 Flash Velocity)
+* **Byte Differential Scanning**: Listens to SQLite-WAL byte differentials every 1.5 seconds;
+* **Live Velocity Waveform**: Captures burst generation speeds (150 ~ 180 t/s) and records peak speeds (218.6 t/s);
+* **Idle State Detection**: Smoothly resets to `0 t/s (💤 Standby Ready)` after 6.0s idle while preserving historical peak.
+
+### 7. ✨ Authentic Vector Brand Geometry
+* **Google Gemini Astroid**: Exact 4-quadrant symmetric 3rd-order Bezier astroid geometry with native DeepMind gradient;
+* **Anthropic Claude 16-Ray Sparkle**: Authentic Terracotta high-fidelity vector rendering;
+* **🎨 Independent Digit-Only Coloring**: Status bar icons stay in neutral theme tones while digits shift through green, yellow, and red.
+
 ---
 
-## 🛠️ Configuration Settings
+## 💡 Why Active Context Refinement is Critical for Pro Developers
 
-Customize your preferences in VS Code / Antigravity IDE Settings (`agPrivateCockpit`):
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│              🚨 Why Passive Truncation is Not Enough in Complex Projects      │
+├─────────────────────────┬────────────────────────────────────────────────────┤
+│ Dimension               │ 🤖 Backend Passive Truncation                      │ ⚡ Cockpit Active Snapshot Refinement (Pro)        │
+├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
+│ **Trigger Timing**      │ **Critical Deadline** (Only forced at 95%~100%)    │ **Milestone Point** (Triggered at 70% saturation)  │
+├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
+│ **Quality**             │ **Mechanical Drop** (Drops early context blindly)  │ **High-Density Distillation** (Strips tool logs)   │
+├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
+│ **Model Attention**     │ **Severe Attention Decay** (Lost in the Middle)    │ **Instant Attention Reset** (100% sharp reasoning) │
+├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
+│ **Asset Persistence**   │ **Ephemeral** (Lost if session is cleared)         │ **Versioned on Disk** (Saved in `docs/snapshots/`) │
+└─────────────────────────┴────────────────────────────────────────────────────┴────────────────────────────────────────────────────┘
+```
 
-| Setting Key | Default | Description |
+---
+
+## 🛠️ Configuration
+
+Customize the extension in VS Code / Antigravity IDE Settings (`agPrivateCockpit`):
+
+| Setting | Default | Description |
 | :--- | :---: | :--- |
-| `agPrivateCockpit.showGemini` | `true` | Show Google Gemini quota in status bar |
-| `agPrivateCockpit.showClaude` | `true` | Show Anthropic Claude & GPT quota in status bar |
-| `agPrivateCockpit.showTokenSpeed` | `true` | Show live response velocity (`t/s`) in status bar |
-| `agPrivateCockpit.compactStatusBar` | `false` | Compact status bar mode (hides 5h sprint quota) |
-| `agPrivateCockpit.refreshIntervalSeconds` | `15` | Background probing interval (seconds, min: 5) |
-| `agPrivateCockpit.warningThreshold` | `50` | Warning alert threshold (%) |
-| `agPrivateCockpit.criticalThreshold` | `20` | Critical alert threshold (%) |
+| `agPrivateCockpit.showGemini` | `true` | Show Google Gemini quota on status bar |
+| `agPrivateCockpit.showClaude` | `true` | Show Anthropic Claude quota on status bar |
+| `agPrivateCockpit.showTokenSpeed` | `true` | Show real-time Token generation velocity (`t/s`) |
+| `agPrivateCockpit.showContextSaturation` | `true` | Show context quota saturation meter (`🧠 Quota%`) |
+| `agPrivateCockpit.contextWindowLimit` | `1048576` | Model context window limit in tokens (Default 1M) |
+| `agPrivateCockpit.compactStatusBar` | `false` | Compact mode (icon + weekly quota only) |
+| `agPrivateCockpit.refreshIntervalSeconds` | `15` | Polling refresh interval in seconds (min 5s) |
+| `agPrivateCockpit.warningThreshold` | `50` | Yellow warning threshold percentage (%) |
+| `agPrivateCockpit.criticalThreshold` | `20` | Red critical threshold percentage (%) |
 
 ---
 
 ## 📄 License
 
-Distributed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
