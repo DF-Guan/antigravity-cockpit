@@ -1,5 +1,5 @@
 const vscode = require('vscode');
-const { computeContextSaturation, getContextState } = require('../services/contextEngine');
+const { computeContextSaturation, getContextState, resolveActiveSubproject } = require('../services/contextEngine');
 
 let sbGIcon, sbGWeekVal, sbG5h;
 let sbCIcon, sbCWeekVal, sbC5h;
@@ -215,7 +215,13 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
     const cW = liveQuotaState.claude.weeklyPercent;
     const c5 = liveQuotaState.claude.fiveHourPercent;
 
-    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, undefined, 'D:/资料M2/mywork/Antigravity/projects/antigravity-cockpit');
+        let wsRoot = undefined;
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        wsRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    }
+    const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
+    const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
+    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject.path);
     const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState);
 
     // 1. Google Gemini

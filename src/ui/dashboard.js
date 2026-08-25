@@ -1,4 +1,4 @@
-const { computeContextSaturation, getContextState } = require('../services/contextEngine');
+const { computeContextSaturation, getContextState, resolveActiveSubproject } = require('../services/contextEngine');
 const vscode = require('vscode');
 
 let currentPanel = undefined;
@@ -68,6 +68,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `⚡ 实时响应速率: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (生成中)' : '0 Tokens/s (待机)'} ｜ 🏆 峰值 ${liveSpeedState.peakTps} Tokens/s`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
+        { label: `⚡ 智能提炼上下文快照`, description: '物理归档当前会话快照，重置模型注意力保留率' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏与真实会话明细' },
         { label: `🌐 切换为 English`, description: '当前: 中文' },
@@ -78,6 +79,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Generation Velocity: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (Streaming)' : '0 Tokens/s (Idle)'} ｜ 🏆 Peak Burst: ${liveSpeedState.peakTps} Tokens/s`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
+        { label: `⚡ Refine Context Snapshot Now`, description: 'Archive snapshot to disk & reset model attention baseline' },
         { label: `🔄 Force Refresh Now`, description: 'Probe latest quota from Language Server' },
         { label: `🖥️ Open Visual Dashboard`, description: 'View brand-accurate quota cockpit & disk analytics' },
         { label: `🌐 Switch to Chinese (中文)`, description: 'Current: English' },
@@ -89,7 +91,9 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
     }).then(sel => {
         if (!sel) return;
         const txt = sel.label;
-        if (txt.includes('可视化') || txt.includes('Visual')) {
+        if (txt.includes('提炼') || txt.includes('Refine')) {
+            if (callbacks.onCompact) callbacks.onCompact();
+        } else if (txt.includes('可视化') || txt.includes('Visual')) {
             if (callbacks.onOpenDashboard) callbacks.onOpenDashboard();
         } else if (txt.includes('切换') || txt.includes('Switch')) {
             if (callbacks.onToggleLang) callbacks.onToggleLang();
@@ -103,7 +107,13 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
 
 function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const isZh = lang === 'zh';
-  const contextState = computeContextSaturation(tokens, 1048576, undefined, 'D:/资料M2/mywork/Antigravity/projects/antigravity-cockpit');
+      let wsRoot = undefined;
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        wsRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    }
+    const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
+    const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
+    const contextState = computeContextSaturation(tokens, 1048576, undefined, subproject.path);
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const warnPct = cfg.get('warningThreshold', 50);
     const critPct = cfg.get('criticalThreshold', 20);
