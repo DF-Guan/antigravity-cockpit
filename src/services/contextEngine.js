@@ -43,6 +43,14 @@ function getContextState() {
 function resolveActiveSubproject(workspaceRoot, activeFilePath) {
     const ws = workspaceRoot || process.cwd();
 
+    // 1. 如果工作区本身直接打开的是某个子项目 (如 D:/.../projects/my-app)
+    const normWs = ws.replace(/\\/g, '/');
+    const wsProjectMatch = normWs.match(/\/projects\/([^\/]+)$/);
+    if (wsProjectMatch) {
+        return { name: wsProjectMatch[1], path: ws, relPath: '.' };
+    }
+
+    // 2. 根据当前激活文件路径精准锁定子项目
     if (activeFilePath && typeof activeFilePath === 'string') {
         const norm = activeFilePath.replace(/\\/g, '/');
         const match = norm.match(/\/projects\/([^\/]+)/);
@@ -51,10 +59,13 @@ function resolveActiveSubproject(workspaceRoot, activeFilePath) {
             const subPath = path.join(ws, 'projects', subName);
             if (fs.existsSync(subPath)) {
                 return { name: subName, path: subPath, relPath: `projects/${subName}` };
+            } else if (path.basename(ws) === subName) {
+                return { name: subName, path: ws, relPath: '.' };
             }
         }
     }
 
+    // 3. 扫描 Monorepo projects/ 目录
     const projectsDir = path.join(ws, 'projects');
     if (fs.existsSync(projectsDir)) {
         const cockpitDir = path.join(projectsDir, 'antigravity-cockpit');
@@ -72,7 +83,17 @@ function resolveActiveSubproject(workspaceRoot, activeFilePath) {
         } catch (_) {}
     }
 
-    return { name: 'workspace', path: ws, relPath: '.' };
+    // 4. 独立单项目兜底：若有 package.json 提取其名字
+    const pkgFile = path.join(ws, 'package.json');
+    if (fs.existsSync(pkgFile)) {
+        try {
+            const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf-8'));
+            if (pkg.name) return { name: pkg.name, path: ws, relPath: '.' };
+        } catch (_) {}
+    }
+
+    const defaultName = path.basename(ws) || 'workspace';
+    return { name: defaultName, path: ws, relPath: '.' };
 }
 
 /**
@@ -95,9 +116,9 @@ function findPersistentSnapshot(subprojectDir, convId) {
         for (const f of files) {
             const fpath = path.join(snapDir, f);
             const content = fs.readFileSync(fpath, 'utf-8');
-            if (content.includes(convId)) {
+            if (!convId || convId === 'default' || content.includes(convId)) {
                 // 提取归档时间与物理消耗
-                const timeMatch = content.match(/归档时间[：:]\s*`([^`]+)`/);
+                const timeMatch = content.match(/(?:快照)?归档时间[\*\s：:]+`([^`]+)`/);
                 const tokenMatch = content.match(/`(\d[\d,]*)`\s*Tokens/);
                 
                 let totalAtCompact = 0;
@@ -108,7 +129,7 @@ function findPersistentSnapshot(subprojectDir, convId) {
                 return {
                     fileName: f,
                     filePath: fpath,
-                    dateReadable: timeMatch ? timeMatch[1] : f,
+                    dateReadable: timeMatch ? timeMatch[1] : f.replace('snapshot_', '').replace('.md', ''),
                     totalAtCompact: totalAtCompact
                 };
             }
@@ -323,27 +344,30 @@ function createSessionSnapshot(subprojectDir, activeConvId, tokenState, subproje
     // 立即重新计算并更新状态
     computeContextSaturation(tokenState, contextState.windowCapacity, contextState.modelType, targetDir);
 
-    // 自动同步更新对应子项目的 memory.md 快照索引指针
+    // 自动同步更新对应子项目的 memory.md 快照索引指针 (若无 memory.md 则自动初始化标准模板)
     const memoryFile = path.join(targetDir, 'memory.md');
-    if (fs.existsSync(memoryFile)) {
-        try {
-            let memContent = fs.readFileSync(memoryFile, 'utf-8');
-            const pointerSection = `## 📸 最新上下文快照索引 (Active Snapshot Pointer)
+    const pointerSection = `## 📸 最新上下文快照索引 (Active Snapshot Pointer)
 - **所属子项目**: \`${subName}\`
 - **最新快照基线**: [docs/snapshots/${fileName}](file:///${filePath.replace(/\\/g, '/')})
 - **归档时间戳**: \`${dateReadable}\` (\`${tsStr}\`)
 - **会话物理消耗**: **${totFormatted}** (\`${totExact}\` Tokens ｜ 状态: **已完成基线提炼 · 注意力重置**)
 - **长文本注意力**: \`100% (已提炼归档 · 零衰减)\`
 `;
+    try {
+        let memContent = '';
+        if (fs.existsSync(memoryFile)) {
+            memContent = fs.readFileSync(memoryFile, 'utf-8');
             if (memContent.includes('## 📸 最新上下文快照索引')) {
                 memContent = memContent.replace(/## 📸 最新上下文快照索引[\s\S]*?(?=\n## |$)/, pointerSection);
             } else {
                 memContent = pointerSection + '\n' + memContent;
             }
-            fs.writeFileSync(memoryFile, memContent, 'utf-8');
-        } catch (e) {
-            console.error('Failed to update memory.md pointer:', e);
+        } else {
+            memContent = `# 项目进度与上下文记忆看板 (${subName})\n\n${pointerSection}\n## 🚀 当前进度\n- **上次做到**: 上下文状态提炼归档已完成；\n- **当前状态**: 开发中；\n\n## 📋 待办事项 (TODO)\n- [ ] 持续进行模块交付\n`;
         }
+        fs.writeFileSync(memoryFile, memContent, 'utf-8');
+    } catch (e) {
+        console.error('Failed to update memory.md pointer:', e);
     }
 
     return {
