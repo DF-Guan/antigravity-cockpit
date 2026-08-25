@@ -241,7 +241,7 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
     const cW = liveQuotaState.claude.weeklyPercent;
     const c5 = liveQuotaState.claude.fiveHourPercent;
 
-    const contextState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap);
+    const contextState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap, tokenAnalyticsState.activeRequests);
     const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState);
 
     // 1. Google Gemini

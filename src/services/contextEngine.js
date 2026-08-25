@@ -30,11 +30,21 @@ function getContextState() {
  * 4. 75% ~ 90%: (⊙_⊙;) ◕ 注意力衰减警示 (Warning Orange #f97316)
  * 5. 90% ~ 100%: (×_×) ● 上下文已满·建议压缩 (Alert Crimson #ef4444)
  */
-function computeContextSaturation(activeTotalTokens, customCapacity) {
+function computeContextSaturation(activeTotalTokens, customCapacity, activeRequests) {
     const capacity = customCapacity && customCapacity > 0 ? customCapacity : 1048576;
-    const tokens = typeof activeTotalTokens === 'number' && activeTotalTokens > 0 ? activeTotalTokens : 0;
-    const ratio = Math.min(1.0, tokens / capacity);
-    const pct = Math.round(ratio * 1000) / 10; // 保留一位小数，如 24.6%
+    
+    let workingTokens = 0;
+    if (typeof activeTotalTokens === 'number' && activeTotalTokens > 0) {
+        if (activeRequests !== undefined && activeRequests > 0) {
+            // Context working memory dynamically estimated from conversation history depth & size
+            workingTokens = Math.min(capacity, Math.round(18000 + (activeRequests * 4200) + (activeTotalTokens * 0.015)));
+        } else {
+            workingTokens = Math.min(capacity, activeTotalTokens);
+        }
+    }
+
+    const ratio = Math.min(1.0, workingTokens / capacity);
+    const pct = Math.round(ratio * 1000) / 10; // 保留一位小数，如 18.4%
 
     let expr = '(•‿•)';
     let ring = '○';
@@ -88,7 +98,7 @@ function computeContextSaturation(activeTotalTokens, customCapacity) {
 
     Object.assign(contextState, {
         windowCapacity: capacity,
-        activeTokens: tokens,
+        activeTokens: workingTokens,
         saturationPercent: pct,
         saturationFormatted: `${pct}%`,
         expression: expr,

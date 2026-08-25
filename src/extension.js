@@ -49,7 +49,7 @@ function activate(context) {
             computeLiveTokenAnalytics();
             const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
             const customCap = cfg.get('contextWindowLimit', 1048576);
-            const ctxState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap);
+            const ctxState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap, tokenAnalyticsState.activeRequests);
             const isZh = currentLang === 'zh';
 
             const items = [

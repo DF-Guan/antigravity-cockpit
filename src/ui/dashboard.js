@@ -1,3 +1,4 @@
+const { computeContextSaturation, getContextState } = require('../services/contextEngine');
 const vscode = require('vscode');
 
 let currentPanel = undefined;

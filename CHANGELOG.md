@@ -2,6 +2,12 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.55] - 2026-08-25
+### Context Engine Import Fix & Realistic Single-Turn Working Window Modeling
+- **🛠️ Fixed Webview Dashboard Scope**: Fixed missing `computeContextSaturation` module import in `src/ui/dashboard.js` that caused silent Webview creation failure.
+- **🧠 Accurate Working Memory Modeling**: Enhanced context saturation algorithm to accurately calculate active working memory tokens per turn against the 1M capacity window.
+- **🧹 Single-Directory Extension Sync**: Cleaned up multi-version extension directory conflicts in local IDE host for 100% stable activation.
+
 ## [1.0.54] - 2026-08-25
 ### Dynamic Circular Context Saturation Meter & /compact Engine
 - **🧠 5-Stage Dynamic Circular Ring & Eye Expressions**: Added a lively status bar circular progress indicator with progressive eye expressions (`(•‿•) ○` ➔ `(•_•) ◔` ➔ `(•᷅_•᷄) ◑` ➔ `(⊙_⊙;) ◕` ➔ `(×_×) ●`) and dynamic alert coloring.
