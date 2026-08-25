@@ -1,3 +1,7 @@
+
+// 🛡️ High-Water Mark Cache: 防止 SQLite WAL commit 刷盘时 Token 产生负向波动
+const sessionHighWaterMarks = {};
+
 const fs = require('fs');
 const path = require('path');
 
@@ -132,10 +136,24 @@ function computeLiveTokenAnalytics() {
         const dynamicRequests = Math.max(active.msgCount || 1, Math.round((active.dbSize + active.walSize) / (390 * 1024)));
         
         const activeGenBytes = (active.dbSize * 0.52) + (active.walSize * 0.7) + active.brainSize;
-        const activeOutTokens = Math.max(1000, Math.round(activeGenBytes / 3.4));
-        const activeInTokens = Math.max(1000, Math.round(dynamicRequests * 118500 + (active.walSize / 8)));
-        const activeCachedTokens = Math.round(activeInTokens * 0.986);
-        const activeTotTokens = activeInTokens + activeOutTokens;
+        let activeOutTokens = Math.max(1000, Math.round(activeGenBytes / 3.4));
+        let activeInTokens = Math.max(1000, Math.round(dynamicRequests * 118500 + (active.walSize / 8)));
+        let activeCachedTokens = Math.round(activeInTokens * 0.986);
+        let activeTotTokens = activeInTokens + activeOutTokens;
+
+        // 🛡️ 单调递增保护：确保活跃会话的 Token 只增不减，彻底杜绝 WAL 刷盘波动
+        if (!sessionHighWaterMarks[active.cid]) {
+            sessionHighWaterMarks[active.cid] = { in: activeInTokens, out: activeOutTokens, tot: activeTotTokens, reqs: dynamicRequests };
+        } else {
+            const hwm = sessionHighWaterMarks[active.cid];
+            activeInTokens = Math.max(hwm.in, activeInTokens);
+            activeOutTokens = Math.max(hwm.out, activeOutTokens);
+            activeTotTokens = Math.max(hwm.tot, activeTotTokens);
+            hwm.in = activeInTokens;
+            hwm.out = activeOutTokens;
+            hwm.tot = activeTotTokens;
+            hwm.reqs = Math.max(hwm.reqs, dynamicRequests);
+        }
 
         let globalConvs = convList.length;
         let globalTotTokens = 0;

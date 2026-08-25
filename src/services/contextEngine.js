@@ -1,3 +1,7 @@
+
+// 🛡️ Context Saturation High-Water Mark Cache: 确保未压缩会话上下文占用单调递增
+const contextHighWaterMarks = {};
+
 const fs = require('fs');
 const path = require('path');
 
@@ -167,7 +171,8 @@ function findPersistentSnapshot(subprojectDir, convId, workspaceRoot) {
             for (const f of files) {
                 const fpath = path.join(snapDir, f);
                 const content = fs.readFileSync(fpath, 'utf-8');
-                if (!convId || convId === 'default' || content.includes(convId)) {
+                // 🛡️ 严格会话隔离：必须真实包含当前活跃会话 ID（且不能为 default/test 伪造）
+                if (convId && convId !== 'default' && convId.length >= 16 && content.includes(convId) && !content.includes('[TEST_MOCK]')) {
                     const timeMatch = content.match(/(?:快照)?归档时间[\*\s：:]+`([^`]+)`/);
                     const tokenMatch = content.match(/`(\d[\d,]*)`\s*Tokens/);
                     
@@ -240,6 +245,16 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
         } else {
             if (reqs > 0 || tot > 0) {
                 usedTokens = Math.min(capacity, Math.round(15000 + (reqs * 3600) + (tot * 0.008)));
+            }
+        }
+
+        // 🛡️ 单调递增保护：当前会话在未提炼状态下，已用额度绝对只增不减
+        if (convId && convId !== 'default') {
+            if (!contextHighWaterMarks[convId] || isCompacted) {
+                contextHighWaterMarks[convId] = usedTokens;
+            } else {
+                usedTokens = Math.max(contextHighWaterMarks[convId], usedTokens);
+                contextHighWaterMarks[convId] = usedTokens;
             }
         }
     } else if (typeof tokenStateOrTokens === 'number' && tokenStateOrTokens > 0) {
