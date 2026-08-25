@@ -59,6 +59,18 @@
 
 ---
 
+### 6. 🧠 Apple/Linear Style Vector Context Quota Telemetry (v2.0.0)
+* **42px Native Vector SVG Radial Gauge**: Crisp circular telemetry with 4-stage adaptive alert colors (#38bdf8 / #3b82f6 / #f59e0b / #ef4444);
+* **Multi-Model Capacities Matrix**: Built-in context window adaptors for Google Gemini (1M/2M), Claude (200K), GPT-4o (128K), and DeepSeek (64K);
+* **Persistent Snapshot Recovery**: Engine automatically scans on-disk snapshots across Reload Window and IDE restarts.
+
+### 7. 📸 Smart Context Snapshot & Subproject Physical Isolation (v2.0.0)
+* **Active Subproject Discovery**: Strictly isolates snapshot archives to `projects/<subprojectName>/docs/snapshots/`;
+* **Dynamic Pointer Sync in memory.md**: Automatically updates the active snapshot pointer in `memory.md` for seamless cross-session continuity;
+* **Non-Intrusive Workflow**: Single click to archive without popping open editor tabs or interrupting flow.
+
+---
+
 ## 🛠️ Configuration Settings
 
 Customize your preferences in VS Code / Antigravity IDE Settings (`agPrivateCockpit`):

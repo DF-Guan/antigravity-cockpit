@@ -59,6 +59,18 @@
 
 ---
 
+### 6. 🧠 Apple/Linear 级高精上下文额度环形仪表（v2.0.0 重磅）
+* **42px 原生矢量 SVG 动态圆环**：彻底摒弃 ASCII 表情与不规范符号，毫秒级自适应四级色彩（科技蓝/极光蓝/预警黄/警戒红）；
+* **多模型原生容量矩阵自适应**：内置 Google Gemini (1M/2M)、Anthropic Claude (200K)、OpenAI GPT-4o (128K)、DeepSeek (64K) 等容量自动换算；
+* **物理持久化回溯 (`findPersistentSnapshot`)**：即便窗口重载或 IDE 重启，依然自动从磁盘读取快照持久化锁定提炼基线。
+
+### 7. 📸 智能上下文快照提炼与多子项目物理隔离（v2.0.0 重磅）
+* **精准锁定子项目 (`resolveActiveSubproject`)**：优先匹配正在编辑的文件所属工程，快照文件严格归属于 `projects/<子项目名>/docs/snapshots/`；
+* **全局文档索引强联动**：自动在子项目 `memory.md` 写入最新快照指针，为新会话提供高密度基线，彻底杜绝跨工程污染；
+* **极简无侵入交互**：单击状态栏或大屏提炼按钮，瞬时落盘并弹出自动淡出的轻量通知，不弹开文件打扰编码思路。
+
+---
+
 ## 🛠️ 配置项说明 (Configuration)
 
 您可以在 VS Code / Antigravity IDE 设置中搜索 `agPrivateCockpit` 进行自定义：
