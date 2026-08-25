@@ -14,7 +14,7 @@ let speedTimer;
 let currentLang = 'auto';
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v2.0.0 激活');
+    console.log('[Antigravity Private Cockpit] v2.0.1 激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
