@@ -131,9 +131,9 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         btnRefresh:  isZh ? '🔄 实时刷新' : '🔄 Refresh',
         
         geminiBrand: 'Google Gemini',
-        geminiSub:   'Gemini 3.7 Flash • 3.1 Pro',
+        geminiSub:   (data.geminiModels && data.geminiModels.length > 0) ? data.geminiModels.slice(0, 4).join(' • ') : 'Gemini 3.7 Flash • Gemini 3.6 Flash • Gemini 3.5 Flash • Gemini 3.1 Pro',
         claudeBrand: 'Anthropic Claude & GPT',
-        claudeSub:   'Claude 4.6 Sonnet • GPT-OSS',
+        claudeSub:   (data.claudeModels && data.claudeModels.length > 0) ? data.claudeModels.slice(0, 3).join(' • ') : 'Claude Sonnet 4.6 (Thinking) • Claude Opus 4.6 (Thinking) • GPT-OSS 120B',
         statusOk:    isZh ? '运行良好' : 'Optimal',
         statusWarn:  isZh ? '注意额度' : 'Watch',
         statusCrit:  isZh ? '额度偏低' : 'Low',

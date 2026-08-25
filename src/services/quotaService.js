@@ -7,6 +7,9 @@ const liveQuotaState = {
     isLive: false,
     isLoading: true,
     lastSyncTime: '--:--:--',
+    availableModels: [],
+    geminiModels: ['Gemini 3.7 Flash', 'Gemini 3.6 Flash', 'Gemini 3.5 Flash', 'Gemini 3.1 Pro'],
+    claudeModels: ['Claude Sonnet 4.6 (Thinking)', 'Claude Opus 4.6 (Thinking)', 'GPT-OSS 120B (Medium)'],
     gemini: {
         weeklyPercent: 0,
         weeklyResetTimeZh: '7天周期',
@@ -77,6 +80,50 @@ function queryEndpoint(port, token) {
             req.end();
         } catch (e) {
             reject(e);
+        }
+    });
+}
+
+
+// Query user status & dynamically discover all available models (< 25ms)
+function queryUserStatus(port, token) {
+    return new Promise((resolve) => {
+        const postData = JSON.stringify({});
+        const options = {
+            hostname: '127.0.0.1',
+            port: port,
+            path: '/exa.language_server_pb.LanguageServerService/GetUserStatus',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-codeium-csrf-token': token,
+                'X-CSRF-Token': token,
+                'Content-Length': Buffer.byteLength(postData)
+            },
+            rejectUnauthorized: false,
+            timeout: 1200
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    resolve(parsed);
+                } catch (_) {
+                    resolve(null);
+                }
+            });
+        });
+
+        req.on('error', () => resolve(null));
+        req.on('timeout', () => { req.destroy(); resolve(null); });
+        try {
+            req.write(postData);
+            req.end();
+        } catch (_) {
+            resolve(null);
         }
     });
 }
@@ -341,6 +388,28 @@ async function fetchLiveQuota(context, speedState, tokenState) {
     try {
         const res = await probeLanguageServerQuota();
         if (res && res.json && res.json.response && res.json.response.groups) {
+            // 🌟 Parallel live model discovery
+            if (cachedPort && cachedToken) {
+                queryUserStatus(cachedPort, cachedToken).then(userStatusRes => {
+                    if (userStatusRes && userStatusRes.userStatus && userStatusRes.userStatus.cascadeModelConfigData) {
+                        const configs = userStatusRes.userStatus.cascadeModelConfigData.clientModelConfigs || [];
+                        const models = [];
+                        const geminis = [];
+                        const claudes = [];
+
+                        configs.forEach(m => {
+                            const lbl = m.label || '';
+                            if (lbl && !models.includes(lbl)) models.push(lbl);
+                            if (lbl.toLowerCase().includes('gemini') && !geminis.includes(lbl)) geminis.push(lbl);
+                            else if ((lbl.toLowerCase().includes('claude') || lbl.toLowerCase().includes('gpt')) && !claudes.includes(lbl)) claudes.push(lbl);
+                        });
+
+                        if (models.length > 0) liveQuotaState.availableModels = models;
+                        if (geminis.length > 0) liveQuotaState.geminiModels = geminis;
+                        if (claudes.length > 0) liveQuotaState.claudeModels = claudes;
+                    }
+                }).catch(() => {});
+            }
             liveQuotaState.isLive = true;
             liveQuotaState.isLoading = false;
 
