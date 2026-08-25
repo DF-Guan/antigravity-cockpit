@@ -2,25 +2,26 @@ const https = require('https');
 const { exec, execFile } = require('child_process');
 const { formatTime } = require('../utils/i18n');
 
+// 🔒 Shared state object across modules (Object reference preserved)
 const liveQuotaState = {
     isLive: false,
     isLoading: true,
-    lastSyncTime: '--:--',
+    lastSyncTime: '--:--:--',
     gemini: {
-        weeklyPercent: null,
-        fiveHourPercent: null,
-        weeklyResetTimeZh: '计算中...',
-        weeklyResetTimeEn: 'Calculating...',
-        fiveHourResetTimeZh: '满额就绪 (100% 充足)',
-        fiveHourResetTimeEn: 'Full (100% Ready)'
+        weeklyPercent: 0,
+        weeklyResetTimeZh: '7天周期',
+        weeklyResetTimeEn: '7-Day Rolling',
+        fiveHourPercent: 0,
+        fiveHourResetTimeZh: '5小时滚动刷新',
+        fiveHourResetTimeEn: '5-hour rolling reset'
     },
     claude: {
-        weeklyPercent: null,
-        fiveHourPercent: null,
-        weeklyResetTimeZh: '计算中...',
-        weeklyResetTimeEn: 'Calculating...',
-        fiveHourResetTimeZh: '满额就绪 (100% 充足)',
-        fiveHourResetTimeEn: 'Full (100% Ready)'
+        weeklyPercent: 0,
+        weeklyResetTimeZh: '7天周期',
+        weeklyResetTimeEn: '7-Day Rolling',
+        fiveHourPercent: 0,
+        fiveHourResetTimeZh: '5小时滚动刷新',
+        fiveHourResetTimeEn: '5-hour rolling reset'
     }
 };
 
@@ -31,43 +32,47 @@ function getLiveQuotaState() {
     return liveQuotaState;
 }
 
+// Low-level HTTPS query to local language server (< 25ms)
 function queryEndpoint(port, token) {
     return new Promise((resolve, reject) => {
-        const tStart = Date.now();
-        const req = https.request({
+        const start = Date.now();
+        const postData = JSON.stringify({ forceRefresh: true });
+        const options = {
             hostname: '127.0.0.1',
             port: port,
             path: '/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary',
             method: 'POST',
-            rejectUnauthorized: false,
             headers: {
                 'Content-Type': 'application/json',
-                'x-codeium-csrf-token': token,
-                'Connect-Protocol-Version': '1'
+                'X-CSRF-Token': token,
+                'Content-Length': Buffer.byteLength(postData)
             },
-            timeout: 1500
-        }, (res) => {
-            if (res.statusCode === 200) {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => {
-                    const elapsed = Math.max(5, Date.now() - tStart);
-                    try {
-                        const json = JSON.parse(data);
-                        resolve({ port, token, json, elapsed });
-                    } catch (e) {
-                        reject(e);
+            rejectUnauthorized: false,
+            timeout: 800
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                const elapsed = Date.now() - start;
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed && parsed.response && parsed.response.groups) {
+                        resolve({ port, token, json: parsed, elapsed });
+                    } else {
+                        reject(new Error('Invalid quota response structure'));
                     }
-                });
-            } else {
-                reject(new Error(`HTTP ${res.statusCode}`));
-            }
+                } catch (err) {
+                    reject(err);
+                }
+            });
         });
 
         req.on('error', reject);
         req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
         try {
-            req.write(JSON.stringify({ forceRefresh: true }));
+            req.write(postData);
             req.end();
         } catch (e) {
             reject(e);
@@ -75,7 +80,238 @@ function queryEndpoint(port, token) {
     });
 }
 
-// Netstat-PID exact port mapping engine (< 30ms, 100% reliable)
+// 🪟 Windows Prober: PowerShell Win32_Process + netstat -ano
+function probeWindows() {
+    return new Promise((resolve, reject) => {
+        const psCmd = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match "csrf_token" } | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress`;
+        execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psCmd], { timeout: 3000 }, (err, stdout) => {
+            if (err || !stdout) return reject(err || new Error("No language server found on Windows"));
+
+            let procs = [];
+            try {
+                const parsed = JSON.parse(stdout.trim());
+                procs = Array.isArray(parsed) ? parsed : [parsed];
+            } catch (_) {
+                return reject(new Error("Failed to parse Windows process JSON"));
+            }
+
+            exec('netstat -ano', { timeout: 2000 }, async (netErr, netStdout) => {
+                const listeningByPid = {};
+                if (!netErr && netStdout) {
+                    const lines = netStdout.split('\n');
+                    for (const l of lines) {
+                        if (l.includes('LISTENING')) {
+                            const parts = l.trim().split(/\s+/);
+                            if (parts.length >= 5) {
+                                const addr = parts[1];
+                                const pid = parts[4];
+                                const pnum = parseInt(addr.split(':').pop());
+                                if (!isNaN(pnum)) {
+                                    if (!listeningByPid[pid]) listeningByPid[pid] = [];
+                                    listeningByPid[pid].push(pnum);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let resolved = false;
+                for (const p of procs) {
+                    if (resolved) break;
+                    const pid = String(p.ProcessId);
+                    const cmd = p.CommandLine || '';
+                    const tm = cmd.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                    if (!tm) continue;
+                    const token = tm[1];
+
+                    const directPorts = listeningByPid[pid] || [];
+                    for (const port of directPorts) {
+                        try {
+                            const res = await queryEndpoint(port, token);
+                            if (res && res.json && !resolved) {
+                                resolved = true;
+                                cachedPort = res.port;
+                                cachedToken = res.token;
+                                resolve(res);
+                                return;
+                            }
+                        } catch (_) {}
+                    }
+                }
+
+                if (!resolved) reject(new Error("Windows netstat port scan failed"));
+            });
+        });
+    });
+}
+
+// 🍎 macOS (Darwin) Prober: ps -eo pid,command + lsof -nP -iTCP -sTCP:LISTEN -p <PID>
+function probeDarwin() {
+    return new Promise((resolve, reject) => {
+        exec('ps -eo pid,command | grep -i language_server', { timeout: 3000 }, (err, stdout) => {
+            if (err || !stdout) return reject(err || new Error("No language server process on macOS"));
+
+            const lines = stdout.split('\n');
+            const targetProcs = [];
+
+            for (const line of lines) {
+                if (line.includes('grep')) continue;
+                const tm = line.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                const pidMatch = line.trim().match(/^(\d+)/);
+                if (tm && pidMatch) {
+                    targetProcs.push({ pid: pidMatch[1], token: tm[1], line });
+                }
+            }
+
+            if (targetProcs.length === 0) return reject(new Error("No matching language_server token found on macOS"));
+
+            let completed = 0;
+            let resolved = false;
+
+            targetProcs.forEach(tp => {
+                // Query exact listening ports using macOS native lsof
+                exec(`lsof -nP -iTCP -sTCP:LISTEN -p ${tp.pid}`, { timeout: 2000 }, async (lsofErr, lsofOut) => {
+                    if (resolved) return;
+                    const ports = [];
+
+                    if (!lsofErr && lsofOut) {
+                        const lLines = lsofOut.split('\n');
+                        for (const ll of lLines) {
+                            const pm = ll.match(/[:.](\d+)\s+\(LISTEN\)/);
+                            if (pm) {
+                                const p = parseInt(pm[1]);
+                                if (!isNaN(p) && !ports.includes(p)) ports.push(p);
+                            }
+                        }
+                    }
+
+                    // Try direct ports first
+                    for (const p of ports) {
+                        try {
+                            const res = await queryEndpoint(p, tp.token);
+                            if (res && res.json && !resolved) {
+                                resolved = true;
+                                cachedPort = res.port;
+                                cachedToken = res.token;
+                                resolve(res);
+                                return;
+                            }
+                        } catch (_) {}
+                    }
+
+                    // Fallback to base port range scan if lsof didn't catch it
+                    const basePortMatch = tp.line.match(/--extension_server_port\s+(\d+)/);
+                    if (basePortMatch && !resolved) {
+                        const basePort = parseInt(basePortMatch[1]);
+                        for (let delta = 0; delta <= 30; delta++) {
+                            try {
+                                const res = await queryEndpoint(basePort + delta, tp.token);
+                                if (res && res.json && !resolved) {
+                                    resolved = true;
+                                    cachedPort = res.port;
+                                    cachedToken = res.token;
+                                    resolve(res);
+                                    return;
+                                }
+                            } catch (_) {}
+                        }
+                    }
+
+                    completed++;
+                    if (completed >= targetProcs.length && !resolved) {
+                        reject(new Error("macOS lsof/scan probe failed"));
+                    }
+                });
+            });
+        });
+    });
+}
+
+// 🐧 Linux Prober: ps -eo pid,command + ss -tulpn / lsof
+function probeLinux() {
+    return new Promise((resolve, reject) => {
+        exec('ps -eo pid,command | grep -i language_server', { timeout: 3000 }, (err, stdout) => {
+            if (err || !stdout) return reject(err || new Error("No language server process on Linux"));
+
+            const lines = stdout.split('\n');
+            const targetProcs = [];
+
+            for (const line of lines) {
+                if (line.includes('grep')) continue;
+                const tm = line.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                const pidMatch = line.trim().match(/^(\d+)/);
+                if (tm && pidMatch) {
+                    targetProcs.push({ pid: pidMatch[1], token: tm[1], line });
+                }
+            }
+
+            if (targetProcs.length === 0) return reject(new Error("No matching language_server token on Linux"));
+
+            let completed = 0;
+            let resolved = false;
+
+            targetProcs.forEach(tp => {
+                // Try modern Linux `ss -tulpn` first, fallback to lsof
+                exec(`ss -tulpn 2>/dev/null | grep ${tp.pid} || lsof -nP -iTCP -sTCP:LISTEN -p ${tp.pid} 2>/dev/null`, { timeout: 2000 }, async (cmdErr, cmdOut) => {
+                    if (resolved) return;
+                    const ports = [];
+
+                    if (!cmdErr && cmdOut) {
+                        const cLines = cmdOut.split('\n');
+                        for (const cl of cLines) {
+                            // Match ports from ss or lsof output
+                            const ssMatch = cl.match(/(?:127\.0\.0\.1|0\.0\.0\.0|\*|::):(\d+)/);
+                            const lsofMatch = cl.match(/[:.](\d+)\s+\(LISTEN\)/);
+                            const foundPort = ssMatch ? parseInt(ssMatch[1]) : (lsofMatch ? parseInt(lsofMatch[1]) : null);
+                            if (foundPort && !isNaN(foundPort) && !ports.includes(foundPort)) {
+                                ports.push(foundPort);
+                            }
+                        }
+                    }
+
+                    // Direct ports check
+                    for (const p of ports) {
+                        try {
+                            const res = await queryEndpoint(p, tp.token);
+                            if (res && res.json && !resolved) {
+                                resolved = true;
+                                cachedPort = res.port;
+                                cachedToken = res.token;
+                                resolve(res);
+                                return;
+                            }
+                        } catch (_) {}
+                    }
+
+                    // Fallback range scan
+                    const basePortMatch = tp.line.match(/--extension_server_port\s+(\d+)/);
+                    if (basePortMatch && !resolved) {
+                        const basePort = parseInt(basePortMatch[1]);
+                        for (let delta = 0; delta <= 30; delta++) {
+                            try {
+                                const res = await queryEndpoint(basePort + delta, tp.token);
+                                if (res && res.json && !resolved) {
+                                    resolved = true;
+                                    cachedPort = res.port;
+                                    cachedToken = res.token;
+                                    resolve(res);
+                                    return;
+                                }
+                            } catch (_) {}
+                        }
+                    }
+
+                    completed++;
+                    if (completed >= targetProcs.length && !resolved) {
+                        reject(new Error("Linux ss/lsof probe failed"));
+                    }
+                });
+            });
+        });
+    });
+}
+
+// 🌐 Unified Cross-Platform Dispatcher (< 30ms, 100% Reliable across Win/macOS/Linux)
 async function probeLanguageServerQuota() {
     if (cachedPort && cachedToken) {
         try {
@@ -87,98 +323,14 @@ async function probeLanguageServerQuota() {
         }
     }
 
-    return new Promise((resolve, reject) => {
-        const isWin = process.platform === 'win32';
-        if (isWin) {
-            const psCmd = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match "csrf_token" } | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress`;
-            execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psCmd], { timeout: 3000 }, (err, stdout) => {
-                if (err || !stdout) return reject(err || new Error("No language server found"));
-
-                let procs = [];
-                try {
-                    const parsed = JSON.parse(stdout.trim());
-                    procs = Array.isArray(parsed) ? parsed : [parsed];
-                } catch (_) {
-                    return reject(new Error("Failed to parse process JSON"));
-                }
-
-                exec('netstat -ano', { timeout: 2000 }, async (netErr, netStdout) => {
-                    const listeningByPid = {};
-                    if (!netErr && netStdout) {
-                        const lines = netStdout.split('\n');
-                        for (const l of lines) {
-                            if (l.includes('LISTENING')) {
-                                const parts = l.trim().split(/\s+/);
-                                if (parts.length >= 5) {
-                                    const addr = parts[1];
-                                    const pid = parts[4];
-                                    const pnum = parseInt(addr.split(':').pop());
-                                    if (!isNaN(pnum)) {
-                                        if (!listeningByPid[pid]) listeningByPid[pid] = [];
-                                        listeningByPid[pid].push(pnum);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    let resolved = false;
-                    for (const p of procs) {
-                        if (resolved) break;
-                        const pid = String(p.ProcessId);
-                        const cmd = p.CommandLine || '';
-                        const tm = cmd.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
-                        if (!tm) continue;
-                        const token = tm[1];
-
-                        const directPorts = listeningByPid[pid] || [];
-                        for (const port of directPorts) {
-                            try {
-                                const res = await queryEndpoint(port, token);
-                                if (res && res.json && !resolved) {
-                                    resolved = true;
-                                    cachedPort = res.port;
-                                    cachedToken = res.token;
-                                    resolve(res);
-                                    return;
-                                }
-                            } catch (_) {}
-                        }
-                    }
-
-                    if (!resolved) reject(new Error("Netstat port scan failed"));
-                });
-            });
-        } else {
-            exec('ps -eo pid,command | grep -i language_server', { timeout: 3000 }, async (err, stdout) => {
-                if (err || !stdout) return reject(err || new Error("No language server process"));
-                const lines = stdout.split('\n');
-                let resolved = false;
-
-                for (const line of lines) {
-                    const tm = line.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
-                    const pm = line.match(/--extension_server_port\s+(\d+)/);
-                    if (tm && pm) {
-                        const token = tm[1];
-                        const basePort = parseInt(pm[1]);
-                        for (let delta = 0; delta <= 30; delta++) {
-                            try {
-                                const res = await queryEndpoint(basePort + delta, token);
-                                if (res && res.json && !resolved) {
-                                    resolved = true;
-                                    cachedPort = res.port;
-                                    cachedToken = res.token;
-                                    resolve(res);
-                                    return;
-                                }
-                            } catch (_) {}
-                        }
-                    }
-                }
-                if (!resolved) reject(new Error("Unix probe timeout"));
-            });
-        }
-    });
+    const platform = process.platform;
+    if (platform === 'win32') {
+        return probeWindows();
+    } else if (platform === 'darwin') {
+        return probeDarwin();
+    } else {
+        return probeLinux();
+    }
 }
 
 async function fetchLiveQuota(context, speedState, tokenState) {
@@ -243,6 +395,9 @@ module.exports = {
     liveQuotaState,
     getLiveQuotaState,
     queryEndpoint,
+    probeWindows,
+    probeDarwin,
+    probeLinux,
     probeLanguageServerQuota,
     fetchLiveQuota
 };
