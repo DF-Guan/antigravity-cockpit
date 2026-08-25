@@ -1,6 +1,19 @@
 
+
 // 🛡️ High-Water Mark Cache: 防止 SQLite WAL commit 刷盘时 Token 产生负向波动
-const sessionHighWaterMarks = {};
+let sessionHighWaterMarks = {};
+let persistentTokenStorage = null;
+
+function initTokenScannerStorage(globalState) {
+    if (globalState) {
+        persistentTokenStorage = globalState;
+        const saved = globalState.get('agPrivateCockpit.sessionHighWaterMarks', {});
+        if (saved && typeof saved === 'object') {
+            sessionHighWaterMarks = Object.assign({}, saved);
+        }
+    }
+}
+
 
 const fs = require('fs');
 const path = require('path');
@@ -153,6 +166,9 @@ function computeLiveTokenAnalytics() {
             hwm.out = activeOutTokens;
             hwm.tot = activeTotTokens;
             hwm.reqs = Math.max(hwm.reqs, dynamicRequests);
+            if (persistentTokenStorage) {
+                persistentTokenStorage.update('agPrivateCockpit.sessionHighWaterMarks', sessionHighWaterMarks);
+            }
         }
 
         let globalConvs = convList.length;
@@ -220,6 +236,7 @@ function computeLiveTokenAnalytics() {
 }
 
 module.exports = {
+    initTokenScannerStorage,
     tokenAnalyticsState,
     getTokenAnalyticsState,
     computeLiveTokenAnalytics

@@ -4,8 +4,8 @@ const vscode = require('vscode');
 const { getEffectiveLang } = require('./utils/i18n');
 const { liveQuotaState, fetchLiveQuota } = require('./services/quotaService');
 const { liveSpeedState, updateLiveSpeedEngine } = require('./services/speedEngine');
-const { tokenAnalyticsState, computeLiveTokenAnalytics } = require('./services/tokenScanner');
-const { computeContextSaturation, createSessionSnapshot, resolveActiveSubproject, getContextState } = require('./services/contextEngine');
+const { tokenAnalyticsState, computeLiveTokenAnalytics, initTokenScannerStorage } = require('./services/tokenScanner');
+const { computeContextSaturation, createSessionSnapshot, resolveActiveSubproject, getContextState, initContextEngineStorage } = require('./services/contextEngine');
 const { initStatusBarItems, renderStatusBar } = require('./ui/statusBar');
 const { showDashboard, updateDashboardIfOpen, showQuickOverview } = require('./ui/dashboard');
 
@@ -14,7 +14,11 @@ let speedTimer;
 let currentLang = 'auto';
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v2.0.2 激活');
+    console.log('[Antigravity Private Cockpit] v2.0.3 激活');
+
+    // 🌟 1. 同步加载物理持久化高水位线 (彻底杜绝 Reload Window / 重启时的数值回退与闪烁)
+    initTokenScannerStorage(context.globalState);
+    initContextEngineStorage(context.globalState);
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();

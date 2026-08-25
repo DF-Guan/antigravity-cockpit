@@ -221,7 +221,7 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
     }
     const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
     const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
-    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject.path);
+    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject.path, wsRoot);
     const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState);
 
     // 1. Google Gemini

@@ -1,6 +1,19 @@
 
-// 🛡️ Context Saturation High-Water Mark Cache: 确保未压缩会话上下文占用单调递增
-const contextHighWaterMarks = {};
+
+// 🛡️ Context Saturation High-Water Mark Cache: 确保提炼后及未提炼状态下占用严格单调递增
+let contextHighWaterMarks = {};
+let persistentContextStorage = null;
+
+function initContextEngineStorage(globalState) {
+    if (globalState) {
+        persistentContextStorage = globalState;
+        const saved = globalState.get('agPrivateCockpit.contextHighWaterMarks', {});
+        if (saved && typeof saved === 'object') {
+            contextHighWaterMarks = Object.assign({}, saved);
+        }
+    }
+}
+
 
 const fs = require('fs');
 const path = require('path');
@@ -197,7 +210,7 @@ function findPersistentSnapshot(subprojectDir, convId, workspaceRoot) {
 /**
  * 🧠 统一高精度上下文额度饱和度测算引擎 (支持物理磁盘快照自动持久化识别)
  */
-function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType, subprojectDir) {
+function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType, subprojectDir, workspaceRoot) {
     let capacity = 1048576; // 默认 Gemini 1M
     const mType = modelType ? String(modelType).toLowerCase() : 'gemini';
 
@@ -223,7 +236,7 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
 
         // 2. 若内存无基线（如刚刚 Reload Window），自动扫描物理磁盘持久化快照！
         if (!baseline && subprojectDir) {
-            const diskSnapshot = findPersistentSnapshot(subprojectDir, convId);
+            const diskSnapshot = findPersistentSnapshot(subprojectDir, convId, workspaceRoot);
             if (diskSnapshot) {
                 baseline = {
                     dateReadable: diskSnapshot.dateReadable,
@@ -258,6 +271,9 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
             } else {
                 usedTokens = Math.max(contextHighWaterMarks[hwmKey], usedTokens);
                 contextHighWaterMarks[hwmKey] = usedTokens;
+            }
+            if (persistentContextStorage) {
+                persistentContextStorage.update('agPrivateCockpit.contextHighWaterMarks', contextHighWaterMarks);
             }
         }
     } else if (typeof tokenStateOrTokens === 'number' && tokenStateOrTokens > 0) {
@@ -451,6 +467,7 @@ function createSessionSnapshot(subprojectDir, activeConvId, tokenState, subproje
 }
 
 module.exports = {
+    initContextEngineStorage,
     MODEL_CAPACITIES,
     contextState,
     getContextState,
