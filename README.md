@@ -71,21 +71,22 @@
 
 ## 💡 Why Active Context Refinement is Critical for Pro Developers
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│              🚨 Why Passive Truncation is Not Enough in Complex Projects      │
-├─────────────────────────┬────────────────────────────────────────────────────┤
-│ Dimension               │ 🤖 Backend Passive Truncation                      │ ⚡ Cockpit Active Snapshot Refinement (Pro)        │
-├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
-│ **Trigger Timing**      │ **Critical Deadline** (Only forced at 95%~100%)    │ **Milestone Point** (Triggered at 70% saturation)  │
-├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
-│ **Quality**             │ **Mechanical Drop** (Drops early context blindly)  │ **High-Density Distillation** (Strips tool logs)   │
-├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
-│ **Model Attention**     │ **Severe Attention Decay** (Lost in the Middle)    │ **Instant Attention Reset** (100% sharp reasoning) │
-├─────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
-│ **Asset Persistence**   │ **Ephemeral** (Lost if session is cleared)         │ **Versioned on Disk** (Saved in `docs/snapshots/`) │
-└─────────────────────────┴────────────────────────────────────────────────────┴────────────────────────────────────────────────────┘
-```
+Many developers ask: *"Since Antigravity automatically truncates and inserts summary checkpoints when the context window fills up, why should I ever manually refine context?"*
+
+| Feature / Dimension | 🤖 Backend Passive Truncation | ⚡ Cockpit Active Snapshot Refinement (Pro) |
+| :--- | :--- | :--- |
+| **Trigger Timing** | **Critical Deadline**: Forced only when context hits 95%–100% capacity | **Milestone Point**: Proactively triggered at ~70% saturation after completing tasks |
+| **Distillation Quality** | **Mechanical Truncation**: Blindly slices early context, risking loss of architecture rules | **High-Density Distillation**: Strips tens of thousands of noisy tool logs while keeping core facts |
+| **Model Attention** | **Severe Attention Decay**: Model struggles under 500K+ noisy tokens ("Lost in the Middle") | **Instant Attention Reset**: Instantly clears noise, restoring 100% sharp reasoning |
+| **Asset Persistence** | **Ephemeral**: Summaries stay in memory only; lost if session is reset or corrupted | **Versioned on Disk**: Physically archived to `docs/snapshots/` and indexed in `memory.md` |
+
+### 🧠 Deep Dive: The 3 Hidden Traps of Long Context Windows
+1. **Breaking Free from the "Lost in the Middle" Trap**:  
+   Even with a 1M or 2M token window, stacking 50–100 turns of raw `git log`, terminal outputs, and debug stack traces clutters the model's focus. Proactively refining at ~70% strips out raw noise so the AI remains laser-focused on your architecture.
+2. **Guarding Against Catastrophic Forgetting**:  
+   Passive truncation drops early messages indiscriminately when limits are reached, often erasing your top-level project rules and active constraints. Manual refinement lets you choose the exact milestone to lock in decisions.
+3. **Transforming Ephemeral Chat into Permanent Project Assets**:  
+   Active refinement physically saves a timestamped snapshot (`docs/snapshots/snapshot_YYYYMMDD_HHMMSS.md`) and updates `memory.md`, allowing new sessions or other collaborating agents to pick up work seamlessly.
 
 ---
 
