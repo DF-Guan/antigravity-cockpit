@@ -2,6 +2,13 @@
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 
+## [1.0.54] - 2026-08-25
+### Dynamic Circular Context Saturation Meter & /compact Engine
+- **🧠 5-Stage Dynamic Circular Ring & Eye Expressions**: Added a lively status bar circular progress indicator with progressive eye expressions (`(•‿•) ○` ➔ `(•_•) ◔` ➔ `(•᷅_•᷄) ◑` ➔ `(⊙_⊙;) ◕` ➔ `(×_×) ●`) and dynamic alert coloring.
+- **⚡ Interactive /compact Context Compaction**: One-click compaction and state snapshot generation to summarize session decisions and reset context attention baseline (similar to Claude Code `/compact`).
+- **📦 Clean Modular Subsystem (`services/contextEngine.js`)**: Isolated context saturation calculation and prompt formatting into an independent module, ensuring zero token bloat in future maintenance.
+- **🐧 Full Cross-Platform Parity**: macOS (`lsof`) and Linux (`ss`) native instant port mapping.
+
 ## [1.0.53] - 2026-08-25
 ### Native Cross-Platform Port Prober (macOS / Linux / Windows)
 - **🐧 macOS & Linux Native Exact Port Mapping Engine**: Replaced linear scan with native `lsof -nP -iTCP -sTCP:LISTEN -p <PID>` (macOS) and `ss -tulpn` / `lsof` (Linux), achieving sub-20ms instant exact port binding across all Unix platforms.

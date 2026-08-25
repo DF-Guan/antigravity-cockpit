@@ -102,6 +102,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
 
 function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const isZh = lang === 'zh';
+  const contextState = computeContextSaturation(tokens.activeTotalNum);
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const warnPct = cfg.get('warningThreshold', 50);
     const critPct = cfg.get('criticalThreshold', 20);
@@ -787,6 +788,33 @@ body {
       <div class="cycle-badge-box">
         <button class="btn-prec" onclick="togglePrecision()" title="${t.btnPrecExact}"><span id="precIcon">🔢</span> <span id="precText">${isZh ? '切换全精度' : 'Exact Mode'}</span></button>
         <div class="cycle-badge">${t.cycleBadge}</div>
+      </div>
+    </div>
+
+    <div class="context-saturation-banner">
+      <div class="ctx-banner-left">
+        <div class="ctx-ring-svg">
+          <svg width="42" height="42" viewBox="0 0 36 36">
+            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3.6"/>
+            <path stroke-dasharray="${contextState.saturationPercent}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="${contextState.colorHex}" stroke-width="3.6" stroke-linecap="round"/>
+            <text x="18" y="21" fill="${contextState.colorHex}" text-anchor="middle" font-size="8.5px" font-weight="bold">${contextState.saturationFormatted}</text>
+          </svg>
+        </div>
+        <div class="ctx-banner-info">
+          <div class="ctx-banner-title">
+            <span class="ctx-expr">${contextState.expression}</span>
+            <span class="ctx-stage" style="color:${contextState.colorHex};">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
+            <span class="ctx-sub-tag">(${tokens.activeTotalFormatted} / ${Math.round(contextState.windowCapacity/1000)}K Tokens)</span>
+          </div>
+          <div class="ctx-banner-desc">
+            ${isZh ? `⚡ 长文本注意力: <strong>${contextState.attentionHealthZh}</strong>` : `⚡ Long-Context Attention: <strong>${contextState.attentionHealthEn}</strong>`}
+          </div>
+        </div>
+      </div>
+      <div class="ctx-banner-right">
+        <button class="btn-compact" onclick="vscode.postMessage({command:'compact'})" title="${isZh ? '提炼当前会话关键决策并重置上下文注意力' : 'Extract session decisions and compact context'}">
+          ⚡ ${isZh ? '压缩上下文 (/compact)' : 'Compact Context (/compact)'}
+        </button>
       </div>
     </div>
 

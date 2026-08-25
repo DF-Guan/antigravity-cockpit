@@ -1,8 +1,10 @@
 const vscode = require('vscode');
+const { computeContextSaturation, getContextState } = require('../services/contextEngine');
 
 let sbGIcon, sbGWeekVal, sbG5h;
 let sbCIcon, sbCWeekVal, sbC5h;
 let sbSpeedIcon, sbSpeedVal;
+let sbContextItem;
 
 function initStatusBarItems(context, onClickCommand) {
     sbGIcon    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
@@ -16,11 +18,15 @@ function initStatusBarItems(context, onClickCommand) {
     sbSpeedIcon = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
     sbSpeedVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9993);
 
+    sbContextItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9992);
+    sbContextItem.command = 'agPrivateCockpit.compactContext';
+
     const allItems = [sbGIcon, sbGWeekVal, sbG5h, sbCIcon, sbCWeekVal, sbC5h, sbSpeedIcon, sbSpeedVal];
     allItems.forEach(item => {
         item.command = onClickCommand || 'agPrivateCockpit.openDashboard';
         context.subscriptions.push(item);
     });
+    context.subscriptions.push(sbContextItem);
 }
 
 function getNumberAlertColor(pct, warnPct, critPct) {
@@ -30,7 +36,86 @@ function getNumberAlertColor(pct, warnPct, critPct) {
     return '#3fb950';
 }
 
-function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState) {
+function buildContextTooltip(lang, contextState, tokenAnalyticsState) {
+    const isZh = lang === 'zh';
+    const tip = new vscode.MarkdownString();
+    tip.isTrusted = true;
+
+    const capFormatted = Math.round(contextState.windowCapacity / 1000) + 'K';
+    const totExact = tokenAnalyticsState.activeTotalExact || '0';
+    const totFormatted = tokenAnalyticsState.activeTotalFormatted || '0';
+
+    if (isZh) {
+        tip.appendMarkdown(`### 🧠 上下文窗口饱和度与注意力感知 (Context Meter)
+
+`);
+        tip.appendMarkdown(`*当前状态: **${contextState.expression} ${contextState.ringIcon} ${contextState.stageNameZh}** • 窗口占用: **${contextState.saturationFormatted}** / ${capFormatted}*
+
+---
+`);
+        tip.appendMarkdown(`📊 **当前活跃会话消耗**: **${totFormatted}** (\`${totExact}\` Tokens)
+`);
+        tip.appendMarkdown(`- 📥 输入 Token (带前缀缓存): **${tokenAnalyticsState.activeInputFormatted}**
+`);
+        tip.appendMarkdown(`- 📤 输出 Token (代码与思考): **${tokenAnalyticsState.activeOutputFormatted}**
+`);
+        tip.appendMarkdown(`- ⚡ **长文本注意力健康度**: \`${contextState.attentionHealthZh}\`
+
+---
+`);
+        tip.appendMarkdown(`🔄 **动态圆圈环形状态机说明**:
+`);
+        tip.appendMarkdown(`- \`○\` 0% ~ 25% : \`(•‿•)\` 充裕敏捷 (零衰减)
+`);
+        tip.appendMarkdown(`- \`◔\` 25% ~ 50%: \`(•_•)\` 稳健运行 (良好)
+`);
+        tip.appendMarkdown(`- \`◑\` 50% ~ 75%: \`(•᷅_•᷄)\` 轻度注意 (开始模糊)
+`);
+        tip.appendMarkdown(`- \`◕\` 75% ~ 90%: \`(⊙_⊙;)\` 注意力衰减警示 (需压缩)
+`);
+        tip.appendMarkdown(`- \`●\` 90% ~ 100%: \`(×_×)\` 上下文已满 (必须压缩/新开)
+
+---
+`);
+        tip.appendMarkdown(`💡 **[⚡ 单击执行 /compact 智能压缩与总结](command:agPrivateCockpit.compactContext)** | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard)`);
+    } else {
+        tip.appendMarkdown(`### 🧠 Context Window Saturation & Attention Meter
+
+`);
+        tip.appendMarkdown(`*Status: **${contextState.expression} ${contextState.ringIcon} ${contextState.stageNameEn}** • Saturation: **${contextState.saturationFormatted}** / ${capFormatted}*
+
+---
+`);
+        tip.appendMarkdown(`📊 **Active Session Tokens**: **${totFormatted}** (\`${totExact}\` Tokens)
+`);
+        tip.appendMarkdown(`- 📥 Input Tokens (Cached): **${tokenAnalyticsState.activeInputFormatted}**
+`);
+        tip.appendMarkdown(`- 📤 Output Tokens (Code): **${tokenAnalyticsState.activeOutputFormatted}**
+`);
+        tip.appendMarkdown(`- ⚡ **Long-Context Attention**: \`${contextState.attentionHealthEn}\`
+
+---
+`);
+        tip.appendMarkdown(`🔄 **Dynamic Ring State Stages**:
+`);
+        tip.appendMarkdown(`- \`○\` 0% ~ 25% : \`(•‿•)\` Pristine & Agile
+`);
+        tip.appendMarkdown(`- \`◔\` 25% ~ 50%: \`(•_•)\` Normal & Stable
+`);
+        tip.appendMarkdown(`- \`◑\` 50% ~ 75%: \`(•᷅_•᷄)\` Moderate Load
+`);
+        tip.appendMarkdown(`- \`◕\` 75% ~ 90%: \`(⊙_⊙;)\` Attention Decay Warning
+`);
+        tip.appendMarkdown(`- \`●\` 90% ~ 100%: \`(×_×)\` Context Saturated (Must Compact)
+
+---
+`);
+        tip.appendMarkdown(`💡 **[⚡ Click to run /compact Compaction](command:agPrivateCockpit.compactContext)** | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard)`);
+    }
+    return tip;
+}
+
+function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState) {
     const isZh = lang === 'zh';
     const tip = new vscode.MarkdownString();
     tip.isTrusted = true;
@@ -42,65 +127,122 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
     if (isZh) {
         const liveBadgeZh = liveQuotaState.isLive ? '🟢 官方原生实时同频' : (liveQuotaState.isLoading ? '🔄 正在同步...' : '⚡ 本地连接就绪');
-        tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱\n\n`);
-        tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 状态: ${liveBadgeZh}*\n\n---\n`);
-        tip.appendMarkdown(`📊 **当前活跃会话 Token 审计 (ID: ${tokenAnalyticsState.activeConvShort})**\n`);
-        tip.appendMarkdown(`- 💎 **当前会话总吞吐: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 交互: **${tokenAnalyticsState.activeRequests}轮**\n`);
-        tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.activeInputFormatted}** (\`${tokenAnalyticsState.activeInputExact}\`) ｜ ⚡ 缓存率: **${tokenAnalyticsState.activeCachedPercent}**\n`);
-        tip.appendMarkdown(`- 📤 输出: **${tokenAnalyticsState.activeOutputFormatted}** (\`${tokenAnalyticsState.activeOutputExact}\` 真实代码与思考)\n`);
-        tip.appendMarkdown(`- 🌐 **本机全局历史累计: ${tokenAnalyticsState.globalTotalFormatted}** (\`${tokenAnalyticsState.globalTotalExact}\` Tokens / 共 ${tokenAnalyticsState.globalConvsCount} 个会话)\n\n---\n`);
-        tip.appendMarkdown(`✨ **Google Gemini 原生系列 (周周期 & 5h冲刺)**\n`);
-        tip.appendMarkdown(`- 7天周期剩余: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺剩余: **${g5}** ｜ 状态/刷新: \`${liveQuotaState.gemini.fiveHourResetTimeZh}\`\n\n`);
-        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列 (周周期 & 5h冲刺)**\n`);
-        tip.appendMarkdown(`- 7天周期剩余: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`\n`);
-        tip.appendMarkdown(`- 5小时冲刺剩余: **${c5}** ｜ 状态/刷新: \`${liveQuotaState.claude.fiveHourResetTimeZh}\`\n\n---\n`);
-        tip.appendMarkdown(`⚡ **实时流式响应测速**\n`);
-        tip.appendMarkdown(`- 🚀 **实时生成流速**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 生成中)' : '0 Tokens/s (💤 待机就绪)'}**\n`);
-        tip.appendMarkdown(`- 🏆 **历史爆发峰值**: **${liveSpeedState.peakTps} Tokens/s**\n`);
-        tip.appendMarkdown(`- ⏱️ 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
-        tip.appendMarkdown(`[🔄 立即刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
+        tip.appendMarkdown(`### 🛸 Antigravity 隐私配额驾驶舱
+
+`);
+        tip.appendMarkdown(`*最后同步: ${liveQuotaState.lastSyncTime} • 数据连接: ${liveBadgeZh}*
+
+---
+`);
+        tip.appendMarkdown(`🧠 **会话上下文饱和度**: **${contextState.expression} ${contextState.ringIcon} ${contextState.saturationFormatted}** (\`${contextState.stageNameZh}\`)
+`);
+        tip.appendMarkdown(`- 💎 **当前会话总吞吐: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 会话轮次: **${tokenAnalyticsState.activeRequests}**
+`);
+        tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.activeInputFormatted}** (\`${tokenAnalyticsState.activeInputExact}\`) ｜ ⚡ 前缀缓存: **${tokenAnalyticsState.activeCachedPercent}**
+`);
+        tip.appendMarkdown(`- 📤 输出: **${tokenAnalyticsState.activeOutputFormatted}** (\`${tokenAnalyticsState.activeOutputExact}\` 真实代码与思考)
+`);
+        tip.appendMarkdown(`- 🌐 **本机全局历史累计: ${tokenAnalyticsState.globalTotalFormatted}** (\`${tokenAnalyticsState.globalTotalExact}\` Tokens / 共 ${tokenAnalyticsState.globalConvsCount} 个会话)
+
+---
+`);
+        tip.appendMarkdown(`✨ **Google Gemini 原生系列 (周周期 & 5h冲刺)**
+`);
+        tip.appendMarkdown(`- 7天周期剩余: **${gW}** ｜ 满额重置: \`${liveQuotaState.gemini.weeklyResetTimeZh}\`
+`);
+        tip.appendMarkdown(`- 5小时冲刺剩余: **${g5}** ｜ 状态/刷新: \`${liveQuotaState.gemini.fiveHourResetTimeZh}\`
+
+`);
+        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT 系列 (周周期 & 5h冲刺)**
+`);
+        tip.appendMarkdown(`- 7天周期剩余: **${cW}** ｜ 满额重置: \`${liveQuotaState.claude.weeklyResetTimeZh}\`
+`);
+        tip.appendMarkdown(`- 5小时冲刺剩余: **${c5}** ｜ 状态/刷新: \`${liveQuotaState.claude.fiveHourResetTimeZh}\`
+
+---
+`);
+        tip.appendMarkdown(`⚡ **实时流式响应测速**
+`);
+        tip.appendMarkdown(`- 🚀 **实时生成流速**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 生成中)' : '0 Tokens/s (💤 待机就绪)'}**
+`);
+        tip.appendMarkdown(`- 🏆 **历史爆发峰值**: **${liveSpeedState.peakTps} Tokens/s**
+`);
+        tip.appendMarkdown(`- ⏱️ 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\`
+
+---
+`);
+        tip.appendMarkdown(`[⚡ /compact 压缩](command:agPrivateCockpit.compactContext) | [🔄 刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         const liveBadgeEn = liveQuotaState.isLive ? '🟢 Native Live Synced' : (liveQuotaState.isLoading ? '🔄 Syncing...' : '⚡ Local Ready');
-        tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit\n\n`);
-        tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*\n\n---\n`);
-        tip.appendMarkdown(`📊 **Active Session Tokens (ID: ${tokenAnalyticsState.activeConvShort})**\n`);
-        tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 Turns: **${tokenAnalyticsState.activeRequests}**\n`);
-        tip.appendMarkdown(`- 📥 Input: **${tokenAnalyticsState.activeInputFormatted}** (\`${tokenAnalyticsState.activeInputExact}\`) ｜ ⚡ Cache: **${tokenAnalyticsState.activeCachedPercent}**\n`);
-        tip.appendMarkdown(`- 📤 Output: **${tokenAnalyticsState.activeOutputFormatted}** (\`${tokenAnalyticsState.activeOutputExact}\` Code & Traces)\n`);
-        tip.appendMarkdown(`- 🌐 **Machine Global Total: ${tokenAnalyticsState.globalTotalFormatted}** (\`${tokenAnalyticsState.globalTotalExact}\` Tokens / ${tokenAnalyticsState.globalConvsCount} sessions)\n\n---\n`);
-        tip.appendMarkdown(`✨ **Google Gemini Suite (7-Day & 5h Windows)**\n`);
-        tip.appendMarkdown(`- 7-Day Limit Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Status/Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn}\`\n\n`);
-        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite (7-Day & 5h Windows)**\n`);
-        tip.appendMarkdown(`- 7-Day Limit Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`\n`);
-        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Status/Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn}\`\n\n---\n`);
-        tip.appendMarkdown(`⚡ **Live Generation Velocity**\n`);
-        tip.appendMarkdown(`- 🚀 **Live Generation Speed**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 Streaming)' : '0 Tokens/s (💤 Idle)'}**\n`);
-        tip.appendMarkdown(`- 🏆 **Peak Burst Speed**: **${liveSpeedState.peakTps} Tokens/s**\n`);
-        tip.appendMarkdown(`- ⏱️ Local Latency: \`${liveSpeedState.latencyMs}ms\`\n\n---\n`);
-        tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
+        tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit
+
+`);
+        tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*
+
+---
+`);
+        tip.appendMarkdown(`🧠 **Context Saturation**: **${contextState.expression} ${contextState.ringIcon} ${contextState.saturationFormatted}** (\`${contextState.stageNameEn}\`)
+`);
+        tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 Turns: **${tokenAnalyticsState.activeRequests}**
+`);
+        tip.appendMarkdown(`- 📥 Input: **${tokenAnalyticsState.activeInputFormatted}** (\`${tokenAnalyticsState.activeInputExact}\`) ｜ ⚡ Cache: **${tokenAnalyticsState.activeCachedPercent}**
+`);
+        tip.appendMarkdown(`- 📤 Output: **${tokenAnalyticsState.activeOutputFormatted}** (\`${tokenAnalyticsState.activeOutputExact}\` Code & Traces)
+`);
+        tip.appendMarkdown(`- 🌐 **Machine Global Total: ${tokenAnalyticsState.globalTotalFormatted}** (\`${tokenAnalyticsState.globalTotalExact}\` Tokens / ${tokenAnalyticsState.globalConvsCount} sessions)
+
+---
+`);
+        tip.appendMarkdown(`✨ **Google Gemini Suite (7-Day & 5h Windows)**
+`);
+        tip.appendMarkdown(`- 7-Day Limit Remaining: **${gW}** ｜ Reset: \`${liveQuotaState.gemini.weeklyResetTimeEn}\`
+`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${g5}** ｜ Status/Reset: \`${liveQuotaState.gemini.fiveHourResetTimeEn}\`
+
+`);
+        tip.appendMarkdown(`🎭 **Anthropic Claude & GPT Suite (7-Day & 5h Windows)**
+`);
+        tip.appendMarkdown(`- 7-Day Limit Remaining: **${cW}** ｜ Reset: \`${liveQuotaState.claude.weeklyResetTimeEn}\`
+`);
+        tip.appendMarkdown(`- 5-Hour Sprint: **${c5}** ｜ Status/Reset: \`${liveQuotaState.claude.fiveHourResetTimeEn}\`
+
+---
+`);
+        tip.appendMarkdown(`⚡ **Live Generation Velocity**
+`);
+        tip.appendMarkdown(`- 🚀 **Live Generation Speed**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 Streaming)' : '0 Tokens/s (💤 Idle)'}**
+`);
+        tip.appendMarkdown(`- 🏆 **Peak Burst Speed**: **${liveSpeedState.peakTps} Tokens/s**
+`);
+        tip.appendMarkdown(`- ⏱️ Local Latency: \`${liveSpeedState.latencyMs}ms\`
+
+---
+`);
+        tip.appendMarkdown(`[⚡ /compact](command:agPrivateCockpit.compactContext) | [🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
 }
 
 function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState) {
-    if (!sbGIcon || !sbGWeekVal || !sbG5h || !sbCIcon || !sbCWeekVal || !sbC5h || !sbSpeedIcon || !sbSpeedVal) return;
+    if (!sbGIcon || !sbGWeekVal || !sbG5h || !sbCIcon || !sbCWeekVal || !sbC5h || !sbSpeedIcon || !sbSpeedVal || !sbContextItem) return;
 
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
-    const showGemini = cfg.get('showGemini', true);
-    const showClaude = cfg.get('showClaude', true);
-    const showSpeed  = cfg.get('showTokenSpeed', true);
-    const compact    = cfg.get('compactStatusBar', false);
-    const warnPct    = cfg.get('warningThreshold', 50);
-    const critPct    = cfg.get('criticalThreshold', 20);
+    const showGemini  = cfg.get('showGemini', true);
+    const showClaude  = cfg.get('showClaude', true);
+    const showSpeed   = cfg.get('showTokenSpeed', true);
+    const showContext = cfg.get('showContextSaturation', true);
+    const customCap   = cfg.get('contextWindowLimit', 1048576);
+    const compact     = cfg.get('compactStatusBar', false);
+    const warnPct     = cfg.get('warningThreshold', 50);
+    const critPct     = cfg.get('criticalThreshold', 20);
 
     const gW = liveQuotaState.gemini.weeklyPercent;
     const g5 = liveQuotaState.gemini.fiveHourPercent;
     const cW = liveQuotaState.claude.weeklyPercent;
     const c5 = liveQuotaState.claude.fiveHourPercent;
 
-    const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
+    const contextState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap);
+    const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState);
 
     // 1. Google Gemini
     if (showGemini) {
@@ -176,11 +318,22 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
         sbSpeedIcon.hide();
         sbSpeedVal.hide();
     }
+
+    // 4. 🧠 Dynamic Circular Context Saturation Meter (with progressive eye expressions & ring)
+    if (showContext) {
+        sbContextItem.text = `${contextState.expression} ${contextState.ringIcon} ${contextState.saturationFormatted}`;
+        sbContextItem.color = contextState.colorHex;
+        sbContextItem.tooltip = buildContextTooltip(lang, contextState, tokenAnalyticsState);
+        sbContextItem.show();
+    } else {
+        sbContextItem.hide();
+    }
 }
 
 module.exports = {
     initStatusBarItems,
     renderStatusBar,
     buildUnifiedTooltip,
+    buildContextTooltip,
     getNumberAlertColor
 };

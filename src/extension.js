@@ -3,6 +3,7 @@ const { getEffectiveLang } = require('./utils/i18n');
 const { liveQuotaState, fetchLiveQuota } = require('./services/quotaService');
 const { liveSpeedState, updateLiveSpeedEngine } = require('./services/speedEngine');
 const { tokenAnalyticsState, computeLiveTokenAnalytics } = require('./services/tokenScanner');
+const { computeContextSaturation, generateCompactPrompt } = require('./services/contextEngine');
 const { initStatusBarItems, renderStatusBar } = require('./ui/statusBar');
 const { showDashboard, updateDashboardIfOpen, showQuickOverview } = require('./ui/dashboard');
 
@@ -11,7 +12,7 @@ let speedTimer;
 let currentLang = 'auto';
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.50 模块化解耦版激活');
+    console.log('[Antigravity Private Cockpit] v1.0.54 动态圆圈上下文饱和度与 /compact 引擎就绪');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -32,6 +33,7 @@ function activate(context) {
                 if (cmd === 'refresh') fetchAndRefresh(context, true);
                 else if (cmd === 'openSettings') vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings');
                 else if (cmd === 'toggleLang') setLanguage(context, currentLang === 'zh' ? 'en' : 'zh');
+                else if (cmd === 'compact') vscode.commands.executeCommand('agPrivateCockpit.compactContext');
             });
         }),
         vscode.commands.registerCommand('agPrivateCockpit.quickOverview', () => {
@@ -39,8 +41,58 @@ function activate(context) {
                 onOpenDashboard: () => vscode.commands.executeCommand('agPrivateCockpit.openDashboard'),
                 onToggleLang: () => setLanguage(context, currentLang === 'zh' ? 'en' : 'zh'),
                 onOpenSettings: () => vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings'),
-                onRefresh: () => fetchAndRefresh(context, true)
+                onRefresh: () => fetchAndRefresh(context, true),
+                onCompact: () => vscode.commands.executeCommand('agPrivateCockpit.compactContext')
             });
+        }),
+        vscode.commands.registerCommand('agPrivateCockpit.compactContext', async () => {
+            computeLiveTokenAnalytics();
+            const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
+            const customCap = cfg.get('contextWindowLimit', 1048576);
+            const ctxState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap);
+            const isZh = currentLang === 'zh';
+
+            const items = [
+                {
+                    label: isZh ? '$(clippy) ⚡ 一键复制 /compact 智能压缩提示词 (推荐)' : '$(clippy) ⚡ Copy /compact Compaction Prompt (Recommended)',
+                    description: isZh ? `${ctxState.expression} ${ctxState.saturationFormatted} • 提炼会话决策并释放上下文注意力` : `${ctxState.expression} ${ctxState.saturationFormatted} • Extract key memory & reset attention`,
+                    action: 'copy'
+                },
+                {
+                    label: isZh ? '$(file-text) 💾 导出当前会话快照存档 (Markdown)' : '$(file-text) 💾 Export Session Snapshot (Markdown)',
+                    description: isZh ? `保存当前 ${tokenAnalyticsState.activeTotalFormatted} Tokens 的架构与进度快照` : `Save architecture & progress snapshot (${tokenAnalyticsState.activeTotalFormatted})`,
+                    action: 'export'
+                },
+                {
+                    label: isZh ? '$(dashboard) 🛸 打开驾驶舱大屏查看完整健康度' : '$(dashboard) 🛸 Open Dashboard to View Context Health',
+                    description: isZh ? `查看 4 宫格、会话清单与实时流速` : `View 4-grid metrics, session list & live speed`,
+                    action: 'dashboard'
+                }
+            ];
+
+            const pick = await vscode.window.showQuickPick(items, {
+                placeHolder: isZh 
+                    ? `🧠 当前会话上下文占用: ${ctxState.expression} ${ctxState.ringIcon} ${ctxState.saturationFormatted} (${ctxState.stageNameZh})`
+                    : `🧠 Active Context Saturation: ${ctxState.expression} ${ctxState.ringIcon} ${ctxState.saturationFormatted} (${ctxState.stageNameEn})`
+            });
+
+            if (!pick) return;
+
+            if (pick.action === 'copy') {
+                const prompt = generateCompactPrompt(tokenAnalyticsState.activeConvId, tokenAnalyticsState);
+                await vscode.env.clipboard.writeText(prompt);
+                vscode.window.showInformationMessage(
+                    isZh 
+                        ? `🎉 /compact 智能压缩提示词已复制到剪贴板！直接粘贴给 AI 对话框即可重置会话注意力！`
+                        : `🎉 /compact prompt copied to clipboard! Paste it into the AI chat to reset attention.`
+                );
+            } else if (pick.action === 'export') {
+                const prompt = generateCompactPrompt(tokenAnalyticsState.activeConvId, tokenAnalyticsState);
+                const doc = await vscode.workspace.openTextDocument({ content: prompt, language: 'markdown' });
+                await vscode.window.showTextDocument(doc);
+            } else if (pick.action === 'dashboard') {
+                vscode.commands.executeCommand('agPrivateCockpit.openDashboard');
+            }
         }),
         vscode.commands.registerCommand('agPrivateCockpit.refresh', () => fetchAndRefresh(context, true)),
         vscode.commands.registerCommand('agPrivateCockpit.toggleLang', () => {

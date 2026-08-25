@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "1.0.53",
+  "version": "1.0.54",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -69,6 +69,11 @@
         "title": "Antigravity Private Cockpit: Open Settings",
         "category": "Antigravity Cockpit",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "agPrivateCockpit.compactContext",
+        "title": "Antigravity Cockpit: /compact 智能压缩与总结上下文",
+        "category": "Antigravity Cockpit"
       }
     ],
     "configuration": {
@@ -129,6 +134,18 @@
           "type": "boolean",
           "default": true,
           "description": "Toggle recent conversation Token Speed (t/s) indicator on status bar (default: true)."
+        },
+        "agPrivateCockpit.showContextSaturation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to display the dynamic circular context saturation meter & progressive eye expression on the status bar (是否在底部状态栏显示动态圆圈上下文饱和度与眼神警示)",
+          "order": 4
+        },
+        "agPrivateCockpit.contextWindowLimit": {
+          "type": "number",
+          "default": 1048576,
+          "description": "Model context window limit in tokens (Default 1,048,576 for 1M window) (模型上下文窗口容量上限 Tokens，默认 1,048,576 / 1M)",
+          "order": 5
         }
       }
     },
