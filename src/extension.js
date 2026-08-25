@@ -1,9 +1,11 @@
+const fs = require('fs');
+const path = require('path');
 const vscode = require('vscode');
 const { getEffectiveLang } = require('./utils/i18n');
 const { liveQuotaState, fetchLiveQuota } = require('./services/quotaService');
 const { liveSpeedState, updateLiveSpeedEngine } = require('./services/speedEngine');
 const { tokenAnalyticsState, computeLiveTokenAnalytics } = require('./services/tokenScanner');
-const { computeContextSaturation, generateCompactPrompt } = require('./services/contextEngine');
+const { computeContextSaturation, createSessionSnapshot, resolveActiveSubproject, getContextState } = require('./services/contextEngine');
 const { initStatusBarItems, renderStatusBar } = require('./ui/statusBar');
 const { showDashboard, updateDashboardIfOpen, showQuickOverview } = require('./ui/dashboard');
 
@@ -12,7 +14,7 @@ let speedTimer;
 let currentLang = 'auto';
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v1.0.54 动态圆圈上下文饱和度与 /compact 引擎就绪');
+    console.log('[Antigravity Private Cockpit] v2.0.0 激活');
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();
@@ -45,54 +47,41 @@ function activate(context) {
                 onCompact: () => vscode.commands.executeCommand('agPrivateCockpit.compactContext')
             });
         }),
+        // 📸 单击智能提炼上下文快照 (无侵入式落盘 + 自动弹窗提示 + 不强行打开文件)
         vscode.commands.registerCommand('agPrivateCockpit.compactContext', async () => {
             computeLiveTokenAnalytics();
             const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
             const customCap = cfg.get('contextWindowLimit', 1048576);
-            const ctxState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap, tokenAnalyticsState.activeRequests);
+            computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject ? subproject.path : undefined);
             const isZh = currentLang === 'zh';
 
-            const items = [
-                {
-                    label: isZh ? '$(clippy) ⚡ 一键复制 /compact 智能压缩提示词 (推荐)' : '$(clippy) ⚡ Copy /compact Compaction Prompt (Recommended)',
-                    description: isZh ? `${ctxState.expression} ${ctxState.saturationFormatted} • 提炼会话决策并释放上下文注意力` : `${ctxState.expression} ${ctxState.saturationFormatted} • Extract key memory & reset attention`,
-                    action: 'copy'
-                },
-                {
-                    label: isZh ? '$(file-text) 💾 导出当前会话快照存档 (Markdown)' : '$(file-text) 💾 Export Session Snapshot (Markdown)',
-                    description: isZh ? `保存当前 ${tokenAnalyticsState.activeTotalFormatted} Tokens 的架构与进度快照` : `Save architecture & progress snapshot (${tokenAnalyticsState.activeTotalFormatted})`,
-                    action: 'export'
-                },
-                {
-                    label: isZh ? '$(dashboard) 🛸 打开驾驶舱大屏查看完整健康度' : '$(dashboard) 🛸 Open Dashboard to View Context Health',
-                    description: isZh ? `查看 4 宫格、会话清单与实时流速` : `View 4-grid metrics, session list & live speed`,
-                    action: 'dashboard'
-                }
-            ];
-
-            const pick = await vscode.window.showQuickPick(items, {
-                placeHolder: isZh 
-                    ? `🧠 当前会话上下文占用: ${ctxState.expression} ${ctxState.ringIcon} ${ctxState.saturationFormatted} (${ctxState.stageNameZh})`
-                    : `🧠 Active Context Saturation: ${ctxState.expression} ${ctxState.ringIcon} ${ctxState.saturationFormatted} (${ctxState.stageNameEn})`
-            });
-
-            if (!pick) return;
-
-            if (pick.action === 'copy') {
-                const prompt = generateCompactPrompt(tokenAnalyticsState.activeConvId, tokenAnalyticsState);
-                await vscode.env.clipboard.writeText(prompt);
-                vscode.window.showInformationMessage(
-                    isZh 
-                        ? `🎉 /compact 智能压缩提示词已复制到剪贴板！直接粘贴给 AI 对话框即可重置会话注意力！`
-                        : `🎉 /compact prompt copied to clipboard! Paste it into the AI chat to reset attention.`
-                );
-            } else if (pick.action === 'export') {
-                const prompt = generateCompactPrompt(tokenAnalyticsState.activeConvId, tokenAnalyticsState);
-                const doc = await vscode.workspace.openTextDocument({ content: prompt, language: 'markdown' });
-                await vscode.window.showTextDocument(doc);
-            } else if (pick.action === 'dashboard') {
-                vscode.commands.executeCommand('agPrivateCockpit.openDashboard');
+            // 1. 获取工作区根目录与当前激活文档
+            let wsRoot = undefined;
+            if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+                wsRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
             }
+            if (!wsRoot) {
+                wsRoot = path.join(context.extensionPath, '..', '..');
+            }
+
+            const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
+
+            // 2. 自动定位当前活跃子项目 (精准隔离至 projects/<name>/)
+            const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
+
+            // 3. 物理归档时间戳快照并同步子项目 memory.md 索引指针
+            const snapshotRes = createSessionSnapshot(subproject.path, tokenAnalyticsState.activeConvId, tokenAnalyticsState, subproject.name);
+
+            // 4. 立即刷新状态栏与驾驶舱大屏 (重置为绿色安全基线)
+            renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
+            updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+
+            // 5. 轻量提示 (自动消失，不强行弹开文件打断用户)
+            const msg = isZh
+                ? `📸 会话上下文已提炼成功！已归档至: ${snapshotRes.relDisplayPath}`
+                : `📸 Session context successfully refined! Archived to: ${snapshotRes.relDisplayPath}`;
+
+            vscode.window.showInformationMessage(msg);
         }),
         vscode.commands.registerCommand('agPrivateCockpit.refresh', () => fetchAndRefresh(context, true)),
         vscode.commands.registerCommand('agPrivateCockpit.toggleLang', () => {
@@ -122,9 +111,10 @@ function activate(context) {
     fetchAndRefresh(context, false);
     restartAutoRefresh(context);
 
-    // 4. 1.5 秒 SQLite-WAL 亚秒级流速感知定时器
+    // 4. 1.5 秒 SQLite-WAL 亚秒级流速与 Token 增量实时感知定时器
     speedTimer = setInterval(() => {
         updateLiveSpeedEngine();
+        computeLiveTokenAnalytics(); // 🌟 实时计算最新会话物理增长与上下文额度变化
         renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
         updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
     }, 1500);

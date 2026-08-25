@@ -103,7 +103,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
 
 function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const isZh = lang === 'zh';
-  const contextState = computeContextSaturation(tokens.activeTotalNum);
+  const contextState = computeContextSaturation(tokens, 1048576, undefined, 'D:/资料M2/mywork/Antigravity/projects/antigravity-cockpit');
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const warnPct = cfg.get('warningThreshold', 50);
     const critPct = cfg.get('criticalThreshold', 20);
@@ -764,6 +764,108 @@ body {
   .sub-grid { grid-template-columns: 1fr; }
   .header-title-box { flex-direction: column; align-items: flex-start; }
 }
+
+/* 🧠 State-of-the-Art Compact Context Telemetry Card */
+.context-telemetry-card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  gap: 14px;
+}
+.ctx-gauge-section {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px;
+  flex: 1;
+}
+.ctx-gauge-svg-wrap {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  flex-shrink: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ctx-gauge-svg {
+  width: 40px !important;
+  height: 40px !important;
+  transform: rotate(-90deg);
+}
+.ctx-gauge-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 3.8;
+}
+.ctx-gauge-val {
+  fill: none;
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+.ctx-meta-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ctx-meta-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-title);
+}
+.ctx-badge-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+}
+.ctx-meta-metrics {
+  font-size: 11px;
+  color: var(--text-desc);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ctx-metric-item strong {
+  color: var(--text-title);
+  font-weight: 600;
+}
+.btn-compact-pro {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-compact-pro:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  transform: translateY(-1px);
+}
+
 </style>
 </head>
 <body>
@@ -792,31 +894,28 @@ body {
       </div>
     </div>
 
-    <div class="context-saturation-banner">
-      <div class="ctx-banner-left">
-        <div class="ctx-ring-svg">
-          <svg width="42" height="42" viewBox="0 0 36 36">
-            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3.6"/>
-            <path stroke-dasharray="${contextState.saturationPercent}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="${contextState.colorHex}" stroke-width="3.6" stroke-linecap="round"/>
-            <text x="18" y="21" fill="${contextState.colorHex}" text-anchor="middle" font-size="8.5px" font-weight="bold">${contextState.saturationFormatted}</text>
+    <div class="context-telemetry-card">
+      <div class="ctx-gauge-section">
+        <div class="ctx-gauge-svg-wrap" title="${isZh ? '1M 上下文物理饱和度' : '1M Context Quota'}">
+          <svg width="42" height="42" class="ctx-gauge-svg" viewBox="0 0 36 36" style="width:42px;height:42px;min-width:42px;min-height:42px;flex-shrink:0;">
+            <circle class="ctx-gauge-track" cx="18" cy="18" r="15"/>
+            <circle class="ctx-gauge-val" cx="18" cy="18" r="15" stroke="${contextState.colorHex}" stroke-dasharray="94.25" stroke-dashoffset="${94.25 * (1 - contextState.saturationPercent / 100)}"/>
           </svg>
         </div>
-        <div class="ctx-banner-info">
-          <div class="ctx-banner-title">
-            <span class="ctx-expr">${contextState.expression}</span>
-            <span class="ctx-stage" style="color:${contextState.colorHex};">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
-            <span class="ctx-sub-tag">(${tokens.activeTotalFormatted} / ${Math.round(contextState.windowCapacity/1000)}K Tokens)</span>
+        <div class="ctx-meta-content">
+          <div class="ctx-meta-header">
+            <span>🧠 ${isZh ? '上下文额度饱和度' : 'Context Quota'}: <strong>${contextState.saturationFormatted}</strong></span>
+            <span class="ctx-badge-pill" style="background:${contextState.colorHex}1a;color:${contextState.colorHex};border:1px solid ${contextState.colorHex}44;">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
           </div>
-          <div class="ctx-banner-desc">
-            ${isZh ? `⚡ 长文本注意力: <strong>${contextState.attentionHealthZh}</strong>` : `⚡ Long-Context Attention: <strong>${contextState.attentionHealthEn}</strong>`}
+          <div class="ctx-meta-metrics">
+            <span class="ctx-metric-item">${isZh ? '已用额度' : 'Memory'}: <strong>${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K</strong> / 1,024K</span>
+            <span class="ctx-metric-item">｜ ⚡ ${isZh ? '注意力' : 'Attention'}: <strong>${isZh ? contextState.attentionHealthZh : contextState.attentionHealthEn}</strong></span>
           </div>
         </div>
       </div>
-      <div class="ctx-banner-right">
-        <button class="btn-compact" onclick="vscode.postMessage({command:'compact'})" title="${isZh ? '提炼当前会话关键决策并重置上下文注意力' : 'Extract session decisions and compact context'}">
-          ⚡ ${isZh ? '压缩上下文 (/compact)' : 'Compact Context (/compact)'}
-        </button>
-      </div>
+      <button class="btn-compact-pro" onclick="vscode.postMessage({command:'compact'})" title="${isZh ? '提炼当前会话关键状态快照并归档' : 'Extract session decisions and compact context'}">
+        ⚡ ${isZh ? '智能提炼上下文' : 'Refine Context'}
+      </button>
     </div>
 
     <div class="hero-row">

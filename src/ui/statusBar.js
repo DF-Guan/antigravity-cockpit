@@ -44,73 +44,47 @@ function buildContextTooltip(lang, contextState, tokenAnalyticsState) {
     const capFormatted = Math.round(contextState.windowCapacity / 1000) + 'K';
     const totExact = tokenAnalyticsState.activeTotalExact || '0';
     const totFormatted = tokenAnalyticsState.activeTotalFormatted || '0';
+    const inFormatted = tokenAnalyticsState.activeInputFormatted || '0';
+    const outFormatted = tokenAnalyticsState.activeOutputFormatted || '0';
 
     if (isZh) {
-        tip.appendMarkdown(`### 🧠 上下文窗口饱和度与注意力感知 (Context Meter)
+        tip.appendMarkdown(`### 🧠 上下文窗口饱和度 (Context Saturation)
 
 `);
-        tip.appendMarkdown(`*当前状态: **${contextState.expression} ${contextState.ringIcon} ${contextState.stageNameZh}** • 窗口占用: **${contextState.saturationFormatted}** / ${capFormatted}*
-
----
-`);
-        tip.appendMarkdown(`📊 **当前活跃会话消耗**: **${totFormatted}** (\`${totExact}\` Tokens)
-`);
-        tip.appendMarkdown(`- 📥 输入 Token (带前缀缓存): **${tokenAnalyticsState.activeInputFormatted}**
-`);
-        tip.appendMarkdown(`- 📤 输出 Token (代码与思考): **${tokenAnalyticsState.activeOutputFormatted}**
-`);
-        tip.appendMarkdown(`- ⚡ **长文本注意力健康度**: \`${contextState.attentionHealthZh}\`
+        tip.appendMarkdown(`*当前占用: **${contextState.saturationFormatted}** / ${capFormatted} (${contextState.stageNameZh})*
 
 ---
 `);
-        tip.appendMarkdown(`🔄 **动态圆圈环形状态机说明**:
+        tip.appendMarkdown(`📊 **当前活跃会话物理吞吐**: **${totFormatted}** (\`${totExact}\` Tokens)
 `);
-        tip.appendMarkdown(`- \`○\` 0% ~ 25% : \`(•‿•)\` 充裕敏捷 (零衰减)
+        tip.appendMarkdown(`- 📥 输入 Context: **${inFormatted}** (含前缀缓存)
 `);
-        tip.appendMarkdown(`- \`◔\` 25% ~ 50%: \`(•_•)\` 稳健运行 (良好)
+        tip.appendMarkdown(`- 📤 输出 Token: **${outFormatted}** (代码与思考链)
 `);
-        tip.appendMarkdown(`- \`◑\` 50% ~ 75%: \`(•᷅_•᷄)\` 轻度注意 (开始模糊)
-`);
-        tip.appendMarkdown(`- \`◕\` 75% ~ 90%: \`(⊙_⊙;)\` 注意力衰减警示 (需压缩)
-`);
-        tip.appendMarkdown(`- \`●\` 90% ~ 100%: \`(×_×)\` 上下文已满 (必须压缩/新开)
+        tip.appendMarkdown(`- ⚡ **长文本注意力保留率**: \`${contextState.attentionHealthZh}\`
 
 ---
 `);
-        tip.appendMarkdown(`💡 **[⚡ 单击执行 /compact 智能压缩与总结](command:agPrivateCockpit.compactContext)** | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard)`);
+        tip.appendMarkdown(`💡 **[⚡ 点击执行 智能提炼上下文快照](command:agPrivateCockpit.compactContext)** | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard)`);
     } else {
-        tip.appendMarkdown(`### 🧠 Context Window Saturation & Attention Meter
+        tip.appendMarkdown(`### 🧠 Context Window Saturation
 
 `);
-        tip.appendMarkdown(`*Status: **${contextState.expression} ${contextState.ringIcon} ${contextState.stageNameEn}** • Saturation: **${contextState.saturationFormatted}** / ${capFormatted}*
+        tip.appendMarkdown(`*Current Usage: **${contextState.saturationFormatted}** / ${capFormatted} (${contextState.stageNameEn})*
 
 ---
 `);
         tip.appendMarkdown(`📊 **Active Session Tokens**: **${totFormatted}** (\`${totExact}\` Tokens)
 `);
-        tip.appendMarkdown(`- 📥 Input Tokens (Cached): **${tokenAnalyticsState.activeInputFormatted}**
+        tip.appendMarkdown(`- 📥 Input Context: **${inFormatted}** (with Cache)
 `);
-        tip.appendMarkdown(`- 📤 Output Tokens (Code): **${tokenAnalyticsState.activeOutputFormatted}**
+        tip.appendMarkdown(`- 📤 Output Tokens: **${outFormatted}** (Code & Traces)
 `);
-        tip.appendMarkdown(`- ⚡ **Long-Context Attention**: \`${contextState.attentionHealthEn}\`
+        tip.appendMarkdown(`- ⚡ **Attention Retention**: \`${contextState.attentionHealthEn}\`
 
 ---
 `);
-        tip.appendMarkdown(`🔄 **Dynamic Ring State Stages**:
-`);
-        tip.appendMarkdown(`- \`○\` 0% ~ 25% : \`(•‿•)\` Pristine & Agile
-`);
-        tip.appendMarkdown(`- \`◔\` 25% ~ 50%: \`(•_•)\` Normal & Stable
-`);
-        tip.appendMarkdown(`- \`◑\` 50% ~ 75%: \`(•᷅_•᷄)\` Moderate Load
-`);
-        tip.appendMarkdown(`- \`◕\` 75% ~ 90%: \`(⊙_⊙;)\` Attention Decay Warning
-`);
-        tip.appendMarkdown(`- \`●\` 90% ~ 100%: \`(×_×)\` Context Saturated (Must Compact)
-
----
-`);
-        tip.appendMarkdown(`💡 **[⚡ Click to run /compact Compaction](command:agPrivateCockpit.compactContext)** | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard)`);
+        tip.appendMarkdown(`💡 **[⚡ Click to run 提炼上下文](command:agPrivateCockpit.compactContext)** | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard)`);
     }
     return tip;
 }
@@ -134,7 +108,7 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
 ---
 `);
-        tip.appendMarkdown(`🧠 **会话上下文饱和度**: **${contextState.expression} ${contextState.ringIcon} ${contextState.saturationFormatted}** (\`${contextState.stageNameZh}\`)
+        tip.appendMarkdown(`🧠 **会话上下文饱和度**: **${contextState.saturationFormatted}** / 1024K (\`${contextState.stageNameZh}\`)
 `);
         tip.appendMarkdown(`- 💎 **当前会话总吞吐: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 会话轮次: **${tokenAnalyticsState.activeRequests}**
 `);
@@ -171,7 +145,7 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
 ---
 `);
-        tip.appendMarkdown(`[⚡ /compact 压缩](command:agPrivateCockpit.compactContext) | [🔄 刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
+        tip.appendMarkdown(`[⚡ 提炼上下文](command:agPrivateCockpit.compactContext) | [🔄 刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         const liveBadgeEn = liveQuotaState.isLive ? '🟢 Native Live Synced' : (liveQuotaState.isLoading ? '🔄 Syncing...' : '⚡ Local Ready');
         tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit
@@ -181,7 +155,7 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
 ---
 `);
-        tip.appendMarkdown(`🧠 **Context Saturation**: **${contextState.expression} ${contextState.ringIcon} ${contextState.saturationFormatted}** (\`${contextState.stageNameEn}\`)
+        tip.appendMarkdown(`🧠 **Context Saturation**: **${contextState.saturationFormatted}** / 1024K (\`${contextState.stageNameEn}\`)
 `);
         tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 Turns: **${tokenAnalyticsState.activeRequests}**
 `);
@@ -218,7 +192,7 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
 ---
 `);
-        tip.appendMarkdown(`[⚡ /compact](command:agPrivateCockpit.compactContext) | [🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
+        tip.appendMarkdown(`[⚡ 提炼上下文](command:agPrivateCockpit.compactContext) | [🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
 }
@@ -241,7 +215,7 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
     const cW = liveQuotaState.claude.weeklyPercent;
     const c5 = liveQuotaState.claude.fiveHourPercent;
 
-    const contextState = computeContextSaturation(tokenAnalyticsState.activeTotalNum, customCap, tokenAnalyticsState.activeRequests);
+    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, undefined, 'D:/资料M2/mywork/Antigravity/projects/antigravity-cockpit');
     const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState);
 
     // 1. Google Gemini
@@ -319,9 +293,9 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
         sbSpeedVal.hide();
     }
 
-    // 4. 🧠 Dynamic Circular Context Saturation Meter (with progressive eye expressions & ring)
+    // 4. 🧠 Clean, High-Precision Context Saturation Meter
     if (showContext) {
-        sbContextItem.text = `${contextState.expression} ${contextState.ringIcon} ${contextState.saturationFormatted}`;
+        sbContextItem.text = `🧠 ${contextState.saturationFormatted}`;
         sbContextItem.color = contextState.colorHex;
         sbContextItem.tooltip = buildContextTooltip(lang, contextState, tokenAnalyticsState);
         sbContextItem.show();

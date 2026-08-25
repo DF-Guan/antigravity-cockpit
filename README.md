@@ -1,6 +1,6 @@
 # 🛸 Antigravity Private Cockpit
 
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-v1.0.55-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-v2.0.0-blue.svg)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-key-features--why-private-cockpit)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-key-features--why-private-cockpit)
 [![Factual Audit](https://img.shields.io/badge/Data%20Audit-100%25%20Physical%20Disk-blue.svg)](#-key-features--why-private-cockpit)

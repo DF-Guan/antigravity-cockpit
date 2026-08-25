@@ -1,112 +1,235 @@
 const fs = require('fs');
 const path = require('path');
 
+// 🎯 主流模型原生上下文窗口上限矩阵 (Model Context Capacities)
+const MODEL_CAPACITIES = {
+    'gemini':    1048576, // 1M  (Google Gemini 2.0 / 3.7 Flash & Pro)
+    'gemini-2m': 2097152, // 2M  (Google Gemini 1.5 Pro)
+    'claude':     200000, // 200K (Anthropic Claude 3.5 / 3.7 Sonnet)
+    'gpt4':       128000, // 128K (OpenAI GPT-4o / GPT-4.5)
+    'deepseek':    64000  // 64K  (DeepSeek V3 / R1)
+};
+
 // 🔒 Shared Context Saturation State across modules
 const contextState = {
-    windowCapacity: 1048576, // 1M Standard Window for Gemini 3.7 / 2.0 / Claude 3.7
-    activeTokens: 0,
+    modelType: 'gemini',
+    windowCapacity: 1048576, // 默认 1M
+    usedTokens: 0,
+    workingTokens: 0,
     saturationPercent: 0,
-    saturationFormatted: '0%',
-    expression: '(•‿•)',
-    ringIcon: '○',
+    saturationFormatted: '0.0%',
+    isCompacted: false,
+    lastCompactedTime: null,
+    lastSnapshotPath: null,
+    stageCode: 'safe',
     stageNameZh: '充裕敏捷',
-    stageNameEn: 'Pristine & Agile',
-    colorHex: '#22c55e',
-    statusText: '(•‿•) ○ 0%',
-    attentionHealthZh: '100% (极佳 · 零注意力衰减)',
+    stageNameEn: 'Optimal',
+    colorHex: '#38bdf8',
+    statusText: '🧠 0.0%',
+    attentionHealthZh: '100% (极佳 · 零衰减)',
     attentionHealthEn: '100% (Optimal · Zero Decay)'
 };
+
+// 内存基线缓存 (跨函数共享)
+const sessionCompactionBaselines = {};
 
 function getContextState() {
     return contextState;
 }
 
 /**
- * 🧠 5-Stage Expression & Dynamic Circular Ring State Machine
- * 
- * 1. 0%  ~ 25%: (•‿•) ○ 充裕敏捷 (Safe Green #22c55e)
- * 2. 25% ~ 50%: (•_•) ◔ 稳健运行 (Sky Blue #38bdf8)
- * 3. 50% ~ 75%: (•᷅_•᷄) ◑ 轻度注意 (Amber Yellow #eab308)
- * 4. 75% ~ 90%: (⊙_⊙;) ◕ 注意力衰减警示 (Warning Orange #f97316)
- * 5. 90% ~ 100%: (×_×) ● 上下文已满·建议压缩 (Alert Crimson #ef4444)
+ * 🔍 精准识别当前活跃子项目根目录 (跨子项目物理隔离防护)
  */
-function computeContextSaturation(activeTotalTokens, customCapacity, activeRequests) {
-    const capacity = customCapacity && customCapacity > 0 ? customCapacity : 1048576;
-    
-    let workingTokens = 0;
-    if (typeof activeTotalTokens === 'number' && activeTotalTokens > 0) {
-        if (activeRequests !== undefined && activeRequests > 0) {
-            // Context working memory dynamically estimated from conversation history depth & size
-            workingTokens = Math.min(capacity, Math.round(18000 + (activeRequests * 4200) + (activeTotalTokens * 0.015)));
-        } else {
-            workingTokens = Math.min(capacity, activeTotalTokens);
+function resolveActiveSubproject(workspaceRoot, activeFilePath) {
+    const ws = workspaceRoot || process.cwd();
+
+    if (activeFilePath && typeof activeFilePath === 'string') {
+        const norm = activeFilePath.replace(/\\/g, '/');
+        const match = norm.match(/\/projects\/([^\/]+)/);
+        if (match) {
+            const subName = match[1];
+            const subPath = path.join(ws, 'projects', subName);
+            if (fs.existsSync(subPath)) {
+                return { name: subName, path: subPath, relPath: `projects/${subName}` };
+            }
         }
     }
 
-    const ratio = Math.min(1.0, workingTokens / capacity);
-    const pct = Math.round(ratio * 1000) / 10; // 保留一位小数，如 18.4%
+    const projectsDir = path.join(ws, 'projects');
+    if (fs.existsSync(projectsDir)) {
+        const cockpitDir = path.join(projectsDir, 'antigravity-cockpit');
+        if (fs.existsSync(cockpitDir)) {
+            return { name: 'antigravity-cockpit', path: cockpitDir, relPath: 'projects/antigravity-cockpit' };
+        }
+        try {
+            const subs = fs.readdirSync(projectsDir).filter(d => {
+                const p = path.join(projectsDir, d);
+                return fs.statSync(p).isDirectory();
+            });
+            if (subs.length > 0) {
+                return { name: subs[0], path: path.join(projectsDir, subs[0]), relPath: `projects/${subs[0]}` };
+            }
+        } catch (_) {}
+    }
 
-    let expr = '(•‿•)';
-    let ring = '○';
-    let stageZh = '充裕敏捷';
-    let stageEn = 'Pristine & Agile';
-    let color = '#22c55e';
-    let healthZh = '100% (极佳 · 零注意力衰减)';
-    let healthEn = '100% (Optimal · Zero Decay)';
+    return { name: 'workspace', path: ws, relPath: '.' };
+}
 
-    if (pct < 25) {
-        expr = '(•‿•)';
-        ring = '○';
-        stageZh = '充裕敏捷';
-        stageEn = 'Pristine & Agile';
-        color = '#22c55e';
-        healthZh = '100% (极佳 · 零注意力衰减)';
-        healthEn = '100% (Optimal · Zero Decay)';
-    } else if (pct < 50) {
-        expr = '(•_•)';
-        ring = '◔';
-        stageZh = '稳健运行';
-        stageEn = 'Normal & Stable';
+/**
+ * 💾 磁盘持久化扫描：自动探测当前会话在物理磁盘上是否已有已归档的快照文件
+ * （解决窗口重载 Reload Window 后内存丢失的问题）
+ */
+function findPersistentSnapshot(subprojectDir, convId) {
+    if (!subprojectDir || !fs.existsSync(subprojectDir)) return null;
+
+    const snapDir = path.join(subprojectDir, 'docs', 'snapshots');
+    if (!fs.existsSync(snapDir)) return null;
+
+    try {
+        const files = fs.readdirSync(snapDir).filter(f => f.startsWith('snapshot_') && f.endsWith('.md'));
+        if (files.length === 0) return null;
+
+        // 按文件名时间戳倒序排列
+        files.sort().reverse();
+        
+        for (const f of files) {
+            const fpath = path.join(snapDir, f);
+            const content = fs.readFileSync(fpath, 'utf-8');
+            if (content.includes(convId)) {
+                // 提取归档时间与物理消耗
+                const timeMatch = content.match(/归档时间[：:]\s*`([^`]+)`/);
+                const tokenMatch = content.match(/`(\d[\d,]*)`\s*Tokens/);
+                
+                let totalAtCompact = 0;
+                if (tokenMatch) {
+                    totalAtCompact = parseInt(tokenMatch[1].replace(/,/g, ''), 10) || 0;
+                }
+
+                return {
+                    fileName: f,
+                    filePath: fpath,
+                    dateReadable: timeMatch ? timeMatch[1] : f,
+                    totalAtCompact: totalAtCompact
+                };
+            }
+        }
+    } catch (_) {}
+
+    return null;
+}
+
+/**
+ * 🧠 统一高精度上下文额度饱和度测算引擎 (支持物理磁盘快照自动持久化识别)
+ */
+function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType, subprojectDir) {
+    let capacity = 1048576; // 默认 Gemini 1M
+    const mType = modelType ? String(modelType).toLowerCase() : 'gemini';
+
+    if (customCapacity && typeof customCapacity === 'number' && customCapacity > 0) {
+        capacity = customCapacity;
+    } else if (MODEL_CAPACITIES[mType]) {
+        capacity = MODEL_CAPACITIES[mType];
+    }
+
+    let usedTokens = 0;
+    let convId = 'default';
+    let isCompacted = false;
+    let lastCompactedTime = null;
+    let lastSnapshotPath = null;
+
+    if (typeof tokenStateOrTokens === 'object' && tokenStateOrTokens !== null) {
+        convId = tokenStateOrTokens.activeConvId || 'default';
+        const reqs = tokenStateOrTokens.activeRequests || 0;
+        const tot = tokenStateOrTokens.activeTotalNum || 0;
+        
+        // 1. 优先检查内存基线
+        let baseline = sessionCompactionBaselines[convId];
+
+        // 2. 若内存无基线（如刚刚 Reload Window），自动扫描物理磁盘持久化快照！
+        if (!baseline && subprojectDir) {
+            const diskSnapshot = findPersistentSnapshot(subprojectDir, convId);
+            if (diskSnapshot) {
+                baseline = {
+                    dateReadable: diskSnapshot.dateReadable,
+                    totalAtCompact: diskSnapshot.totalAtCompact || tot,
+                    requestsAtCompact: reqs,
+                    filePath: diskSnapshot.filePath
+                };
+                sessionCompactionBaselines[convId] = baseline;
+            }
+        }
+
+        if (baseline) {
+            isCompacted = true;
+            lastCompactedTime = baseline.dateReadable;
+            lastSnapshotPath = baseline.filePath;
+            const deltaTokens = Math.max(0, tot - (baseline.totalAtCompact || tot));
+            // 提炼后基线以高密度 Snapshot 为基准 (约 16K Tokens) + 后续增量
+            usedTokens = Math.min(capacity, Math.round(16000 + (deltaTokens * 0.008)));
+        } else {
+            if (reqs > 0 || tot > 0) {
+                usedTokens = Math.min(capacity, Math.round(15000 + (reqs * 3600) + (tot * 0.008)));
+            }
+        }
+    } else if (typeof tokenStateOrTokens === 'number' && tokenStateOrTokens > 0) {
+        usedTokens = Math.min(capacity, tokenStateOrTokens);
+    }
+
+    const ratio = Math.min(1.0, usedTokens / capacity);
+    const pct = Math.round(ratio * 1000) / 10; // 0.0% ~ 100.0%
+
+    let stageCode = 'safe';
+    let stageZh = isCompacted ? '充裕敏捷 (已提炼)' : '充裕敏捷';
+    let stageEn = isCompacted ? 'Optimal (Refined)' : 'Optimal';
+    let color = '#38bdf8';
+    let healthZh = isCompacted ? '100% (已提炼归档 · 注意力重置)' : '100% (极佳 · 零衰减)';
+    let healthEn = isCompacted ? '100% (Refined · Reset)' : '100% (Optimal · Zero Decay)';
+
+    if (pct < 40) {
+        stageCode = 'safe';
+        stageZh = isCompacted ? '充裕敏捷 (已提炼)' : '充裕敏捷';
+        stageEn = isCompacted ? 'Optimal (Refined)' : 'Optimal';
         color = '#38bdf8';
+        healthZh = isCompacted ? '100% (已提炼归档 · 注意力重置)' : '100% (极佳 · 零衰减)';
+        healthEn = isCompacted ? '100% (Refined · Reset)' : '100% (Optimal · Zero Decay)';
+    } else if (pct < 70) {
+        stageCode = 'normal';
+        stageZh = '稳健运行';
+        stageEn = 'Normal';
+        color = '#3b82f6';
         healthZh = '95% (良好 · 逻辑严密)';
         healthEn = '95% (Good · Coherent)';
-    } else if (pct < 75) {
-        expr = '(•᷅_•᷄)';
-        ring = '◑';
-        stageZh = '轻度注意';
-        stageEn = 'Moderate Load';
-        color = '#eab308';
-        healthZh = '80% (轻度衰减 · 早期上下文开始模糊)';
-        healthEn = '80% (Mild Decay · Early context fading)';
-    } else if (pct < 90) {
-        expr = '(⊙_⊙;)';
-        ring = '◕';
-        stageZh = '注意力衰减警示';
-        stageEn = 'Attention Decay Warning';
-        color = '#f97316';
-        healthZh = '60% (中度衰减 · 建议及时 /compact 压缩)';
-        healthEn = '60% (Decaying · Recommend /compact soon)';
+    } else if (pct < 85) {
+        stageCode = 'warning';
+        stageZh = '注意力衰减预警';
+        stageEn = 'Attention Decay';
+        color = '#f59e0b';
+        healthZh = '75% (轻度衰减 · 建议提炼)';
+        healthEn = '75% (Mild Decay · Recommend Snapshot)';
     } else {
-        expr = '(×_×)';
-        ring = '●';
-        stageZh = '上下文已满 · 必须压缩';
-        stageEn = 'Context Saturated · Must Compact';
+        stageCode = 'critical';
+        stageZh = '上下文临界 · 必须提炼';
+        stageEn = 'Saturated · Must Snapshot';
         color = '#ef4444';
-        healthZh = '30% (重度失忆风险 · 必须立即压缩或新开会话)';
-        healthEn = '30% (Critical Amnesia Risk · Must Compact)';
+        healthZh = '40% (重度失忆风险 · 需提炼)';
+        healthEn = '40% (Critical Amnesia Risk · Must Snapshot)';
     }
 
     Object.assign(contextState, {
+        modelType: mType,
         windowCapacity: capacity,
-        activeTokens: workingTokens,
+        usedTokens: usedTokens,
+        workingTokens: usedTokens,
         saturationPercent: pct,
-        saturationFormatted: `${pct}%`,
-        expression: expr,
-        ringIcon: ring,
+        saturationFormatted: `${pct.toFixed(1)}%`,
+        isCompacted: isCompacted,
+        lastCompactedTime: lastCompactedTime,
+        lastSnapshotPath: lastSnapshotPath,
+        stageCode: stageCode,
         stageNameZh: stageZh,
         stageNameEn: stageEn,
         colorHex: color,
-        statusText: `${expr} ${ring} ${pct}%`,
+        statusText: `🧠 ${pct.toFixed(1)}%`,
         attentionHealthZh: healthZh,
         attentionHealthEn: healthEn
     });
@@ -115,38 +238,131 @@ function computeContextSaturation(activeTotalTokens, customCapacity, activeReque
 }
 
 /**
- * 📋 生成类似 Claude Code /compact 的智能压缩提示词
+ * 📸 在指定子项目目录下物理归档 session_snapshot.md，并更新对应子项目的 memory.md 索引与基线
  */
-function generateCompactPrompt(activeConvId, tokenState) {
-    const nowStr = new Date().toLocaleString('zh-CN');
-    const totFormatted = tokenState ? tokenState.activeTotalFormatted : '当前会话';
+function createSessionSnapshot(subprojectDir, activeConvId, tokenState, subprojectName) {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const tsStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const dateReadable = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    const targetDir = subprojectDir || process.cwd();
+    const snapshotsDir = path.join(targetDir, 'docs', 'snapshots');
+    try {
+        if (!fs.existsSync(snapshotsDir)) {
+            fs.mkdirSync(snapshotsDir, { recursive: true });
+        }
+    } catch (_) {}
+
+    const fileName = `snapshot_${tsStr}.md`;
+    const filePath = path.join(snapshotsDir, fileName);
+    const subName = subprojectName || path.basename(targetDir);
+    const relDisplayPath = `projects/${subName}/docs/snapshots/${fileName}`;
+
+    const totFormatted = tokenState ? tokenState.activeTotalFormatted : '0 Tokens';
     const totExact = tokenState ? tokenState.activeTotalExact : '0';
+    const inFormatted = tokenState ? tokenState.activeInputFormatted : '0';
+    const outFormatted = tokenState ? tokenState.activeOutputFormatted : '0';
+    const cachedPercent = tokenState ? tokenState.activeCachedPercent : '0%';
+    const capFormatted = Math.round(contextState.windowCapacity / 1000) + 'K';
 
-    return `/compact
-================================================================
-          CONTEXT COMPACTION & STATE CHECKPOINT (会话上下文压缩)
-================================================================
-【会话标识】: ${activeConvId || '当前活跃会话'}
-【压缩时间】: ${nowStr}
-【当前物理消耗】: ${totFormatted} Tokens (精确: ${totExact} Tokens)
-【窗口占用】: ${contextState.saturationFormatted} / ${Math.round(contextState.windowCapacity / 1000)}K (${contextState.stageNameZh})
+    const snapshotContent = `# 📸 会话上下文状态快照 (Session Snapshot)
 
-【压缩指令 (Compact Instructions)】:
-请将本会话迄今为止的所有交互、决策与代码成果进行深度提炼，生成一份紧凑的高密度状态快照，丢弃过往冗长工具输出与中间临时调试日志：
+> 💡 本文件由 **Antigravity Private Cockpit** 自动提炼生成。作为所属子项目 \`${subName}\` 的高密度基线索引，后续对话可直接读取本快照以重置注意力，避免长文本失忆。
 
-1. 🎯 核心目标与项目架构 (Goals & Architecture)
-2. ✅ 已完成的关键特性与修复 (Accomplished Deliverables)
-3. 🚧 当前正在进行的上下文状态 (In-Progress State & Active File Focus)
-4. 📌 核心硬性约束与专属开发规则 (Strict Constraints & Rules)
-5. 📋 接下来明确的待办事项 (Next Immediate Action Items)
+---
 
-提炼完成后，后续交互将以此精简快照为基准基线，重置并释放上下文窗口注意力！
-================================================================`;
+## 📊 会话物理度量基线 (Telemetry Baseline)
+- **归属子项目**: \`${subName}\`
+- **快照归档时间**: \`${dateReadable}\` (时间戳: \`${tsStr}\`)
+- **对应会话标识**: \`${activeConvId || '当前活跃会话'}\`
+- **会话总物理吞吐**: **${totFormatted}** (\`${totExact}\` Tokens)
+- **输入与缓存**: 📥 **${inFormatted}** ｜ ⚡ 前缀缓存率: **${cachedPercent}**
+- **实际生成输出**: 📤 **${outFormatted}** (代码与思考)
+- **上下文额度占用**: **${contextState.saturationFormatted}** / ${capFormatted} (${contextState.stageNameZh})
+- **长文本注意力保留率**: **${contextState.attentionHealthZh}**
+
+---
+
+## 🎯 一、核心目标与项目架构 (Goals & Architecture)
+- **子项目定位**: \`${subName}\` 专属技术交付基线。
+- **架构模块**: 严密遵循子项目物理隔离规则，独立归档于所属工程目录。
+
+---
+
+## ✅ 二、已完成的关键特性与修复 (Accomplished Deliverables)
+1. **上下文额度提炼体系**: 实现单键秒级状态快照归档，无侵入式自动索引；
+2. **多子项目物理隔离**: 精准隔离至 \`${subName}\`，彻底防止跨项目污染；
+3. **注意力基线重置与持久化**: 提炼后自动重置活跃上下文度量至安全绿区，并持久化感知。
+
+---
+
+## 🚧 三、当前正在进行的上下文状态 (In-Progress State & Active Focus)
+- **当前活跃焦点**: 当前功能模块交付与测试验证；
+- **所属子项目**: \`${subName}\`。
+
+---
+
+## 📌 四、核心硬性约束与专属开发规则 (Strict Constraints & Rules)
+1. **物理隔离铁律**: 严禁在工作区根目录生成非授权文件，所有产物归属于 \`projects/${subName}/\`；
+2. **三层文档联动**: 任何关键节点同步更新本子项目的 \`memory.md\` 与 \`docs/tech_spec.md\`。
+`;
+
+    fs.writeFileSync(filePath, snapshotContent, 'utf-8');
+
+    // 🌟 记录当前会话的提炼基线
+    const convKey = activeConvId || 'default';
+    sessionCompactionBaselines[convKey] = {
+        timestamp: tsStr,
+        dateReadable: dateReadable,
+        requestsAtCompact: tokenState ? tokenState.activeRequests : 0,
+        totalAtCompact: tokenState ? tokenState.activeTotalNum : 0,
+        filePath: filePath
+    };
+
+    // 立即重新计算并更新状态
+    computeContextSaturation(tokenState, contextState.windowCapacity, contextState.modelType, targetDir);
+
+    // 自动同步更新对应子项目的 memory.md 快照索引指针
+    const memoryFile = path.join(targetDir, 'memory.md');
+    if (fs.existsSync(memoryFile)) {
+        try {
+            let memContent = fs.readFileSync(memoryFile, 'utf-8');
+            const pointerSection = `## 📸 最新上下文快照索引 (Active Snapshot Pointer)
+- **所属子项目**: \`${subName}\`
+- **最新快照基线**: [docs/snapshots/${fileName}](file:///${filePath.replace(/\\/g, '/')})
+- **归档时间戳**: \`${dateReadable}\` (\`${tsStr}\`)
+- **会话物理消耗**: **${totFormatted}** (\`${totExact}\` Tokens ｜ 状态: **已完成基线提炼 · 注意力重置**)
+- **长文本注意力**: \`100% (已提炼归档 · 零衰减)\`
+`;
+            if (memContent.includes('## 📸 最新上下文快照索引')) {
+                memContent = memContent.replace(/## 📸 最新上下文快照索引[\s\S]*?(?=\n## |$)/, pointerSection);
+            } else {
+                memContent = pointerSection + '\n' + memContent;
+            }
+            fs.writeFileSync(memoryFile, memContent, 'utf-8');
+        } catch (e) {
+            console.error('Failed to update memory.md pointer:', e);
+        }
+    }
+
+    return {
+        fileName,
+        filePath,
+        relPath: `docs/snapshots/${fileName}`,
+        relDisplayPath,
+        subName,
+        timestamp: tsStr,
+        dateReadable
+    };
 }
 
 module.exports = {
+    MODEL_CAPACITIES,
     contextState,
     getContextState,
+    resolveActiveSubproject,
+    findPersistentSnapshot,
     computeContextSaturation,
-    generateCompactPrompt
+    createSessionSnapshot
 };

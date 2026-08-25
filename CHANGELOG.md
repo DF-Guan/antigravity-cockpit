@@ -1,3 +1,19 @@
+## [2.0.0] - 2026-08-25
+### 🚀 2.0 重大里程碑与核心重构 (Major Milestone & Architecture Overhaul)
+- **🧠 纯净高精上下文额度仪表盘 (Context Quota & Saturation Telemetry)**:
+  - 彻底去除所有 ASCII 表情符号与杂乱 Unicode 符号，打造 Apple/Linear 级高精度原生 SVG 动态环形进度卡片；
+  - 像素级对齐底部状态栏 `🧠 额度%` 仪表，自适应四级警示变色 (`#38bdf8` -> `#3b82f6` -> `#f59e0b` -> `#ef4444`)；
+- **🎯 主流大模型容量矩阵自适应 (Multi-Model Capacities Matrix)**:
+  - 内置 Google Gemini (1M/2M)、Anthropic Claude (200K)、OpenAI GPT-4o (128K)、DeepSeek (64K) 等主流大模型上下文容量自适应换算引擎；
+- **📸 智能会话快照提炼与多子项目物理隔离 (Subproject Snapshot Archiving)**:
+  - 单键秒级物理生成带时间戳的 `projects/<subproject>/docs/snapshots/snapshot_YYYYMMDD_HHMMSS.md`；
+  - 联动更新所属子项目的 `memory.md` 索引指针；
+  - 彻底实现跨子项目物理隔离，防止跨工程污染；
+- **💾 磁盘持久化快照自动回溯 (Persistent Snapshot Recovery)**:
+  - 引入 `findPersistentSnapshot` 物理扫描算法，彻底解决窗口重载 (Reload Window) 导致的未压缩误判问题；
+- **⚡ SQLite-WAL 亚秒级增量感知 (Sub-second Delta Ticker)**:
+  - 毫秒级微分感知预写日志文件，实现随着对话与代码生成自适应平滑动态增长。
+
 # Change Log
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
