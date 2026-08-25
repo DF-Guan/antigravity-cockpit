@@ -40,13 +40,14 @@
 * **多模型原生容量矩阵自适应**：内置 Google Gemini (1M/2M)、Anthropic Claude (200K)、OpenAI GPT-4o (128K)、DeepSeek (64K) 等容量自动换算；
 * **物理持久化回溯 (`findPersistentSnapshot`)**：即便窗口重载或 IDE 重启，依然自动从磁盘读取快照持久化锁定提炼基线。
 
-### 3. 📸 智能上下文快照提炼与多子项目物理隔离（v2.0.0 重磅）
-* **精准锁定子项目 (`resolveActiveSubproject`)**：优先匹配正在编辑的文件所属工程，快照文件严格归属于 `projects/<子项目名>/docs/snapshots/`；
-* **💡 零配置自适应与自动建目录 (Zero-Config Auto-Creation)**：
-  - **自动建目录**：若当前项目尚未创建 `docs/snapshots/`，点击提炼时引擎会**全自动级联创建完整目录并写入快照**，无需开发者手动干预；
-  - **单工程自动兼容**：对于没有 `projects/` 目录的独立单一工程，快照将全自动回退保存在 `<工程根目录>/docs/snapshots/` 下；
-* **全局文档索引强联动**：自动在子项目 `memory.md` 写入最新快照指针，为新会话提供高密度基线，彻底杜绝跨工程污染；
-* **极简无侵入交互**：单击状态栏或大屏提炼按钮，瞬时落盘并弹出自动淡出的轻量通知，不弹开文件打扰编码思路。
+### 3. 📸 智能上下文快照提炼与双模架构平权兼容（v2.0.0 重磅）
+* **双模平权兼容 (Projects / Workspace Dual-Mode)**：
+  - **💼 Monorepo 专属模式 (`projects/`)**：若工作区包含多个子工程，自动识别当前激活工程，快照精准隔离归档至 `projects/<子项目名>/docs/snapshots/`；
+  - **📁 通用工作区模式 (`workspace/`)**：对于未自定义 `projects/` 目录的普通单工程，快照全自动保存至 `<工作区根目录>/docs/snapshots/`，以 `workspace` 身份平滑兼容；
+* **💡 零配置自愈建目录 (Zero-Config Auto-Creation)**：
+  - 点击提炼时，引擎会自动级联创建缺失的 `docs/snapshots/` 目录，无需开发者手动预建；
+* **全局三层文档强联动**：自动在所属子工程或工作区的 `memory.md` 写入最新快照指针，为新会话与跨 Agent 协作提供高密度基线；
+* **极简无侵入交互**：单键瞬时提炼落盘，自动弹出轻量淡出通知，不弹开文件打扰编码心流。
 
 ### 4. ⚡ Netstat-PID 端口映射引擎（30ms 瞬时直连 · 100% 同步率）
 * **PID 精准网络表映射**：通过 `netstat -ano` 直接抓取 Language Server 进程当前真正处于 `LISTENING` 状态的所有物理端口；

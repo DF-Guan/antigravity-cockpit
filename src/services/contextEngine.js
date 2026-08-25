@@ -43,14 +43,21 @@ function getContextState() {
 function resolveActiveSubproject(workspaceRoot, activeFilePath) {
     const ws = workspaceRoot || process.cwd();
 
-    // 1. 如果工作区本身直接打开的是某个子项目 (如 D:/.../projects/my-app)
+    // 1. 【子项目直接打开兼容】工作区本身直接打开的是某个子项目 (如 D:/.../projects/my-app)
     const normWs = ws.replace(/\\/g, '/');
     const wsProjectMatch = normWs.match(/\/projects\/([^\/]+)$/);
     if (wsProjectMatch) {
-        return { name: wsProjectMatch[1], path: ws, relPath: '.' };
+        const subName = wsProjectMatch[1];
+        return { 
+            name: subName, 
+            path: ws, 
+            relPath: '.', 
+            isSubproject: true,
+            displayCategory: `projects/${subName}`
+        };
     }
 
-    // 2. 根据当前激活文件路径精准锁定子项目
+    // 2. 【活跃文件精准定位】根据当前激活文件路径精准锁定子项目
     if (activeFilePath && typeof activeFilePath === 'string') {
         const norm = activeFilePath.replace(/\\/g, '/');
         const match = norm.match(/\/projects\/([^\/]+)/);
@@ -58,19 +65,37 @@ function resolveActiveSubproject(workspaceRoot, activeFilePath) {
             const subName = match[1];
             const subPath = path.join(ws, 'projects', subName);
             if (fs.existsSync(subPath)) {
-                return { name: subName, path: subPath, relPath: `projects/${subName}` };
+                return { 
+                    name: subName, 
+                    path: subPath, 
+                    relPath: `projects/${subName}`, 
+                    isSubproject: true,
+                    displayCategory: `projects/${subName}`
+                };
             } else if (path.basename(ws) === subName) {
-                return { name: subName, path: ws, relPath: '.' };
+                return { 
+                    name: subName, 
+                    path: ws, 
+                    relPath: '.', 
+                    isSubproject: true,
+                    displayCategory: `projects/${subName}`
+                };
             }
         }
     }
 
-    // 3. 扫描 Monorepo projects/ 目录
+    // 3. 【Monorepo 目录扫描】扫描工作区 projects/ 目录
     const projectsDir = path.join(ws, 'projects');
     if (fs.existsSync(projectsDir)) {
         const cockpitDir = path.join(projectsDir, 'antigravity-cockpit');
         if (fs.existsSync(cockpitDir)) {
-            return { name: 'antigravity-cockpit', path: cockpitDir, relPath: 'projects/antigravity-cockpit' };
+            return { 
+                name: 'antigravity-cockpit', 
+                path: cockpitDir, 
+                relPath: 'projects/antigravity-cockpit', 
+                isSubproject: true,
+                displayCategory: 'projects/antigravity-cockpit'
+            };
         }
         try {
             const subs = fs.readdirSync(projectsDir).filter(d => {
@@ -78,67 +103,92 @@ function resolveActiveSubproject(workspaceRoot, activeFilePath) {
                 return fs.statSync(p).isDirectory();
             });
             if (subs.length > 0) {
-                return { name: subs[0], path: path.join(projectsDir, subs[0]), relPath: `projects/${subs[0]}` };
+                return { 
+                    name: subs[0], 
+                    path: path.join(projectsDir, subs[0]), 
+                    relPath: `projects/${subs[0]}`, 
+                    isSubproject: true,
+                    displayCategory: `projects/${subs[0]}`
+                };
             }
         } catch (_) {}
     }
 
-    // 4. 独立单项目兜底：若有 package.json 提取其名字
+    // 4. 【默认工作区兼容模式 (Workspace Compatibility Mode)】
+    // 用户未自定义 projects/ 目录时，全面自适应为通用工作区 (workspace)
+    let wsName = path.basename(ws) || 'workspace';
     const pkgFile = path.join(ws, 'package.json');
     if (fs.existsSync(pkgFile)) {
         try {
             const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf-8'));
-            if (pkg.name) return { name: pkg.name, path: ws, relPath: '.' };
+            if (pkg.name) wsName = pkg.name;
         } catch (_) {}
     }
 
-    const defaultName = path.basename(ws) || 'workspace';
-    return { name: defaultName, path: ws, relPath: '.' };
+    return { 
+        name: wsName, 
+        path: ws, 
+        relPath: '.', 
+        isSubproject: false,
+        displayCategory: `workspace (${wsName})`
+    };
 }
-
 /**
  * 💾 磁盘持久化扫描：自动探测当前会话在物理磁盘上是否已有已归档的快照文件
  * （解决窗口重载 Reload Window 后内存丢失的问题）
  */
-function findPersistentSnapshot(subprojectDir, convId) {
-    if (!subprojectDir || !fs.existsSync(subprojectDir)) return null;
+function findPersistentSnapshot(subprojectDir, convId, workspaceRoot) {
+    const candidateDirs = [];
 
-    const snapDir = path.join(subprojectDir, 'docs', 'snapshots');
-    if (!fs.existsSync(snapDir)) return null;
+    if (subprojectDir && fs.existsSync(subprojectDir)) {
+        candidateDirs.push(path.join(subprojectDir, 'docs', 'snapshots'));
+    }
 
-    try {
-        const files = fs.readdirSync(snapDir).filter(f => f.startsWith('snapshot_') && f.endsWith('.md'));
-        if (files.length === 0) return null;
-
-        // 按文件名时间戳倒序排列
-        files.sort().reverse();
-        
-        for (const f of files) {
-            const fpath = path.join(snapDir, f);
-            const content = fs.readFileSync(fpath, 'utf-8');
-            if (!convId || convId === 'default' || content.includes(convId)) {
-                // 提取归档时间与物理消耗
-                const timeMatch = content.match(/(?:快照)?归档时间[\*\s：:]+`([^`]+)`/);
-                const tokenMatch = content.match(/`(\d[\d,]*)`\s*Tokens/);
-                
-                let totalAtCompact = 0;
-                if (tokenMatch) {
-                    totalAtCompact = parseInt(tokenMatch[1].replace(/,/g, ''), 10) || 0;
-                }
-
-                return {
-                    fileName: f,
-                    filePath: fpath,
-                    dateReadable: timeMatch ? timeMatch[1] : f.replace('snapshot_', '').replace('.md', ''),
-                    totalAtCompact: totalAtCompact
-                };
-            }
+    if (workspaceRoot && fs.existsSync(workspaceRoot) && workspaceRoot !== subprojectDir) {
+        candidateDirs.push(path.join(workspaceRoot, 'docs', 'snapshots'));
+        const pDir = path.join(workspaceRoot, 'projects');
+        if (fs.existsSync(pDir)) {
+            try {
+                fs.readdirSync(pDir).forEach(sub => {
+                    const subSnap = path.join(pDir, sub, 'docs', 'snapshots');
+                    if (fs.existsSync(subSnap)) candidateDirs.push(subSnap);
+                });
+            } catch (_) {}
         }
-    } catch (_) {}
+    }
+
+    for (const snapDir of candidateDirs) {
+        if (!fs.existsSync(snapDir)) continue;
+        try {
+            const files = fs.readdirSync(snapDir).filter(f => f.startsWith('snapshot_') && f.endsWith('.md'));
+            if (files.length === 0) continue;
+
+            files.sort().reverse();
+            for (const f of files) {
+                const fpath = path.join(snapDir, f);
+                const content = fs.readFileSync(fpath, 'utf-8');
+                if (!convId || convId === 'default' || content.includes(convId)) {
+                    const timeMatch = content.match(/(?:快照)?归档时间[\*\s：:]+`([^`]+)`/);
+                    const tokenMatch = content.match(/`(\d[\d,]*)`\s*Tokens/);
+                    
+                    let totalAtCompact = 0;
+                    if (tokenMatch) {
+                        totalAtCompact = parseInt(tokenMatch[1].replace(/,/g, ''), 10) || 0;
+                    }
+
+                    return {
+                        fileName: f,
+                        filePath: fpath,
+                        dateReadable: timeMatch ? timeMatch[1] : f.replace('snapshot_', '').replace('.md', ''),
+                        totalAtCompact: totalAtCompact
+                    };
+                }
+            }
+        } catch (_) {}
+    }
 
     return null;
 }
-
 /**
  * 🧠 统一高精度上下文额度饱和度测算引擎 (支持物理磁盘快照自动持久化识别)
  */
@@ -278,7 +328,8 @@ function createSessionSnapshot(subprojectDir, activeConvId, tokenState, subproje
     const fileName = `snapshot_${tsStr}.md`;
     const filePath = path.join(snapshotsDir, fileName);
     const subName = subprojectName || path.basename(targetDir);
-    const relDisplayPath = `projects/${subName}/docs/snapshots/${fileName}`;
+    const isSub = subprojectDir && subprojectDir.replace(/\\/g, '/').includes('/projects/');
+    const relDisplayPath = isSub ? `projects/${subName}/docs/snapshots/${fileName}` : `docs/snapshots/${fileName}`;
 
     const totFormatted = tokenState ? tokenState.activeTotalFormatted : '0 Tokens';
     const totExact = tokenState ? tokenState.activeTotalExact : '0';

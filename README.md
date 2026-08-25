@@ -40,11 +40,11 @@
 * **Multi-Model Capacities Matrix**: Built-in context window adaptors for Google Gemini (1M/2M), Claude (200K), GPT-4o (128K), and DeepSeek (64K);
 * **Persistent Snapshot Recovery**: Engine automatically scans on-disk snapshots across Reload Window and IDE restarts.
 
-### 3. 📸 Smart Context Snapshot & Subproject Physical Isolation (v2.0.0)
-* **Active Subproject Discovery (`resolveActiveSubproject`)**: Strictly isolates snapshot archives to `projects/<subprojectName>/docs/snapshots/`;
-* **💡 Zero-Config Auto-Creation & Standalone Compatibility**:
-  - **Auto Directory Creation**: If `docs/snapshots/` does not exist yet, the engine **automatically creates the directory cascade on the fly** when refining;
-  - **Standalone Repo Support**: For projects without a `projects/` folder, snapshots seamlessly fall back to `<projectRoot>/docs/snapshots/`;
+### 3. 📸 Smart Context Snapshot & Dual-Mode Compatibility (v2.0.0)
+* **Projects & Workspace Dual-Mode Compatibility**:
+  - **💼 Monorepo Mode (`projects/`)**: Automatically detects active subprojects and isolates archives to `projects/<subprojectName>/docs/snapshots/`;
+  - **📁 Standard Workspace Mode (`workspace/`)**: For standard single-repo workspaces without `projects/`, snapshots seamlessly save to `<workspaceRoot>/docs/snapshots/`;
+* **💡 Zero-Config Auto-Creation**: Automatically creates `docs/snapshots/` directories on the fly if not already present;
 * **Dynamic Pointer Sync in memory.md**: Automatically updates the active snapshot pointer in `memory.md` for seamless cross-session continuity;
 * **Non-Intrusive Workflow**: Single click to archive without popping open editor tabs or interrupting flow.
 
