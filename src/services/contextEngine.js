@@ -239,8 +239,9 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
             isCompacted = true;
             lastCompactedTime = baseline.dateReadable;
             lastSnapshotPath = baseline.filePath;
-            const deltaTokens = Math.max(0, tot - (baseline.totalAtCompact || tot));
-            // 提炼后基线以高密度 Snapshot 为基准 (约 16K Tokens) + 后续增量
+            const baseTokens = baseline.totalAtCompact || tot;
+            const deltaTokens = Math.max(0, tot - baseTokens);
+            // 提炼后基线以高密度 Snapshot 为基准 (16,000 Tokens) + 提炼后真实增量
             usedTokens = Math.min(capacity, Math.round(16000 + (deltaTokens * 0.008)));
         } else {
             if (reqs > 0 || tot > 0) {
@@ -248,13 +249,15 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
             }
         }
 
-        // 🛡️ 单调递增保护：当前会话在未提炼状态下，已用额度绝对只增不减
+        // 🛡️ 全状态单调递增防护 (Strict Monotonic High-Water Mark):
+        // 无论是在未提炼状态还是在提炼后的增量演进中，同一个提炼周期内的占用数值绝对只增不减，彻底杜绝回退抖动
         if (convId && convId !== 'default') {
-            if (!contextHighWaterMarks[convId] || isCompacted) {
-                contextHighWaterMarks[convId] = usedTokens;
+            const hwmKey = isCompacted ? `${convId}_compact_${baseline ? baseline.dateReadable : 'c'}` : `${convId}_raw`;
+            if (!contextHighWaterMarks[hwmKey]) {
+                contextHighWaterMarks[hwmKey] = usedTokens;
             } else {
-                usedTokens = Math.max(contextHighWaterMarks[convId], usedTokens);
-                contextHighWaterMarks[convId] = usedTokens;
+                usedTokens = Math.max(contextHighWaterMarks[hwmKey], usedTokens);
+                contextHighWaterMarks[hwmKey] = usedTokens;
             }
         }
     } else if (typeof tokenStateOrTokens === 'number' && tokenStateOrTokens > 0) {
