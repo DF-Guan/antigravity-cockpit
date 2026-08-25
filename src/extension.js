@@ -50,9 +50,6 @@ function activate(context) {
         // 📸 单击智能提炼上下文快照 (无侵入式落盘 + 自动弹窗提示 + 不强行打开文件)
         vscode.commands.registerCommand('agPrivateCockpit.compactContext', async () => {
             computeLiveTokenAnalytics();
-            const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
-            const customCap = cfg.get('contextWindowLimit', 1048576);
-            computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject ? subproject.path : undefined);
             const isZh = currentLang === 'zh';
 
             // 1. 获取工作区根目录与当前激活文档
@@ -71,6 +68,11 @@ function activate(context) {
 
             // 3. 物理归档时间戳快照并同步子项目 memory.md 索引指针
             const snapshotRes = createSessionSnapshot(subproject.path, tokenAnalyticsState.activeConvId, tokenAnalyticsState, subproject.name);
+
+            // 4. 重算上下文饱和度
+            const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
+            const customCap = cfg.get('contextWindowLimit', 1048576);
+            computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject.path);
 
             // 4. 立即刷新状态栏与驾驶舱大屏 (重置为绿色安全基线)
             renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
