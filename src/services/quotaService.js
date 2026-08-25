@@ -44,6 +44,7 @@ function queryEndpoint(port, token) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'x-codeium-csrf-token': token,
                 'X-CSRF-Token': token,
                 'Content-Length': Buffer.byteLength(postData)
             },
