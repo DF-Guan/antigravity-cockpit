@@ -68,6 +68,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
         { label: `🌐 本机全局累计: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `共计 ${tokenAnalyticsState.globalConvsCount} 个会话的物理总和`, detail: '包含本机磁盘上所有历史 Antigravity 开发会话' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
+        { label: `🧠 切换测算目标模型窗口`, description: '当前支持: Gemini (1M/2M), Claude (200K), GPT-4o (128K), DeepSeek (64K)', detail: '实时调整上下文额度饱和度参考基准' },
         { label: `⚡ 实时响应速率: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (生成中)' : '0 Tokens/s (待机)'} ｜ 🏆 峰值 ${liveSpeedState.peakTps} Tokens/s`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
         { label: `⚡ 智能提炼上下文快照`, description: '物理归档当前会话快照，重置模型注意力保留率' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
@@ -92,7 +93,9 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
     }).then(sel => {
         if (!sel) return;
         const txt = sel.label;
-        if (txt.includes('提炼') || txt.includes('Refine')) {
+        if (txt.includes('模型') || txt.includes('Model')) {
+            vscode.commands.executeCommand('agPrivateCockpit.switchModel');
+        } else if (txt.includes('提炼') || txt.includes('Refine')) {
             if (callbacks.onCompact) callbacks.onCompact();
         } else if (txt.includes('可视化') || txt.includes('Visual')) {
             if (callbacks.onOpenDashboard) callbacks.onOpenDashboard();

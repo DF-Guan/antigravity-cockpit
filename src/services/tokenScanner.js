@@ -147,6 +147,7 @@ function computeLiveTokenAnalytics() {
         
         // 动态高精推断：结合 dbSize + walSize + brainSize 实时动态计算轮次与 Token 消耗
         const totalPhysicalBytes = active.dbSize + active.walSize + active.brainSize;
+        const estimatedSteps = Math.max(active.msgCount || 1, Math.round((active.dbSize + active.walSize) / 11800));
         const dynamicRequests = Math.max(active.msgCount || 1, Math.round((active.dbSize + active.walSize) / (390 * 1024)));
         
         const activeGenBytes = (active.dbSize * 0.52) + (active.walSize * 0.7) + active.brainSize;
@@ -208,6 +209,10 @@ function computeLiveTokenAnalytics() {
             activeConvId: active.cid,
             activeConvShort: active.cid.slice(0, 8) + '...',
             activeRequests: dynamicRequests,
+            activeSteps: estimatedSteps,
+            activePhysicalBytes: totalPhysicalBytes,
+            activeWalBytes: active.walSize,
+            activeDbBytes: active.dbSize,
             activeInputFormatted: fmt(activeInTokens),
             activeInputExact: fmtExact(activeInTokens),
             activeInputNum: activeInTokens,

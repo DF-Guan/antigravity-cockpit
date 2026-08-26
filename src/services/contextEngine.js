@@ -4,6 +4,7 @@
 // 🛡️ Context Saturation High-Water Mark Cache: 确保提炼后及未提炼状态下占用严格单调递增
 let contextHighWaterMarks = {};
 let persistentContextStorage = null;
+let currentModelType = 'gemini';
 
 function initContextEngineStorage(globalState) {
     if (globalState) {
@@ -12,7 +13,25 @@ function initContextEngineStorage(globalState) {
         if (saved && typeof saved === 'object') {
             contextHighWaterMarks = Object.assign({}, saved);
         }
+        const savedModel = globalState.get('agPrivateCockpit.modelType', 'gemini');
+        if (savedModel && MODEL_CAPACITIES[savedModel]) {
+            currentModelType = savedModel;
+        }
     }
+}
+
+function setModelType(mType) {
+    if (mType && MODEL_CAPACITIES[mType.toLowerCase()]) {
+        currentModelType = mType.toLowerCase();
+        if (persistentContextStorage) {
+            persistentContextStorage.update('agPrivateCockpit.modelType', currentModelType);
+        }
+    }
+    return currentModelType;
+}
+
+function getModelType() {
+    return currentModelType;
 }
 
 
@@ -212,8 +231,8 @@ function findPersistentSnapshot(subprojectDir, convId, workspaceRoot) {
  * 🧠 统一高精度上下文额度饱和度测算引擎 (支持物理磁盘快照自动持久化识别)
  */
 function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType, subprojectDir, workspaceRoot) {
-    let capacity = 1048576; // 默认 Gemini 1M
-    const mType = modelType ? String(modelType).toLowerCase() : 'gemini';
+    const mType = modelType ? String(modelType).toLowerCase() : currentModelType;
+    let capacity = MODEL_CAPACITIES[mType] || 1048576;
 
     if (customCapacity && typeof customCapacity === 'number' && customCapacity > 0) {
         capacity = customCapacity;
@@ -249,17 +268,22 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
             }
         }
 
+        const rawSteps = tokenStateOrTokens.activeSteps || Math.max(reqs, Math.round(tot / 45000));
+        const walBytes = tokenStateOrTokens.activeWalBytes || 0;
+        const walBurst = Math.min(45000, Math.round(walBytes / 36));
+
         if (baseline) {
             isCompacted = true;
             lastCompactedTime = baseline.dateReadable;
             lastSnapshotPath = baseline.filePath;
-            const baseTokens = baseline.totalAtCompact || tot;
-            const deltaTokens = Math.max(0, tot - baseTokens);
-            // 提炼后基线以高密度 Snapshot 为基准 (16,000 Tokens) + 提炼后真实增量
-            usedTokens = Math.min(capacity, Math.round(16000 + (deltaTokens * 0.008)));
+            const baseSteps = baseline.requestsAtCompact || 0;
+            const deltaSteps = Math.max(0, rawSteps - baseSteps);
+            // 提炼后基线以高密度 Snapshot 为基准 (16,000 Tokens) + 提炼后增量轮次工作记忆
+            usedTokens = Math.min(capacity, Math.round(16000 + (deltaSteps * 40) + walBurst));
         } else {
-            if (reqs > 0 || tot > 0) {
-                usedTokens = Math.min(capacity, Math.round(15000 + (reqs * 3600) + (tot * 0.008)));
+            if (rawSteps > 0 || tot > 0) {
+                // 未提炼状态：基础系统提示词环境 (14,000) + 对话轮次物理工作记忆 + 实时工具缓冲区
+                usedTokens = Math.min(capacity, Math.round(14000 + (rawSteps * 40) + walBurst));
             }
         }
 
@@ -475,5 +499,7 @@ module.exports = {
     resolveActiveSubproject,
     findPersistentSnapshot,
     computeContextSaturation,
-    createSessionSnapshot
+    createSessionSnapshot,
+    setModelType,
+    getModelType
 };

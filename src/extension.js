@@ -6,7 +6,7 @@ const { getEffectiveLang } = require('./utils/i18n');
 const { liveQuotaState, fetchLiveQuota } = require('./services/quotaService');
 const { liveSpeedState, updateLiveSpeedEngine } = require('./services/speedEngine');
 const { tokenAnalyticsState, computeLiveTokenAnalytics, initTokenScannerStorage } = require('./services/tokenScanner');
-const { computeContextSaturation, createSessionSnapshot, resolveActiveSubproject, getContextState, initContextEngineStorage } = require('./services/contextEngine');
+const { computeContextSaturation, createSessionSnapshot, resolveActiveSubproject, getContextState, initContextEngineStorage, setModelType } = require('./services/contextEngine');
 const { initStatusBarItems, renderStatusBar } = require('./ui/statusBar');
 const { showDashboard, updateDashboardIfOpen, showQuickOverview } = require('./ui/dashboard');
 
@@ -15,7 +15,7 @@ let speedTimer;
 let currentLang = 'auto';
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v2.0.11 激活');
+    console.log('[Antigravity Private Cockpit] v2.1.0 激活');
 
     // 🌟 1. 同步加载物理持久化高水位线 (彻底杜绝 Reload Window / 重启时的数值回退与闪烁)
     initTokenScannerStorage(context.globalState);
@@ -89,6 +89,31 @@ function activate(context) {
                 : `📸 Session context successfully refined! Archived to: ${snapshotRes.relDisplayPath}`;
 
             vscode.window.showInformationMessage(msg);
+        }),
+                // 🧠 切换上下文测算参考的目标大模型窗口
+        vscode.commands.registerCommand('agPrivateCockpit.switchModel', async () => {
+            const isZh = currentLang === 'zh';
+            const models = [
+                { label: '🌐 Google Gemini 2.0 / Flash', description: '1,048,576 Tokens (1M 窗口 · 默认推荐)', modelType: 'gemini' },
+                { label: '🌐 Google Gemini 1.5 Pro', description: '2,097,152 Tokens (2M 窗口 · 超大长文本)', modelType: 'gemini-2m' },
+                { label: '🟣 Anthropic Claude 3.5 / 3.7 Sonnet', description: '200,000 Tokens (200K 窗口 · 深度编程首选)', modelType: 'claude' },
+                { label: '🟢 OpenAI GPT-4o / GPT-4.5', description: '128,000 Tokens (128K 窗口 · 通用旗舰)', modelType: 'gpt4' },
+                { label: '🔵 DeepSeek V3 / R1', description: '64,000 Tokens (64K 窗口 · 高性价比)', modelType: 'deepseek' }
+            ];
+            const sel = await vscode.window.showQuickPick(models, {
+                placeHolder: isZh ? '选择上下文测算参考的目标大模型窗口' : 'Select Target Model Context Window'
+            });
+            if (sel && sel.modelType) {
+                const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
+                await cfg.update('modelType', sel.modelType, vscode.ConfigurationTarget.Global);
+                setModelType(sel.modelType);
+                computeLiveTokenAnalytics();
+                renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
+                updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+                vscode.window.showInformationMessage(
+                    isZh ? `🧠 已切换上下文测算基准为: ${sel.label}` : `🧠 Context telemetry switched to: ${sel.label}`
+                );
+            }
         }),
         vscode.commands.registerCommand('agPrivateCockpit.refresh', () => fetchAndRefresh(context, true)),
         vscode.commands.registerCommand('agPrivateCockpit.toggleLang', () => {

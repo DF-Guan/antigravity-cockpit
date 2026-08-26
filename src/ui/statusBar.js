@@ -42,6 +42,15 @@ function buildContextTooltip(lang, contextState, tokenAnalyticsState) {
     const tip = new vscode.MarkdownString();
     tip.isTrusted = true;
 
+    const modelDisplayNames = {
+        'gemini': 'Google Gemini (1M)',
+        'gemini-2m': 'Google Gemini 1.5 Pro (2M)',
+        'claude': 'Anthropic Claude (200K)',
+        'gpt4': 'OpenAI GPT-4o (128K)',
+        'deepseek': 'DeepSeek V3/R1 (64K)'
+    };
+    const currentModelName = modelDisplayNames[contextState.modelType] || 'Google Gemini (1M)';
+
     const capFormatted = Math.round(contextState.windowCapacity / 1000) + 'K';
     const totExact = tokenAnalyticsState.activeTotalExact || '0';
     const totFormatted = tokenAnalyticsState.activeTotalFormatted || '0';
@@ -222,7 +231,8 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
     }
     const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
     const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
-    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject.path, wsRoot);
+    const configuredModel = cfg.get('modelType', undefined);
+    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, configuredModel, subproject.path, wsRoot);
     const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState);
 
     // 1. Google Gemini
