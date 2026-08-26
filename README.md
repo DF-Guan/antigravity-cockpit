@@ -16,13 +16,6 @@
 
 ---
 
-
----
-
-## 🌟 Feature Showcase & Architecture Matrix
-
-![Feature Showcase](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/feature_showcase.png)
-
 ## 📸 Visual Preview
 
 ### 📍 1. Compact Native Status Bar Telemetry

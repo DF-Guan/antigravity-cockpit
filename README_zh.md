@@ -16,13 +16,6 @@
 
 ---
 
-
----
-
-## 🌟 核心特性与全景架构矩阵 (Feature Showcase)
-
-![核心特性全景](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/feature_showcase.png)
-
 ## 📸 界面实测预览 (Visual Preview)
 
 ### 📍 1. 底部状态栏微距常驻监控 (Native Status Bar Integration)
