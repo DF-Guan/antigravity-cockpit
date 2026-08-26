@@ -1,5 +1,6 @@
 # 🛸 Antigravity Private Cockpit
 
+[![CI & Quality Gate](https://github.com/DF-Guan/antigravity-cockpit/actions/workflows/ci.yml/badge.svg)](https://github.com/DF-Guan/antigravity-cockpit/actions/workflows/ci.yml)
 [![Open VSX](https://img.shields.io/open-vsx/v/DF-Guan/antigravity-cockpit?color=blue&label=Open%20VSX)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-key-features--why-private-cockpit)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-key-features--why-private-cockpit)
@@ -14,6 +15,13 @@
 [🌐 **切换至中文文档 (README_zh.md)**](README_zh.md)
 
 ---
+
+
+---
+
+## 🌟 Feature Showcase & Architecture Matrix
+
+![Feature Showcase](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/feature_showcase.png)
 
 ## 📸 Visual Preview
 

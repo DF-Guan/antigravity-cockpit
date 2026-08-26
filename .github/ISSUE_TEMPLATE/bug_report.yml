@@ -1,0 +1,41 @@
+name: 🐛 Bug Report
+description: Report a reproducible bug or unexpected behavior in Antigravity Private Cockpit
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the details below.
+  - type: input
+    id: version
+    attributes:
+      label: Cockpit Extension Version
+      description: What version of the extension are you running? (e.g. v2.0.5)
+      placeholder: v2.0.5
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? (Include screenshots or errors if available)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the issue
+      placeholder: |
+        1. Open Antigravity IDE
+        2. Click on Status Bar item
+        3. See error ...
+    validations:
+      required: true

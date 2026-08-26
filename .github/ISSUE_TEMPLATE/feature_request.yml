@@ -1,0 +1,22 @@
+name: 🚀 Feature Request
+description: Suggest a new idea or enhancement for Antigravity Private Cockpit
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a great idea to make Cockpit even better? Let us know!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: Is your feature request related to a specific workflow problem?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented
+    validations:
+      required: true
