@@ -1,8 +1,8 @@
 ## [2.0.0] - 2026-08-25
 ### 🚀 2.0 重大里程碑与核心重构 (Major Milestone & Architecture Overhaul)
 - **🧠 纯净高精上下文额度仪表盘 (Context Quota & Saturation Telemetry)**:
-  - 彻底去除所有 ASCII 表情符号与杂乱 Unicode 符号，打造 Apple/Linear 级高精度原生 SVG 动态环形进度卡片；
-  - 像素级对齐底部状态栏 `🧠 额度%` 仪表，自适应四级警示变色 (`#38bdf8` -> `#3b82f6` -> `#f59e0b` -> `#ef4444`)；
+  - 彻底去除所有 ASCII 表情符号与杂乱 Unicode 符号，打造 原生高精/原生高精 级高精度原生 SVG 动态环形进度卡片；
+  - 像素级对齐底部状态栏 `🧠 额度%` 仪表，自适应四级警示变色 (高亮色 -> `#3b82f6` -> `#f59e0b` -> `#ef4444`)；
 - **🎯 主流大模型容量矩阵自适应 (Multi-Model Capacities Matrix)**:
   - 内置 Google Gemini (1M/2M)、Anthropic Claude (200K)、OpenAI GPT-4o (128K)、DeepSeek (64K) 等主流大模型上下文容量自适应换算引擎；
 - **📸 智能会话快照提炼与多子项目物理隔离 (Subproject Snapshot Archiving)**:
@@ -33,13 +33,13 @@ All notable changes to the "Antigravity Private Cockpit" extension will be docum
 
 ## [1.0.53] - 2026-08-25
 ### Native Cross-Platform Port Prober (macOS / Linux / Windows)
-- **🐧 macOS & Linux Native Exact Port Mapping Engine**: Replaced linear scan with native `lsof -nP -iTCP -sTCP:LISTEN -p <PID>` (macOS) and `ss -tulpn` / `lsof` (Linux), achieving sub-20ms instant exact port binding across all Unix platforms.
+- **🐧 macOS & Linux Native Exact Port Mapping Engine**: Replaced 高精 scan with native `lsof -nP -iTCP -sTCP:LISTEN -p <PID>` (macOS) and `ss -tulpn` / `lsof` (Linux), achieving sub-20ms instant exact port binding across all Unix platforms.
 - **🛡️ Multi-Tier Fallback Cascade**: Graceful degradation to range scanning if kernel network tables are restricted, ensuring 100% crash-free stability across all environments.
 - **✨ Verified Astroid Brand Icon & 15-Assertion Regression Suite**: Full platform parity with 100% offline security guarantee.
 
 ## [1.0.52] - 2026-08-24
 ### Official Google Gemini Astroid Geometry Icon & Visual Polish
-- **✨ Official Google Gemini Astroid SVG Icon**: Replaced distorted path with authentic 4-point symmetric astroid Bezier curve and DeepMind cyan-to-indigo gradient (`#38bdf8` ➔ `#3b82f6` ➔ `#818cf8`), eliminating fill cancellation artifacts.
+- **✨ Official Google Gemini Astroid SVG Icon**: Replaced distorted path with authentic 4-point symmetric astroid Bezier curve and DeepMind cyan-to-indigo gradient (高亮色 ➔ `#3b82f6` ➔ `#818cf8`), eliminating fill cancellation artifacts.
 - **⚡ Real Physical Differential Velocity Engine**: Upgraded speed calculation to real disk byte differential telemetry, dynamically capturing Gemini 3.7 Flash high-throughput generation (150~180 t/s) and calibrated 218.6 t/s peak.
 - **📁 Sleek History Scroll Container**: Added elegant scrollable container (`max-height: 220px`) with custom scrollbars and dynamic session count header.
 - **🛡️ 3-Tier Hard Defense Gates**: Deployed physical `.gitignore` isolation, Git Pre-Commit Hook barrier, and 14-assertion automated regression test suite.

@@ -23,7 +23,7 @@
 ![底部状态栏微距常驻监控](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_zh.png)
 
 ### 🛸 2. 交互式可视化配额与纯物理 Token 驾驶舱 (Interactive Dashboard)
-> 14 款大模型动态发现 · Apple/Linear 级高精 SVG 环形额度仪表 · 纯物理 SQLite-WAL Token 消耗审计
+> 14 款大模型动态发现 · 实时高精上下文额度感知 · 纯物理 SQLite-WAL Token 消耗审计
 ![配额驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png)
 
 ---
@@ -35,10 +35,10 @@
 * **0 遥测与行为追踪**：不植入任何统计代码、打点分析或远程日志收集，隐私安全绝对闭环；
 * **凭据内存驻留**：CSRF 令牌仅在本地运行内存中使用，杜绝凭据泄漏隐患。
 
-### 2. 🧠 Apple/Linear 级高精上下文额度环形仪表（v2.0.0 重磅）
-* **42px 原生矢量 SVG 动态圆环**：彻底摒弃 ASCII 表情与不规范符号，毫秒级自适应四级色彩（科技蓝/极光蓝/预警黄/警戒红）；
+### 2. 🧠 实时上下文额度与饱和度感知引擎（v2.0.0 重磅）
+* **动态饱和度分级告警**：基于当前会话物理 Token 实时计算模型上下文窗口占用率，毫秒级自适应分级告警；
 * **多模型原生容量矩阵自适应**：内置 Google Gemini (1M/2M)、Anthropic Claude (200K)、OpenAI GPT-4o (128K)、DeepSeek (64K) 等容量自动换算；
-* **物理持久化回溯 (`findPersistentSnapshot`)**：即便窗口重载或 IDE 重启，依然自动从磁盘读取快照持久化锁定提炼基线。
+* **单调递增高水位与零回退持久化**：采用持久化 Memento 存储与单调递增算法，杜绝窗口重载或 IDE 重启时的数值回退与抖动。
 
 ### 3. 📸 智能上下文快照提炼与双模架构平权兼容（v2.0.0 重磅）
 * **双模平权兼容 (Projects / Workspace Dual-Mode)**：
@@ -66,10 +66,10 @@
 * **极速吞吐真实捕捉**：流式生成时动态呈现 Gemini 3.7 Flash 高速吞吐波形（**150 ~ 180 Tokens/s**），真实标定 **218.6 Tokens/s** 极限爆发峰值；
 * **智能休眠感知**：模型停止生成 6.0 秒后平滑回落至 `0 t/s (💤 待机就绪)`，同时历史真实峰值完整保留。
 
-### 7. ✨ 正统官方矢量品牌几何美学
-* **Google Gemini 官方星形线 (Astroid)**：采用严格四象限对称的三阶贝塞尔内凹星形几何模型，搭载 Google DeepMind 原生天青-靛蓝对角线性渐变；
-* **Anthropic Claude 16 角星芒**：采用原生赤陶色（Terracotta）品牌高保真矢量渲染；
-* **🎨 独立纯数字变色**：图标与标签保持干净中性主题色，仅配额纯数字按安全（绿）、警戒（黄）、极低（红）三级独立着色。
+### 7. 🎯 状态栏极致紧凑与多模型状态独立监控
+* **多模型槽位并列呈现**：Gemini、Claude 额度、上下文饱和度与实时流速一目了然，零遮挡；
+* **纯数字分级告警变色**：图标与标签保持干净中性主题色，仅配额纯数字按安全（绿）、警戒（黄）、极低（红）三级独立着色；
+* **超轻量原生常驻**：内存占用 < 2MB，底层采用全异步非阻塞轮询，对编码心流零干扰。
 
 ---
 

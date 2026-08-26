@@ -23,7 +23,7 @@
 ![Status Bar Integration](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_en.png)
 
 ### 🛸 2. Interactive Quota & Token Dashboard
-> 14 dynamic models discovery · Apple/Linear style SVG radial context gauge · Factual SQLite-WAL Token audit
+> 14 dynamic models discovery · Real-time context quota telemetry · Factual SQLite-WAL Token audit
 ![Dashboard Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_en.png)
 
 ---
@@ -35,10 +35,10 @@
 * **0 Telemetry & Analytics**: Absolutely no tracking scripts, ping analytics, or remote log collection;
 * **In-Memory Credentials**: CSRF tokens reside purely in memory.
 
-### 2. 🧠 Apple/Linear Style Vector Context Quota Telemetry (v2.0.0)
-* **42px Native Vector SVG Radial Gauge**: Crisp circular telemetry with 4-stage adaptive alert colors (#38bdf8 / #3b82f6 / #f59e0b / #ef4444);
-* **Multi-Model Capacities Matrix**: Built-in context window adaptors for Google Gemini (1M/2M), Claude (200K), GPT-4o (128K), and DeepSeek (64K);
-* **Persistent Snapshot Recovery**: Engine automatically scans on-disk snapshots across Reload Window and IDE restarts.
+### 2. 🧠 Real-Time Context Quota & Saturation Telemetry (v2.0.0)
+* **Dynamic Multi-Tier Saturation Alerts**: Instantaneous computation of context window utilization with threshold warning;
+* **Multi-Model Context Adaptors**: Built-in capacity adaptors for Google Gemini (1M/2M), Claude (200K), GPT-4o (128K), and DeepSeek (64K);
+* **Monotonic High-Water Mark & 0-Rollback Storage**: Persistent Memento storage eliminates rollback across IDE restarts and window reloads.
 
 ### 3. 📸 Smart Context Snapshot & Dual-Mode Compatibility (v2.0.0)
 * **Projects & Workspace Dual-Mode Compatibility**:
