@@ -23,9 +23,8 @@
 ![底部状态栏微距常驻监控](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_zh.png)
 
 ### 🛸 2. 交互式可视化配额与纯物理 Token 驾驶舱 (Interactive Dashboard)
-| 🛸 实时可视化配额与纯物理 Token 驾驶舱 | 📍 状态栏微距排版与多维悬浮卡片 |
-| :---: | :---: |
-| ![配额驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png) | ![状态栏与悬浮卡片](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_zh.png) |
+> 14 款大模型动态发现 · Apple/Linear 级高精 SVG 环形额度仪表 · 纯物理 SQLite-WAL Token 消耗审计
+![配额驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png)
 
 ---
 

@@ -20,12 +20,11 @@
 
 ### 📍 1. Compact Native Status Bar Telemetry
 > Official vector brand geometry · Pure `🧠 Context Quota%` gauge · Independent digit coloring · Real-time physical velocity · Zero deadzone
-![Status Bar Integration](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_zh.png)
+![Status Bar Integration](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_en.png)
 
 ### 🛸 2. Interactive Quota & Token Dashboard
-| 🛸 Interactive Quota & Token Dashboard | 📍 Status Bar Hover Card & Layout |
-| :---: | :---: |
-| ![Dashboard Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png) | ![Status Bar Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_preview_zh.png) |
+> 14 dynamic models discovery · Apple/Linear style SVG radial context gauge · Factual SQLite-WAL Token audit
+![Dashboard Preview](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_en.png)
 
 ---
 
