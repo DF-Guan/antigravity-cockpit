@@ -269,21 +269,26 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
         }
 
         const rawSteps = tokenStateOrTokens.activeSteps || Math.max(reqs, Math.round(tot / 45000));
-        const walBytes = tokenStateOrTokens.activeWalBytes || 0;
-        const walBurst = Math.min(45000, Math.round(walBytes / 36));
+        const physicalBytes = tokenStateOrTokens.activePhysicalBytes || ((tokenStateOrTokens.activeWalBytes || 0) + (tokenStateOrTokens.activeDbBytes || 0));
 
         if (baseline) {
             isCompacted = true;
             lastCompactedTime = baseline.dateReadable;
             lastSnapshotPath = baseline.filePath;
+            
+            const baseBytes = baseline.bytesAtCompact || (baseline.totalAtCompact ? Math.round(baseline.totalAtCompact * 1.8) : 0);
+            const deltaBytes = Math.max(0, physicalBytes - baseBytes);
             const baseSteps = baseline.requestsAtCompact || 0;
             const deltaSteps = Math.max(0, rawSteps - baseSteps);
-            // 提炼后基线以高密度 Snapshot 为基准 (16,000 Tokens) + 提炼后增量轮次工作记忆
-            usedTokens = Math.min(capacity, Math.round(16000 + (deltaSteps * 40) + walBurst));
+            
+            // 🌟 提炼后基线以高密度 Snapshot 为基准 (16,000 Tokens) + 物理增量动态微分
+            const incrementalTokens = Math.max(Math.round(deltaBytes / 235), Math.round(deltaSteps * 35));
+            usedTokens = Math.min(capacity, Math.round(16000 + incrementalTokens));
         } else {
-            if (rawSteps > 0 || tot > 0) {
-                // 未提炼状态：基础系统提示词环境 (14,000) + 对话轮次物理工作记忆 + 实时工具缓冲区
-                usedTokens = Math.min(capacity, Math.round(14000 + (rawSteps * 40) + walBurst));
+            if (physicalBytes > 0 || rawSteps > 0) {
+                // 🌟 未提炼状态：14,000 基础系统提示词 + 物理磁盘/WAL 实时微分映射 (随每一条对话和工具调用平滑实时自增)
+                const dynamicWorkingTokens = Math.max(Math.round(physicalBytes / 235), Math.round(rawSteps * 45));
+                usedTokens = Math.min(capacity, Math.round(14000 + dynamicWorkingTokens));
             }
         }
 
@@ -441,13 +446,15 @@ function createSessionSnapshot(subprojectDir, activeConvId, tokenState, subproje
 
     fs.writeFileSync(filePath, snapshotContent, 'utf-8');
 
-    // 🌟 记录当前会话的提炼基线
+    // 🌟 记录当前会话的提炼基线 (包含物理字节与步骤数)
     const convKey = activeConvId || 'default';
+    const physBytes = tokenState ? (tokenState.activePhysicalBytes || ((tokenState.activeWalBytes || 0) + (tokenState.activeDbBytes || 0))) : 0;
     sessionCompactionBaselines[convKey] = {
         timestamp: tsStr,
         dateReadable: dateReadable,
-        requestsAtCompact: tokenState ? tokenState.activeRequests : 0,
+        requestsAtCompact: tokenState ? (tokenState.activeSteps || tokenState.activeRequests || 0) : 0,
         totalAtCompact: tokenState ? tokenState.activeTotalNum : 0,
+        bytesAtCompact: physBytes,
         filePath: filePath
     };
 
