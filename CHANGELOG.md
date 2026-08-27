@@ -1,5 +1,13 @@
 # Change Log (更新日志)
 
+## [2.1.2] - 2026-08-27
+### 📝 全平台文档与核心卖点同步 (Documentation & Selling Points)
+- **🧠 深度收录【智能提炼上下文 vs /learn 快捷指令】架构级辨析与协同指南**:
+  - 明确 `/learn`（员工守则/终身认知升级）与 `智能提炼上下文`（游戏即时存档/会话内存清理）的物理边界与职责分工；
+  - 全量同步更新至中英文 README、深度技术白皮书 `docs/tech_spec.md`、功能图谱 `docs/feature_map.md` 与 Open VSX 市场。
+
+---
+
 ## [2.1.1] - 2026-08-27
 ### ⚡ 修复与优化 (Bug Fixes & Continuous Telemetry)
 - **🧠 修复上下文额度饱和度长时间停滞不动的物理缺陷**:
