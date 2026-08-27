@@ -38,7 +38,7 @@ function formatTime(desc, isoResetTime) {
             if (mins > 0 && days === 0) { zhParts.push(`${mins}分钟`); enParts.push(`${mins}m`); }
             if (zhParts.length === 0) return { zh: '不足1分钟后', en: 'in <1 min' };
             return { zh: zhParts.join(' ') + '后', en: 'in ' + enParts.join(' ') };
-        } catch (_) {}
+        } catch (_) { /* Explicit safe fallback: non-blocking */ }
     }
     return { zh: '', en: '' };
 }

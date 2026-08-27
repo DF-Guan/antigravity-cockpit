@@ -81,7 +81,7 @@ function computeLiveTokenAnalytics() {
                         convMap[cid].dbSize = stDb.size;
                         convMap[cid].walSize = walSize;
                         convMap[cid].mtime = mtime;
-                    } catch (_) {}
+                    } catch (_) { /* Explicit safe fallback: non-blocking */ }
                 }
             }
         }
@@ -103,7 +103,7 @@ function computeLiveTokenAnalytics() {
                         for (const mf of mfiles) {
                             try {
                                 convMap[cid].brainSize += fs.statSync(path.join(msgDir, mf)).size;
-                            } catch (_) {}
+                            } catch (_) { /* Explicit safe fallback: non-blocking */ }
                         }
                     }
 
@@ -114,7 +114,7 @@ function computeLiveTokenAnalytics() {
                         for (const lf of lfiles) {
                             try {
                                 convMap[cid].brainSize += fs.statSync(path.join(logsDir, lf)).size;
-                            } catch (_) {}
+                            } catch (_) { /* Explicit safe fallback: non-blocking */ }
                         }
                     }
 
@@ -124,9 +124,9 @@ function computeLiveTokenAnalytics() {
                         try {
                             const fst = fs.statSync(rfp);
                             if (fst.isFile()) convMap[cid].brainSize += fst.size;
-                        } catch (_) {}
+                        } catch (_) { /* Explicit safe fallback: non-blocking */ }
                     }
-                } catch (_) {}
+                } catch (_) { /* Explicit safe fallback: non-blocking */ }
             }
         }
 

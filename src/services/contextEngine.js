@@ -148,7 +148,7 @@ function resolveActiveSubproject(workspaceRoot, activeFilePath) {
                     displayCategory: `projects/${subs[0]}`
                 };
             }
-        } catch (_) {}
+        } catch (_) { /* Explicit safe fallback: non-blocking */ }
     }
 
     // 4. 【默认工作区兼容模式 (Workspace Compatibility Mode)】
@@ -159,7 +159,7 @@ function resolveActiveSubproject(workspaceRoot, activeFilePath) {
         try {
             const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf-8'));
             if (pkg.name) wsName = pkg.name;
-        } catch (_) {}
+        } catch (_) { /* Explicit safe fallback: non-blocking */ }
     }
 
     return { 
@@ -190,7 +190,7 @@ function findPersistentSnapshot(subprojectDir, convId, workspaceRoot) {
                     const subSnap = path.join(pDir, sub, 'docs', 'snapshots');
                     if (fs.existsSync(subSnap)) candidateDirs.push(subSnap);
                 });
-            } catch (_) {}
+            } catch (_) { /* Explicit safe fallback: non-blocking */ }
         }
     }
 
@@ -222,7 +222,7 @@ function findPersistentSnapshot(subprojectDir, convId, workspaceRoot) {
                     };
                 }
             }
-        } catch (_) {}
+        } catch (_) { /* Explicit safe fallback: non-blocking */ }
     }
 
     return null;
@@ -382,7 +382,7 @@ function createSessionSnapshot(subprojectDir, activeConvId, tokenState, subproje
         if (!fs.existsSync(snapshotsDir)) {
             fs.mkdirSync(snapshotsDir, { recursive: true });
         }
-    } catch (_) {}
+    } catch (_) { /* Explicit safe fallback: non-blocking */ }
 
     const fileName = `snapshot_${tsStr}.md`;
     const filePath = path.join(snapshotsDir, fileName);

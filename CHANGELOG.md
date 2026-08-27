@@ -1,4 +1,14 @@
-## [2.0.0] - 2026-08-25
+# Change Log (更新日志)
+
+## [2.1.0] - 2026-08-26
+### 🧠 上下文额度物理保真与多模型动态自适应 (Physical Working Context & Multi-Model Adaptation)
+- **⚡ 物理级真实工作记忆测算**: 废除历史折减乘数，结合当前活跃会话物理 Steps（5,700+ 轮）与 WAL 实时数据，真实呈现深度长会话下的瞬时工作上下文占用（280,000+ Tokens），彻底解决长交互后数值锁死在 5.6% 的缺陷。
+- **🎯 多模型原生窗口自适应矩阵**: 原生支持 Google Gemini (1M/2M)、Anthropic Claude 3.5/3.7 (200K)、OpenAI GPT-4o (128K)、DeepSeek (64K) 等主流大模型，支持在状态栏与快捷菜单中一键动态切换测算参考基准。
+- **🚦 4 阶注意力健康度预警曲线**: 随真实上下文占用实时自适应流转（充裕敏捷 100% ➔ 稳健运行 95% ➔ 注意力衰减预警 75% ➔ 临界饱和 40%），智能指导何时执行快照提炼。
+
+---
+
+[2.0.0] - 2026-08-25
 ### 🚀 2.0 重大里程碑与核心重构 (Major Milestone & Architecture Overhaul)
 - **🧠 纯净高精上下文额度仪表盘 (Context Quota & Saturation Telemetry)**:
   - 彻底去除所有 ASCII 表情符号与杂乱 Unicode 符号，打造 原生高精/原生高精 级高精度原生 SVG 动态环形进度卡片；
@@ -13,8 +23,6 @@
   - 引入 `findPersistentSnapshot` 物理扫描算法，彻底解决窗口重载 (Reload Window) 导致的未压缩误判问题；
 - **⚡ SQLite-WAL 亚秒级增量感知 (Sub-second Delta Ticker)**:
   - 毫秒级微分感知预写日志文件，实现随着对话与代码生成自适应平滑动态增长。
-
-# Change Log
 
 All notable changes to the "Antigravity Private Cockpit" extension will be documented in this file.
 

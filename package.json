@@ -194,5 +194,11 @@
     "name": "DF-Guan",
     "url": "https://github.com/DF-Guan"
   },
-  "qna": "https://github.com/DF-Guan/antigravity-cockpit/discussions"
+  "qna": "https://github.com/DF-Guan/antigravity-cockpit/discussions",
+  "scripts": {
+    "test": "node test/verify_feature_map.js && node test/verify_dune_architecture.js && node test/verify_reversibility_gate.js",
+    "verify:fm": "node test/verify_feature_map.js",
+    "verify:dune": "node test/verify_dune_architecture.js",
+    "verify:gate": "node test/verify_reversibility_gate.js"
+  }
 }

@@ -184,7 +184,7 @@ function probeWindows() {
                                 resolve(res);
                                 return;
                             }
-                        } catch (_) {}
+                        } catch (_) { /* Explicit safe fallback: non-blocking */ }
                     }
                 }
 
@@ -245,7 +245,7 @@ function probeDarwin() {
                                 resolve(res);
                                 return;
                             }
-                        } catch (_) {}
+                        } catch (_) { /* Explicit safe fallback: non-blocking */ }
                     }
 
                     // Fallback to base port range scan if lsof didn't catch it
@@ -262,7 +262,7 @@ function probeDarwin() {
                                     resolve(res);
                                     return;
                                 }
-                            } catch (_) {}
+                            } catch (_) { /* Explicit safe fallback: non-blocking */ }
                         }
                     }
 
@@ -329,7 +329,7 @@ function probeLinux() {
                                 resolve(res);
                                 return;
                             }
-                        } catch (_) {}
+                        } catch (_) { /* Explicit safe fallback: non-blocking */ }
                     }
 
                     // Fallback range scan
@@ -346,7 +346,7 @@ function probeLinux() {
                                     resolve(res);
                                     return;
                                 }
-                            } catch (_) {}
+                            } catch (_) { /* Explicit safe fallback: non-blocking */ }
                         }
                     }
 

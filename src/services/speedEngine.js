@@ -32,10 +32,10 @@ function scanRealTimeConversationActivity() {
                             const st = fs.statSync(p);
                             if (st.mtimeMs > latestMtime) latestMtime = st.mtimeMs;
                             totalBytes += st.size;
-                        } catch (_) {}
+                        } catch (_) { /* Explicit safe fallback: non-blocking */ }
                     }
                 }
-            } catch (_) {}
+            } catch (_) { /* Explicit safe fallback: non-blocking */ }
         }
 
         if (fs.existsSync(brainDir)) {
@@ -48,10 +48,10 @@ function scanRealTimeConversationActivity() {
                             const st = fs.statSync(lp);
                             if (st.mtimeMs > latestMtime) latestMtime = st.mtimeMs;
                             totalBytes += st.size;
-                        } catch (_) {}
+                        } catch (_) { /* Explicit safe fallback: non-blocking */ }
                     }
                 }
-            } catch (_) {}
+            } catch (_) { /* Explicit safe fallback: non-blocking */ }
         }
 
         const now = Date.now();

@@ -11,7 +11,7 @@ function showDashboard(context, liveQuotaState, liveSpeedState, tokenAnalyticsSt
             updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
             return currentPanel;
         } catch (e) {
-            try { currentPanel.dispose(); } catch (_) {}
+            try { currentPanel.dispose(); } catch (_) { /* Explicit safe fallback: non-blocking */ }
             currentPanel = undefined;
         }
     }
@@ -49,7 +49,7 @@ function updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsSta
     if (currentPanel) {
         try {
             currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
-        } catch (_) {}
+        } catch (_) { /* Explicit safe fallback: non-blocking */ }
     }
 }
 
@@ -1072,7 +1072,7 @@ const isZh = "${isZh}" === "true";
 let isExact = false;
 try {
   isExact = localStorage.getItem('ag_cockpit_exact_mode') === 'true';
-} catch(_) {}
+} catch (_) { /* Explicit safe fallback: non-blocking */ }
 
 function updatePrecisionView() {
   document.querySelectorAll('.token-val').forEach(el => {
@@ -1088,7 +1088,7 @@ function updatePrecisionView() {
 
 function togglePrecision() {
   isExact = !isExact;
-  try { localStorage.setItem('ag_cockpit_exact_mode', isExact); } catch(_) {}
+  try { localStorage.setItem('ag_cockpit_exact_mode', isExact); } catch (_) { /* Explicit safe fallback: non-blocking */ }
   updatePrecisionView();
 }
 
