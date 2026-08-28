@@ -1,6 +1,5 @@
 //﻿​‌​​​​​‌​‌​‌​‌​‌​‌​‌​‌​​​‌​​‌​​​​​‌‌‌​‌​​‌​​​‌​​​‌​​​‌‌​​​‌​‌‌​‌​‌​​​‌‌‌​‌‌‌​‌​‌​‌‌​​​​‌​‌‌​‌‌‌​​‌‌‌‌‌​​​‌​‌​​‌‌​‌​​‌​​‌​‌​​​‌‌‌​​‌‌‌​‌​​​‌‌​​​​​​‌‌​‌‌​​​‌‌​​​‌​​‌‌​‌​​​‌‌​​​​‌​‌‌​​​‌‌​‌‌​​​‌‌​​‌‌​​​​​‌‌​​​‌​​​‌‌‌​​​​‌‌​​‌​​​​‌‌​​​​​‌‌​​​‌​​‌‌​​​​‌​​‌‌​​​‌​​‌‌​​‌​‍
 
-
 // 🛡️ High-Water Mark Cache: 防止 SQLite WAL commit 刷盘时 Token 产生负向波动
 let sessionHighWaterMarks = {};
 let persistentTokenStorage = null;
@@ -15,7 +14,6 @@ function initTokenScannerStorage(globalState) {
     }
 }
 
-
 const fs = require('fs');
 const path = require('path');
 
@@ -23,6 +21,11 @@ const tokenAnalyticsState = {
     activeConvId: '',
     activeConvShort: '当前会话',
     activeRequests: 0,
+    activeSteps: 0,
+    activePhysicalBytes: 0,
+    activeWalBytes: 0,
+    activeDbBytes: 0,
+    activeBrainBytes: 0,
     activeInputFormatted: '0',
     activeInputExact: '0',
     activeInputNum: 0,
@@ -50,7 +53,7 @@ function getTokenAnalyticsState() {
 }
 
 /**
- * ⚡ 亚秒级多维活跃会话物理 Token 扫描与动态增量感知引擎
+ * ⚡ 亚秒级多维活跃会话物理 Token 扫描与动态增量感知引擎 (全面支持跨会话毫秒级切换与多维时间戳穿透)
  */
 function computeLiveTokenAnalytics() {
     try {
@@ -60,7 +63,7 @@ function computeLiveTokenAnalytics() {
         
         const convMap = {};
 
-        // 1. 扫描 SQLite 数据库与其实时 WAL 写入日志 (精确到每个字的新增)
+        // 1. 扫描 SQLite 数据库与其实时 WAL 写入日志
         if (fs.existsSync(convDir)) {
             const files = fs.readdirSync(convDir);
             for (const f of files) {
@@ -77,55 +80,53 @@ function computeLiveTokenAnalytics() {
                             walSize = stWal.size;
                             if (stWal.mtimeMs > mtime) mtime = stWal.mtimeMs;
                         }
-                        if (!convMap[cid]) convMap[cid] = { cid, dbSize: 0, walSize: 0, brainSize: 0, msgCount: 0, mtime: 0 };
+                        if (!convMap[cid]) convMap[cid] = { cid, dbSize: 0, walSize: 0, brainSize: 0, msgCount: 0, maxStep: 0, mtime: 0 };
                         convMap[cid].dbSize = stDb.size;
                         convMap[cid].walSize = walSize;
-                        convMap[cid].mtime = mtime;
-                    } catch (_) { /* Explicit safe fallback: non-blocking */ }
+                        if (mtime > convMap[cid].mtime) convMap[cid].mtime = mtime;
+                    } catch (_) { /* Explicit safe fallback */ }
                 }
             }
         }
 
-        // 2. 扫描 Brain 目录下的制品、日志与消息
+        // 2. 🌟 深度物理穿透扫描 Brain 目录 (解决 Windows 目录 mtime 不更新导致跨会话切换失灵的根本缺陷)
         if (fs.existsSync(brainDir)) {
             const brainConvs = fs.readdirSync(brainDir).filter(f => f.includes('-'));
             for (const cid of brainConvs) {
                 const cdir = path.join(brainDir, cid);
-                if (!convMap[cid]) convMap[cid] = { cid, dbSize: 0, walSize: 0, brainSize: 0, msgCount: 0, mtime: 0 };
+                if (!convMap[cid]) convMap[cid] = { cid, dbSize: 0, walSize: 0, brainSize: 0, msgCount: 0, maxStep: 0, mtime: 0 };
+
                 try {
-                    const st = fs.statSync(cdir);
-                    if (st.mtimeMs > convMap[cid].mtime) convMap[cid].mtime = st.mtimeMs;
-
-                    const msgDir = path.join(cdir, '.system_generated', 'messages');
-                    if (fs.existsSync(msgDir)) {
-                        const mfiles = fs.readdirSync(msgDir);
-                        convMap[cid].msgCount = mfiles.length;
-                        for (const mf of mfiles) {
-                            try {
-                                convMap[cid].brainSize += fs.statSync(path.join(msgDir, mf)).size;
-                            } catch (_) { /* Explicit safe fallback: non-blocking */ }
+                    // 递归遍历该会话下的所有子文件，提取真实的最新修改时间与总字节数
+                    function scanDirRecursive(dir) {
+                        if (!fs.existsSync(dir)) return;
+                        const entries = fs.readdirSync(dir, { withFileTypes: true });
+                        for (const entry of entries) {
+                            const fullPath = path.join(dir, entry.name);
+                            if (entry.isDirectory()) {
+                                if (entry.name === '.tempmediaStorage' || entry.name === 'video_frames') continue;
+                                if (dir.endsWith('.system_generated' + path.sep + 'steps') || dir.endsWith('.system_generated/steps')) {
+                                    const stepNum = Number(entry.name);
+                                    if (!isNaN(stepNum) && stepNum > convMap[cid].maxStep) {
+                                        convMap[cid].maxStep = stepNum;
+                                    }
+                                }
+                                scanDirRecursive(fullPath);
+                            } else if (entry.isFile()) {
+                                try {
+                                    const fst = fs.statSync(fullPath);
+                                    convMap[cid].brainSize += fst.size;
+                                    if (fst.mtimeMs > convMap[cid].mtime) {
+                                        convMap[cid].mtime = fst.mtimeMs;
+                                    }
+                                    if (dir.endsWith('messages')) {
+                                        convMap[cid].msgCount += 1;
+                                    }
+                                } catch (_) { /* Safe fallback */ }
+                            }
                         }
                     }
-
-                    // 扫描 logs / transcripts 物理增长
-                    const logsDir = path.join(cdir, '.system_generated', 'logs');
-                    if (fs.existsSync(logsDir)) {
-                        const lfiles = fs.readdirSync(logsDir);
-                        for (const lf of lfiles) {
-                            try {
-                                convMap[cid].brainSize += fs.statSync(path.join(logsDir, lf)).size;
-                            } catch (_) { /* Explicit safe fallback: non-blocking */ }
-                        }
-                    }
-
-                    const rootFiles = fs.readdirSync(cdir);
-                    for (const rf of rootFiles) {
-                        const rfp = path.join(cdir, rf);
-                        try {
-                            const fst = fs.statSync(rfp);
-                            if (fst.isFile()) convMap[cid].brainSize += fst.size;
-                        } catch (_) { /* Explicit safe fallback: non-blocking */ }
-                    }
+                    scanDirRecursive(cdir);
                 } catch (_) { /* Explicit safe fallback: non-blocking */ }
             }
         }
@@ -145,20 +146,9 @@ function computeLiveTokenAnalytics() {
 
         const active = convList[0];
         
-        // 动态高精推断：结合 dbSize + walSize + brainSize 实时动态计算轮次与 Token 消耗
+        // 🌟 动态高精推断：结合 dbSize + walSize + brainSize + msgCount + maxStep 实时动态计算轮次与 Token 消耗
         const totalPhysicalBytes = active.dbSize + active.walSize + active.brainSize;
-        
-        // 🌟 物理穿透：探测脑区 steps 物理序号
-        let detectedStepCount = 0;
-        try {
-            const stepsDir = path.join(brainDir, active.cid, '.system_generated', 'steps');
-            if (fs.existsSync(stepsDir)) {
-                const sDirs = fs.readdirSync(stepsDir).filter(s => /^\d+$/.test(s)).map(Number);
-                if (sDirs.length > 0) detectedStepCount = Math.max(...sDirs);
-            }
-        } catch (_) { /* Explicit safe fallback: non-blocking */ }
-
-        const estimatedSteps = detectedStepCount > 0 ? detectedStepCount : Math.max(active.msgCount || 1, Math.round((active.dbSize + active.walSize) / 11800));
+        const estimatedSteps = Math.max(active.maxStep || 1, active.msgCount || 1, Math.round((active.dbSize + active.walSize) / 11800));
         const dynamicRequests = Math.max(active.msgCount || 1, Math.round((active.dbSize + active.walSize) / (390 * 1024)));
         
         const activeGenBytes = (active.dbSize * 0.52) + (active.walSize * 0.7) + active.brainSize;
@@ -167,9 +157,9 @@ function computeLiveTokenAnalytics() {
         let activeCachedTokens = Math.round(activeInTokens * 0.986);
         let activeTotTokens = activeInTokens + activeOutTokens;
 
-        // 🛡️ 单调递增保护：确保活跃会话的 Token 只增不减，彻底杜绝 WAL 刷盘波动
+        // 🛡️ 单调递增保护：确保当前活跃会话的 Token 只增不减，彻底杜绝 WAL 刷盘波动
         if (!sessionHighWaterMarks[active.cid]) {
-            sessionHighWaterMarks[active.cid] = { in: activeInTokens, out: activeOutTokens, tot: activeTotTokens, reqs: dynamicRequests };
+            sessionHighWaterMarks[active.cid] = { in: activeInTokens, out: activeOutTokens, tot: activeTotTokens, reqs: dynamicRequests, steps: estimatedSteps };
         } else {
             const hwm = sessionHighWaterMarks[active.cid];
             activeInTokens = Math.max(hwm.in, activeInTokens);
@@ -179,6 +169,7 @@ function computeLiveTokenAnalytics() {
             hwm.out = activeOutTokens;
             hwm.tot = activeTotTokens;
             hwm.reqs = Math.max(hwm.reqs, dynamicRequests);
+            hwm.steps = Math.max(hwm.steps || 0, estimatedSteps);
             if (persistentTokenStorage) {
                 persistentTokenStorage.update('agPrivateCockpit.sessionHighWaterMarks', sessionHighWaterMarks);
             }
@@ -224,6 +215,7 @@ function computeLiveTokenAnalytics() {
             activePhysicalBytes: totalPhysicalBytes,
             activeWalBytes: active.walSize,
             activeDbBytes: active.dbSize,
+            activeBrainBytes: active.brainSize,
             activeInputFormatted: fmt(activeInTokens),
             activeInputExact: fmtExact(activeInTokens),
             activeInputNum: activeInTokens,

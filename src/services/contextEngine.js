@@ -269,7 +269,7 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
         }
 
         const rawSteps = tokenStateOrTokens.activeSteps || Math.max(reqs, Math.round(tot / 45000));
-        const physicalBytes = tokenStateOrTokens.activePhysicalBytes || ((tokenStateOrTokens.activeWalBytes || 0) + (tokenStateOrTokens.activeDbBytes || 0));
+        const physicalBytes = tokenStateOrTokens.activePhysicalBytes || ((tokenStateOrTokens.activeWalBytes || 0) + (tokenStateOrTokens.activeDbBytes || 0) + (tokenStateOrTokens.activeBrainBytes || 0));
 
         if (baseline) {
             isCompacted = true;
@@ -281,13 +281,14 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
             const baseSteps = baseline.requestsAtCompact || 0;
             const deltaSteps = Math.max(0, rawSteps - baseSteps);
             
-            // 🌟 提炼后基线以高密度 Snapshot 为基准 (16,000 Tokens) + 物理增量动态微分
-            const incrementalTokens = Math.max(Math.round(deltaBytes / 235), Math.round(deltaSteps * 35));
+            // 🌟 提炼后基线：16,000 高密度 Snapshot 基线 + 提炼后每轮对话/工具调用的真实工作上下文增量 (~280 Tokens/step)
+            const incrementalTokens = Math.max(Math.round(deltaBytes / 42), Math.round(deltaSteps * 280));
             usedTokens = Math.min(capacity, Math.round(16000 + incrementalTokens));
         } else {
             if (physicalBytes > 0 || rawSteps > 0) {
-                // 🌟 未提炼状态：14,000 基础系统提示词 + 物理磁盘/WAL 实时微分映射 (随每一条对话和工具调用平滑实时自增)
-                const dynamicWorkingTokens = Math.max(Math.round(physicalBytes / 235), Math.round(rawSteps * 45));
+                // 🌟 未提炼状态：14,000 系统指令 + 物理工作上下文密度微分 (~280 Tokens/step 或 bytes/42)
+                // 确保无论是老长会话还是新开会话，每一轮交互与工具执行均能产生平滑灵敏的即时跳字反馈
+                const dynamicWorkingTokens = Math.max(Math.round(physicalBytes / 42), Math.round(rawSteps * 280));
                 usedTokens = Math.min(capacity, Math.round(14000 + dynamicWorkingTokens));
             }
         }
