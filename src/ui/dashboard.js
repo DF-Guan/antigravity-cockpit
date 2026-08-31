@@ -779,39 +779,42 @@ body {
   .header-title-box { flex-direction: column; align-items: flex-start; }
 }
 
-/* 🧠 State-of-the-Art Compact Context Telemetry Card */
+/* 🧠 State-of-the-Art Adaptive Context Telemetry Card */
 .context-telemetry-card {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   background: var(--bg-sub);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 14px;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
+  transition: all 0.2s ease;
 }
 .ctx-gauge-section {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 12px;
   flex: 1;
+  min-width: 0;
 }
 .ctx-gauge-svg-wrap {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  flex-shrink: 0 !important;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .ctx-gauge-svg {
-  width: 40px !important;
-  height: 40px !important;
+  width: 42px;
+  height: 42px;
   transform: rotate(-90deg);
 }
 .ctx-gauge-track {
@@ -828,33 +831,61 @@ body {
 .ctx-meta-content {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
 .ctx-meta-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-title);
+  min-width: 0;
+}
+.ctx-meta-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.ctx-meta-val {
+  font-weight: 700;
+  font-feature-settings: "tnum";
 }
 .ctx-badge-pill {
   font-size: 10px;
   font-weight: 700;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 10px;
   letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .ctx-meta-metrics {
   font-size: 11px;
   color: var(--text-desc);
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.ctx-metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
 }
 .ctx-metric-item strong {
   color: var(--text-title);
   font-weight: 600;
+}
+.ctx-metric-sep {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 .btn-compact-pro {
   background: rgba(56, 189, 248, 0.1);
@@ -867,6 +898,7 @@ body {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -878,6 +910,52 @@ body {
   color: #ffffff;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
   transform: translateY(-1px);
+}
+
+@media (max-width: 540px) {
+  .context-telemetry-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .ctx-gauge-section {
+    width: 100%;
+  }
+  .btn-compact-pro {
+    width: 100%;
+    padding: 7px 10px;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 360px) {
+  .context-telemetry-card {
+    padding: 8px 10px;
+  }
+  .ctx-gauge-section {
+    gap: 8px;
+  }
+  .ctx-gauge-svg-wrap {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    max-width: 36px;
+  }
+  .ctx-gauge-svg {
+    width: 36px;
+    height: 36px;
+  }
+  .ctx-meta-header {
+    font-size: 12px;
+  }
+  .ctx-meta-metrics {
+    font-size: 10px;
+    gap: 2px 6px;
+  }
+  .ctx-metric-sep {
+    display: none;
+  }
 }
 
 </style>
@@ -911,19 +989,20 @@ body {
     <div class="context-telemetry-card">
       <div class="ctx-gauge-section">
         <div class="ctx-gauge-svg-wrap" title="${isZh ? '1M 上下文物理饱和度' : '1M Context Quota'}">
-          <svg width="42" height="42" class="ctx-gauge-svg" viewBox="0 0 36 36" style="width:42px;height:42px;min-width:42px;min-height:42px;flex-shrink:0;">
+          <svg width="42" height="42" class="ctx-gauge-svg" viewBox="0 0 36 36">
             <circle class="ctx-gauge-track" cx="18" cy="18" r="15"/>
             <circle class="ctx-gauge-val" cx="18" cy="18" r="15" stroke="${contextState.colorHex}" stroke-dasharray="94.25" stroke-dashoffset="${94.25 * (1 - contextState.saturationPercent / 100)}"/>
           </svg>
         </div>
         <div class="ctx-meta-content">
           <div class="ctx-meta-header">
-            <span>🧠 ${isZh ? '上下文额度饱和度' : 'Context Quota'}: <strong>${contextState.saturationFormatted}</strong></span>
+            <span class="ctx-meta-title">🧠 ${isZh ? '上下文额度' : 'Context Quota'}: <strong class="ctx-meta-val" style="color:${contextState.colorHex};">${contextState.saturationFormatted}</strong></span>
             <span class="ctx-badge-pill" style="background:${contextState.colorHex}1a;color:${contextState.colorHex};border:1px solid ${contextState.colorHex}44;">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
           </div>
           <div class="ctx-meta-metrics">
-            <span class="ctx-metric-item">${isZh ? '已用额度' : 'Memory'}: <strong>${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K</strong> / 1,024K</span>
-            <span class="ctx-metric-item">｜ ⚡ ${isZh ? '注意力' : 'Attention'}: <strong>${isZh ? contextState.attentionHealthZh : contextState.attentionHealthEn}</strong></span>
+            <span class="ctx-metric-item">${isZh ? '已用' : 'Used'}: <strong>${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K</strong> / 1,024K</span>
+            <span class="ctx-metric-sep">•</span>
+            <span class="ctx-metric-item">⚡ ${isZh ? '注意力' : 'Attention'}: <strong>${isZh ? contextState.attentionHealthZh : contextState.attentionHealthEn}</strong></span>
           </div>
         </div>
       </div>
