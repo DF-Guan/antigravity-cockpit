@@ -779,51 +779,50 @@ body {
   .header-title-box { flex-direction: column; align-items: flex-start; }
 }
 
-/* 🧠 State-of-the-Art Adaptive Structured Context Telemetry Card */
+/* 🧠 State-of-the-Art Bulletproof Ultra-Adaptive Context Telemetry Card */
 .context-telemetry-card {
   display: flex;
   flex-direction: column;
   background: var(--bg-sub);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 14px;
-  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  gap: 8px;
   min-width: 0;
+  width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ctx-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
+  gap: 4px;
+  width: 100%;
   min-width: 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 5px;
 }
 
 .ctx-card-title {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-title);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   min-width: 0;
-}
-
-.ctx-card-pct {
-  font-weight: 800;
-  font-size: 13px;
-  font-feature-settings: "tnum";
 }
 
 .ctx-badge-pill {
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 10px;
   letter-spacing: 0.2px;
   white-space: nowrap;
@@ -833,15 +832,16 @@ body {
 .ctx-card-body {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
   min-width: 0;
 }
 
 .ctx-gauge-svg-wrap {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  max-width: 38px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  max-width: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -849,8 +849,8 @@ body {
 }
 
 .ctx-gauge-svg {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   transform: rotate(-90deg);
 }
 
@@ -870,22 +870,43 @@ body {
 .ctx-card-stats {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   flex: 1;
   min-width: 0;
 }
 
-.ctx-stat-line {
+.ctx-stat-primary {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  font-size: 11px;
+  align-items: baseline;
+  gap: 5px;
+  line-height: 1.1;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.ctx-stat-pct {
+  font-size: 14px;
+  font-weight: 800;
+  font-feature-settings: "tnum";
+}
+
+.ctx-stat-sub {
+  font-size: 10px;
   color: var(--text-desc);
   white-space: nowrap;
 }
 
-.ctx-stat-line strong {
+.ctx-stat-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-desc);
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.ctx-stat-tag strong {
   color: var(--text-title);
   font-weight: 600;
 }
@@ -895,14 +916,14 @@ body {
   border: 1px solid rgba(56, 189, 248, 0.35);
   color: #38bdf8;
   border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 5px 8px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   transition: all 0.2s ease;
   width: 100%;
   box-sizing: border-box;
@@ -913,6 +934,25 @@ body {
   border-color: #38bdf8;
   color: #ffffff;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+/* 📱 Responsive layout for narrow viewports */
+@media (max-width: 460px) {
+  .sec-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .cycle-badge-box {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+  .top-actions {
+    flex-wrap: wrap !important;
+  }
 }
 
 /* 🖥️ Wide screen layout (> 580px) */
@@ -926,13 +966,14 @@ body {
   .ctx-card-top {
     border-bottom: none;
     padding-bottom: 0;
+    width: auto;
   }
   .ctx-card-body {
     flex: 1;
   }
   .btn-compact-pro {
     width: auto;
-    padding: 7px 14px;
+    padding: 6px 12px;
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -969,27 +1010,26 @@ body {
       <div class="ctx-card-top">
         <div class="ctx-card-title">
           <span>🧠</span>
-          <span>${isZh ? '上下文额度' : 'Context Quota'}:</span>
-          <span class="ctx-card-pct" style="color:${contextState.colorHex};">${contextState.saturationFormatted}</span>
+          <span>${isZh ? '上下文额度' : 'Context Quota'}</span>
         </div>
         <span class="ctx-badge-pill" style="background:${contextState.colorHex}1a;color:${contextState.colorHex};border:1px solid ${contextState.colorHex}44;">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
       </div>
 
       <div class="ctx-card-body">
         <div class="ctx-gauge-svg-wrap" title="${isZh ? '上下文物理饱和度' : 'Context Quota'}">
-          <svg width="38" height="38" class="ctx-gauge-svg" viewBox="0 0 36 36">
+          <svg width="36" height="36" class="ctx-gauge-svg" viewBox="0 0 36 36">
             <circle class="ctx-gauge-track" cx="18" cy="18" r="15"/>
             <circle class="ctx-gauge-val" cx="18" cy="18" r="15" stroke="${contextState.colorHex}" stroke-dasharray="94.25" stroke-dashoffset="${94.25 * (1 - contextState.saturationPercent / 100)}"/>
           </svg>
         </div>
         <div class="ctx-card-stats">
-          <div class="ctx-stat-line">
-            <span>${isZh ? '已用额度' : 'Memory'}:</span>
-            <span><strong>${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K</strong> / 1,024K</span>
+          <div class="ctx-stat-primary">
+            <span class="ctx-stat-pct" style="color:${contextState.colorHex};">${contextState.saturationFormatted}</span>
+            <span class="ctx-stat-sub">(${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K / 1M)</span>
           </div>
-          <div class="ctx-stat-line">
+          <div class="ctx-stat-tag">
             <span>⚡ ${isZh ? '注意力' : 'Attention'}:</span>
-            <span><strong>${isZh ? contextState.attentionHealthZh : contextState.attentionHealthEn}</strong></span>
+            <span><strong>${isZh ? (contextState.isCompacted ? '100% (敏捷)' : contextState.attentionHealthZh) : contextState.attentionHealthEn}</strong></span>
           </div>
         </div>
       </div>

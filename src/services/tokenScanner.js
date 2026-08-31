@@ -104,7 +104,15 @@ function computeLiveTokenAnalytics() {
                         for (const entry of entries) {
                             const fullPath = path.join(dir, entry.name);
                             if (entry.isDirectory()) {
-                                if (entry.name === '.tempmediaStorage' || entry.name === 'video_frames') continue;
+                                // 🛡️ 排除非对话文本目录 (如测试脚本、临时媒体、视频帧)，避免物理字节虚标膨胀
+                                if (entry.name === '.tempmediaStorage' || entry.name === 'video_frames' || entry.name === 'scratch' || entry.name === 'browser' || entry.name === '.user_uploaded') {
+                                    // 仅更新 mtime，不累加非文本文件大小
+                                    try {
+                                        const dst = fs.statSync(fullPath);
+                                        if (dst.mtimeMs > convMap[cid].mtime) convMap[cid].mtime = dst.mtimeMs;
+                                    } catch (_) { /* Explicit safe fallback: non-blocking */ }
+                                    continue;
+                                }
                                 if (dir.endsWith('.system_generated' + path.sep + 'steps') || dir.endsWith('.system_generated/steps')) {
                                     const stepNum = Number(entry.name);
                                     if (!isNaN(stepNum) && stepNum > convMap[cid].maxStep) {
@@ -115,7 +123,11 @@ function computeLiveTokenAnalytics() {
                             } else if (entry.isFile()) {
                                 try {
                                     const fst = fs.statSync(fullPath);
-                                    convMap[cid].brainSize += fst.size;
+                                    const ext = path.extname(entry.name).toLowerCase();
+                                    // 仅将真实文本对话数据 (json, jsonl, md, txt, log) 计入真实 Token 字节
+                                    if (['.json', '.jsonl', '.md', '.txt', '.log'].includes(ext) || !ext) {
+                                        convMap[cid].brainSize += fst.size;
+                                    }
                                     if (fst.mtimeMs > convMap[cid].mtime) {
                                         convMap[cid].mtime = fst.mtimeMs;
                                     }

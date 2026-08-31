@@ -281,14 +281,13 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
             const baseSteps = baseline.requestsAtCompact || 0;
             const deltaSteps = Math.max(0, rawSteps - baseSteps);
             
-            // 🌟 提炼后基线：16,000 高密度 Snapshot 基线 + 提炼后每轮对话/工具调用的真实工作上下文增量 (~280 Tokens/step)
-            const incrementalTokens = Math.max(Math.round(deltaBytes / 42), Math.round(deltaSteps * 280));
+            // 🌟 提炼后基线：16,000 高密度 Snapshot 基线 + 提炼后每轮对话/工具调用的真实工作上下文增量
+            const incrementalTokens = Math.max(Math.round(deltaBytes / 240), Math.round(deltaSteps * 35));
             usedTokens = Math.min(capacity, Math.round(16000 + incrementalTokens));
         } else {
             if (physicalBytes > 0 || rawSteps > 0) {
-                // 🌟 未提炼状态：14,000 系统指令 + 物理工作上下文密度微分 (~280 Tokens/step 或 bytes/42)
-                // 确保无论是老长会话还是新开会话，每一轮交互与工具执行均能产生平滑灵敏的即时跳字反馈
-                const dynamicWorkingTokens = Math.max(Math.round(physicalBytes / 42), Math.round(rawSteps * 280));
+                // 🌟 未提炼状态：14,000 系统指令 + 物理工作上下文真实密度模型 (排除二进制垃圾，精准反映 prompt window)
+                const dynamicWorkingTokens = Math.max(Math.round(physicalBytes / 225), Math.round(rawSteps * 48));
                 usedTokens = Math.min(capacity, Math.round(14000 + dynamicWorkingTokens));
             }
         }
@@ -297,7 +296,8 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
         // 无论是在未提炼状态还是在提炼后的增量演进中，同一个提炼周期内的占用数值绝对只增不减，彻底杜绝回退抖动
         if (convId && convId !== 'default') {
             const hwmKey = isCompacted ? `${convId}_compact_${baseline ? baseline.dateReadable : 'c'}` : `${convId}_raw`;
-            if (!contextHighWaterMarks[hwmKey]) {
+            // 🛡️ 智能单调递增防护：如果历史 HWM 严重失真 (> capacity 且当前计算合理)，自动重置校准
+            if (!contextHighWaterMarks[hwmKey] || (contextHighWaterMarks[hwmKey] >= capacity && usedTokens < capacity * 0.9)) {
                 contextHighWaterMarks[hwmKey] = usedTokens;
             } else {
                 usedTokens = Math.max(contextHighWaterMarks[hwmKey], usedTokens);
@@ -315,40 +315,40 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
     const pct = Math.round(ratio * 1000) / 10; // 0.0% ~ 100.0%
 
     let stageCode = 'safe';
-    let stageZh = isCompacted ? '充裕敏捷 (已提炼)' : '充裕敏捷';
+    let stageZh = isCompacted ? '已提炼敏捷' : '充裕敏捷';
     let stageEn = isCompacted ? 'Optimal (Refined)' : 'Optimal';
     let color = '#38bdf8';
-    let healthZh = isCompacted ? '100% (已提炼归档 · 注意力重置)' : '100% (极佳 · 零衰减)';
-    let healthEn = isCompacted ? '100% (Refined · Reset)' : '100% (Optimal · Zero Decay)';
+    let healthZh = isCompacted ? '100% (已重置)' : '100% (极佳)';
+    let healthEn = isCompacted ? '100% (Reset)' : '100% (Optimal)';
 
     if (pct < 40) {
         stageCode = 'safe';
-        stageZh = isCompacted ? '充裕敏捷 (已提炼)' : '充裕敏捷';
+        stageZh = isCompacted ? '已提炼敏捷' : '充裕敏捷';
         stageEn = isCompacted ? 'Optimal (Refined)' : 'Optimal';
         color = '#38bdf8';
-        healthZh = isCompacted ? '100% (已提炼归档 · 注意力重置)' : '100% (极佳 · 零衰减)';
-        healthEn = isCompacted ? '100% (Refined · Reset)' : '100% (Optimal · Zero Decay)';
+        healthZh = isCompacted ? '100% (已重置)' : '100% (极佳)';
+        healthEn = isCompacted ? '100% (Reset)' : '100% (Optimal)';
     } else if (pct < 70) {
         stageCode = 'normal';
         stageZh = '稳健运行';
         stageEn = 'Normal';
         color = '#3b82f6';
-        healthZh = '95% (良好 · 逻辑严密)';
-        healthEn = '95% (Good · Coherent)';
+        healthZh = '95% (稳健)';
+        healthEn = '95% (Good)';
     } else if (pct < 85) {
         stageCode = 'warning';
-        stageZh = '注意力衰减预警';
+        stageZh = '注意提炼';
         stageEn = 'Attention Decay';
         color = '#f59e0b';
-        healthZh = '75% (轻度衰减 · 建议提炼)';
-        healthEn = '75% (Mild Decay · Recommend Snapshot)';
+        healthZh = '75% (衰减)';
+        healthEn = '75% (Decay)';
     } else {
         stageCode = 'critical';
-        stageZh = '上下文临界 · 必须提炼';
-        stageEn = 'Saturated · Must Snapshot';
+        stageZh = '临界饱和';
+        stageEn = 'Saturated';
         color = '#ef4444';
-        healthZh = '40% (重度失忆风险 · 需提炼)';
-        healthEn = '40% (Critical Amnesia Risk · Must Snapshot)';
+        healthZh = '40% (临界)';
+        healthEn = '40% (Risk)';
     }
 
     Object.assign(contextState, {

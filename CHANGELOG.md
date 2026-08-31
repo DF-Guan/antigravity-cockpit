@@ -1,5 +1,18 @@
 # Change Log (更新日志)
 
+## [2.1.6] - 2026-08-31
+### 🎨 极窄视口排版解耦与 Token 物理噪音过滤 (Ultra-Narrow 180px & Physical Noise Filter)
+- **🧠 极限视口 (180px - 220px) 元素级解耦排版**:
+  - **顶层标头独立**: 顶行仅保留 `🧠 上下文额度` 与 `[已提炼敏捷]` 徽标，彻底消灭挤压重叠与竖排字；
+  - **百分比归位数据网格**: 饱和度百分比与 36px 环形表盘平行并列，辅以紧致指标 `(194K / 1M)` 与单行注意力健康度；
+  - **全页面断点适配**: 顶部操作栏与会话 Token 审计标题增加响应式换行，极窄模式全局规整；
+- **🔬 Token 物理扫描与噪音过滤算法精准升级**:
+  - `tokenScanner` 严格排除 `scratch/` 脚本、测试录像与二进制媒体噪音，仅统计真实 SQLite / WAL / JSON 文本数据，彻底解决大项目上下文虚标破 100% 的数学缺陷；
+- **⚡ Antigravity IDE 真实运行目录双写同步支持**:
+  - 自动识别并热同步 `~/.antigravity-ide/extensions/` 与 `~/.vscode/extensions/`，确保插件修改 100% 实时生效。
+
+---
+
 ## [2.1.5] - 2026-08-31
 ### 🎨 超窄侧边栏与微距视口终极适配 (Ultra-Narrow Sidebar 220px Zero-Clipping)
 - **🧠 彻底重构上下文额度卡片为三层纵向原子解耦排版 (3-Tier Atomic Card Architecture)**:
