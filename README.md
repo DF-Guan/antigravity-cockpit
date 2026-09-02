@@ -60,7 +60,7 @@
 * **Real-time Deletion Sync**: Deleting session files instantly updates local counts;
 * **One-Click Precision Toggle**: Switch between compact mode (`25.6M`) and exact integer format (`25,563,472`).
 
-### 6. 🚀 Real Physical Differential Speed Engine (Gemini 3.7 Flash Velocity)
+### 6. 🚀 Real Physical Differential Speed Engine (Gemini 3.8 / 3.7 Flash Velocity)
 * **Byte Differential Scanning**: Listens to SQLite-WAL byte differentials every 1.5 seconds;
 * **Live Velocity Waveform**: Captures burst generation speeds (150 ~ 180 t/s) and records peak speeds (218.6 t/s);
 * **Idle State Detection**: Smoothly resets to `0 t/s (💤 Standby Ready)` after 6.0s idle while preserving historical peak.

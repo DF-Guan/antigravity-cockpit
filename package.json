@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -162,7 +162,7 @@
             "deepseek"
           ],
           "enumDescriptions": [
-            "Google Gemini 2.0 / Flash (1M Tokens Window)",
+            "Google Gemini 3.8 / 3.7 Flash (1M Tokens Window)",
             "Google Gemini 1.5 Pro (2M Tokens Window)",
             "Anthropic Claude 3.5 / 3.7 Sonnet (200K Tokens Window)",
             "OpenAI GPT-4o / GPT-4.5 (128K Tokens Window)",

@@ -40,7 +40,7 @@ const path = require('path');
 
 // 🎯 主流模型原生上下文窗口上限矩阵 (Model Context Capacities)
 const MODEL_CAPACITIES = {
-    'gemini':    1048576, // 1M  (Google Gemini 2.0 / 3.7 Flash & Pro)
+    'gemini':    1048576, // 1M  (Google Gemini 3.8 / 3.7 Flash & Pro)
     'gemini-2m': 2097152, // 2M  (Google Gemini 1.5 Pro)
     'claude':     200000, // 200K (Anthropic Claude 3.5 / 3.7 Sonnet)
     'gpt4':       128000, // 128K (OpenAI GPT-4o / GPT-4.5)

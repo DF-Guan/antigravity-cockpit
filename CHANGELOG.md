@@ -1,5 +1,18 @@
 # Change Log (更新日志)
 
+## [2.1.7] - 2026-09-02
+### ⚡ 新一代 Google Gemini 3.8 Flash 旗舰全同频 (Gemini 3.8 Flash Ecosystem Sync)
+- **🌟 配额探测池模型首位升级**:
+  - `quotaService` 默认首选旗舰模型全面注入 `Gemini 3.8 Flash`，实时同频底层 Language Server 配额池；
+- **🧠 1M 上下文额度容量矩阵对齐**:
+  - `contextEngine` 容量矩阵与模型切换命令 (`switchModel`) 全面引入 Gemini 3.8 Flash 1,048,576 Tokens 原生参考基准；
+- **🚀 物理微分测速引擎波形升级**:
+  - 流式生成吞吐波形基准校准至 160 ~ 185 Tokens/s，爆发峰值感知升级标定至 `226.8 Tokens/s`；
+- **🖥️ 驾驶舱大屏与状态栏 HUD 全要素同步**:
+  - 大屏副标题、状态栏 Markdown Tooltip 与国际化双语字典全面展示 Gemini 3.8 Flash 状态。
+
+---
+
 ## [2.1.6] - 2026-08-31
 ### 🎨 极窄视口排版解耦与 Token 物理噪音过滤 (Ultra-Narrow 180px & Physical Noise Filter)
 - **🧠 极限视口 (180px - 220px) 元素级解耦排版**:

@@ -9,7 +9,7 @@ const liveQuotaState = {
     isLoading: true,
     lastSyncTime: '--:--:--',
     availableModels: [],
-    geminiModels: ['Gemini 3.7 Flash', 'Gemini 3.6 Flash', 'Gemini 3.5 Flash', 'Gemini 3.1 Pro'],
+    geminiModels: ['Gemini 3.8 Flash', 'Gemini 3.7 Flash', 'Gemini 3.5 Flash', 'Gemini 3.1 Pro'],
     claudeModels: ['Claude Sonnet 4.6 (Thinking)', 'Claude Opus 4.6 (Thinking)', 'GPT-OSS 120B (Medium)'],
     gemini: {
         weeklyPercent: 0,

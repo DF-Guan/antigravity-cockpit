@@ -94,7 +94,7 @@ function activate(context) {
         vscode.commands.registerCommand('agPrivateCockpit.switchModel', async () => {
             const isZh = currentLang === 'zh';
             const models = [
-                { label: '🌐 Google Gemini 2.0 / Flash', description: '1,048,576 Tokens (1M 窗口 · 默认推荐)', modelType: 'gemini' },
+                { label: '🌐 Google Gemini 3.8 / 3.7 Flash', description: '1,048,576 Tokens (1M 窗口 · 默认推荐)', modelType: 'gemini' },
                 { label: '🌐 Google Gemini 1.5 Pro', description: '2,097,152 Tokens (2M 窗口 · 超大长文本)', modelType: 'gemini-2m' },
                 { label: '🟣 Anthropic Claude 3.5 / 3.7 Sonnet', description: '200,000 Tokens (200K 窗口 · 深度编程首选)', modelType: 'claude' },
                 { label: '🟢 OpenAI GPT-4o / GPT-4.5', description: '128,000 Tokens (128K 窗口 · 通用旗舰)', modelType: 'gpt4' },

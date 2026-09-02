@@ -43,7 +43,7 @@ function buildContextTooltip(lang, contextState, tokenAnalyticsState) {
     tip.isTrusted = true;
 
     const modelDisplayNames = {
-        'gemini': 'Google Gemini (1M)',
+        'gemini': 'Google Gemini 3.8/3.7 Flash (1M)',
         'gemini-2m': 'Google Gemini 1.5 Pro (2M)',
         'claude': 'Anthropic Claude (200K)',
         'gpt4': 'OpenAI GPT-4o (128K)',

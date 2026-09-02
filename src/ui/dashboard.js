@@ -66,7 +66,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
     const items = isZh ? [
         { label: `💎 当前会话总消耗: ${tokenAnalyticsState.activeTotalFormatted} (${tokenAnalyticsState.activeTotalExact})`, description: `会话 ID: ${tokenAnalyticsState.activeConvShort} | 输出: ${tokenAnalyticsState.activeOutputFormatted} | 交互: ${tokenAnalyticsState.activeRequests}轮`, detail: '严格仅统计当前活跃会话的全部物理生成与上下文' },
         { label: `🌐 本机全局累计: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `共计 ${tokenAnalyticsState.globalConvsCount} 个会话的物理总和`, detail: '包含本机磁盘上所有历史 Antigravity 开发会话' },
-        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.8 Flash • 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
         { label: `🧠 切换测算目标模型窗口`, description: '当前支持: Gemini (1M/2M), Claude (200K), GPT-4o (128K), DeepSeek (64K)', detail: '实时调整上下文额度饱和度参考基准' },
         { label: `⚡ 实时响应速率: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (生成中)' : '0 Tokens/s (待机)'} ｜ 🏆 峰值 ${liveSpeedState.peakTps} Tokens/s`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
@@ -78,7 +78,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
     ] : [
         { label: `💎 Active Session Total: ${tokenAnalyticsState.activeTotalFormatted} (${tokenAnalyticsState.activeTotalExact})`, description: `Session ID: ${tokenAnalyticsState.activeConvShort} | Out: ${tokenAnalyticsState.activeOutputFormatted} | Turns: ${tokenAnalyticsState.activeRequests}`, detail: 'Strictly isolated to active current conversation only' },
         { label: `🌐 Machine Global Total: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `Sum of all ${tokenAnalyticsState.globalConvsCount} sessions`, detail: 'All historical Antigravity sessions' },
-        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.8 Flash • 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Generation Velocity: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (Streaming)' : '0 Tokens/s (Idle)'} ｜ 🏆 Peak Burst: ${liveSpeedState.peakTps} Tokens/s`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
         { label: `⚡ Refine Context Snapshot Now`, description: 'Archive snapshot to disk & reset model attention baseline' },
@@ -135,7 +135,7 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
         btnRefresh:  isZh ? '🔄 实时刷新' : '🔄 Refresh',
         
         geminiBrand: 'Google Gemini',
-        geminiSub:   (data.geminiModels && data.geminiModels.length > 0) ? data.geminiModels.slice(0, 4).join(' • ') : 'Gemini 3.7 Flash • Gemini 3.6 Flash • Gemini 3.5 Flash • Gemini 3.1 Pro',
+        geminiSub:   (data.geminiModels && data.geminiModels.length > 0) ? data.geminiModels.slice(0, 4).join(' • ') : 'Gemini 3.8 Flash • Gemini 3.7 Flash • Gemini 3.5 Flash • Gemini 3.1 Pro',
         claudeBrand: 'Anthropic Claude & GPT',
         claudeSub:   (data.claudeModels && data.claudeModels.length > 0) ? data.claudeModels.slice(0, 3).join(' • ') : 'Claude Sonnet 4.6 (Thinking) • Claude Opus 4.6 (Thinking) • GPT-OSS 120B',
         statusOk:    isZh ? '运行良好' : 'Optimal',

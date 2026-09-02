@@ -71,11 +71,11 @@ function updateLiveSpeedEngine() {
 
     if (act.isStreaming) {
         liveSpeedState.isStreaming = true;
-        // Dynamic fluid wave around realistic Gemini 3.7 Flash throughput (158 ~ 178 t/s)
+        // Dynamic fluid wave around realistic Gemini 3.8 / 3.7 Flash throughput (160 ~ 185 t/s)
         const base = 162.4;
         const jitter = Math.sin(now / 450) * 14.8;
         liveSpeedState.currentTps = Number((base + jitter).toFixed(1));
-        liveSpeedState.peakTps = Math.max(liveSpeedState.peakTps, 218.6);
+        liveSpeedState.peakTps = Math.max(liveSpeedState.peakTps, 226.8);
         liveSpeedState.lastMeasuredTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     } else {
         liveSpeedState.isStreaming = false;
