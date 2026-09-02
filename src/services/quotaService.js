@@ -169,7 +169,7 @@ function probeWindows() {
                     if (resolved) break;
                     const pid = String(p.ProcessId);
                     const cmd = p.CommandLine || '';
-                    const tm = cmd.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                    const tm = cmd.match(/--csrf_token[\s=]+([a-zA-Z0-9-]+)/);
                     if (!tm) continue;
                     const token = tm[1];
 
@@ -205,7 +205,7 @@ function probeDarwin() {
 
             for (const line of lines) {
                 if (line.includes('grep')) continue;
-                const tm = line.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                const tm = line.match(/--csrf_token[\s=]+([a-zA-Z0-9-]+)/);
                 const pidMatch = line.trim().match(/^(\d+)/);
                 if (tm && pidMatch) {
                     targetProcs.push({ pid: pidMatch[1], token: tm[1], line });
@@ -287,7 +287,7 @@ function probeLinux() {
 
             for (const line of lines) {
                 if (line.includes('grep')) continue;
-                const tm = line.match(/--csrf_token\s+([a-zA-Z0-9-]+)/);
+                const tm = line.match(/--csrf_token[\s=]+([a-zA-Z0-9-]+)/);
                 const pidMatch = line.trim().match(/^(\d+)/);
                 if (tm && pidMatch) {
                     targetProcs.push({ pid: pidMatch[1], token: tm[1], line });

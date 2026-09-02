@@ -15,7 +15,7 @@ let speedTimer;
 let currentLang = 'auto';
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v2.1.0 激活');
+    console.log('[Antigravity Private Cockpit] v2.1.7 激活');
 
     // 🌟 1. 同步加载物理持久化高水位线 (彻底杜绝 Reload Window / 重启时的数值回退与闪烁)
     initTokenScannerStorage(context.globalState);
@@ -41,6 +41,7 @@ function activate(context) {
                 else if (cmd === 'openSettings') vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings');
                 else if (cmd === 'toggleLang') setLanguage(context, currentLang === 'zh' ? 'en' : 'zh');
                 else if (cmd === 'compact') vscode.commands.executeCommand('agPrivateCockpit.compactContext');
+                else if (cmd === 'switchModel') vscode.commands.executeCommand('agPrivateCockpit.switchModel');
             });
         }),
         vscode.commands.registerCommand('agPrivateCockpit.quickOverview', () => {
@@ -77,11 +78,11 @@ function activate(context) {
             // 4. 重算上下文饱和度
             const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
             const customCap = cfg.get('contextWindowLimit', 1048576);
-            computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject.path);
+            computeContextSaturation(tokenAnalyticsState, customCap, undefined, subproject.path, wsRoot);
 
             // 4. 立即刷新状态栏与驾驶舱大屏 (重置为绿色安全基线)
             renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
-            updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+            updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, true);
 
             // 5. 轻量提示 (自动消失，不强行弹开文件打断用户)
             const msg = isZh
@@ -109,7 +110,7 @@ function activate(context) {
                 setModelType(sel.modelType);
                 computeLiveTokenAnalytics();
                 renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
-                updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+                updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, true);
                 vscode.window.showInformationMessage(
                     isZh ? `🧠 已切换上下文测算基准为: ${sel.label}` : `🧠 Context telemetry switched to: ${sel.label}`
                 );
@@ -134,7 +135,7 @@ function activate(context) {
                 }
                 restartAutoRefresh(context);
                 renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
-                updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+                updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, true);
             }
         })
     );
@@ -148,7 +149,7 @@ function activate(context) {
         updateLiveSpeedEngine();
         computeLiveTokenAnalytics(); // 🌟 实时计算最新会话物理增长与上下文额度变化
         renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
-        updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+        updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, false);
     }, 1500);
     context.subscriptions.push({ dispose: () => { if (speedTimer) clearInterval(speedTimer); } });
 }
@@ -157,7 +158,7 @@ async function fetchAndRefresh(context, manual = false) {
     computeLiveTokenAnalytics();
     await fetchLiveQuota(context, liveSpeedState, tokenAnalyticsState);
     renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
-    updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+    updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, true);
 
     if (manual) {
         const isZh = currentLang === 'zh';
@@ -185,7 +186,7 @@ function setLanguage(context, lang) {
     currentLang = lang;
     context.globalState.update('agPrivateCockpit.lang', lang);
     renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
-    updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+    updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, true);
     vscode.window.showInformationMessage(lang === 'zh' ? '🌐 已切换至中文' : '🌐 Switched to English');
 }
 

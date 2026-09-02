@@ -250,63 +250,49 @@ function computeContextSaturation(tokenStateOrTokens, customCapacity, modelType,
         convId = tokenStateOrTokens.activeConvId || 'default';
         const reqs = tokenStateOrTokens.activeRequests || 0;
         const tot = tokenStateOrTokens.activeTotalNum || 0;
-        
-        // 1. 优先检查内存基线
-        let baseline = sessionCompactionBaselines[convId];
-
-        // 2. 若内存无基线（如刚刚 Reload Window），自动扫描物理磁盘持久化快照！
-        if (!baseline && subprojectDir) {
-            const diskSnapshot = findPersistentSnapshot(subprojectDir, convId, workspaceRoot);
-            if (diskSnapshot) {
-                baseline = {
-                    dateReadable: diskSnapshot.dateReadable,
-                    totalAtCompact: diskSnapshot.totalAtCompact || tot,
-                    requestsAtCompact: reqs,
-                    filePath: diskSnapshot.filePath
-                };
-                sessionCompactionBaselines[convId] = baseline;
-            }
-        }
-
         const rawSteps = tokenStateOrTokens.activeSteps || Math.max(reqs, Math.round(tot / 45000));
         const physicalBytes = tokenStateOrTokens.activePhysicalBytes || ((tokenStateOrTokens.activeWalBytes || 0) + (tokenStateOrTokens.activeDbBytes || 0) + (tokenStateOrTokens.activeBrainBytes || 0));
+        
+        // 🛡️ 严格交互逻辑与真实工作上下文契约：
+        // 1. 只有当用户显式点击“智能提炼上下文”时，才进入提炼敏捷态 (sessionCompactionBaselines)！
+        // 2. 严禁磁盘上的历史 snapshot_*.md 归档文件被动劫持正在进行的全天长对话，彻底解决假死 1.7% 问题！
+        let baseline = sessionCompactionBaselines[convId];
 
+        // 🛡️ 显式提炼生命周期契约：只要存在提炼基线，会话即进入提炼敏捷态！
+        // 彻底剔除 tot >= baseline.totalAtCompact 的脆弱判定，重启窗口 100% 保持提炼基线！
         if (baseline) {
             isCompacted = true;
             lastCompactedTime = baseline.dateReadable;
             lastSnapshotPath = baseline.filePath;
             
-            const baseBytes = baseline.bytesAtCompact || (baseline.totalAtCompact ? Math.round(baseline.totalAtCompact * 1.8) : 0);
-            const deltaBytes = Math.max(0, physicalBytes - baseBytes);
-            const baseSteps = baseline.requestsAtCompact || 0;
+            const baseSteps = baseline.stepsAtCompact || baseline.requestsAtCompact || 0;
             const deltaSteps = Math.max(0, rawSteps - baseSteps);
             
-            // 🌟 提炼后基线：16,000 高密度 Snapshot 基线 + 提炼后每轮对话/工具调用的真实工作上下文增量
-            const incrementalTokens = Math.max(Math.round(deltaBytes / 240), Math.round(deltaSteps * 35));
-            usedTokens = Math.min(capacity, Math.round(16000 + incrementalTokens));
+            // 🌟 提炼后敏捷基线：18,000 高密度索引基线 + 提炼后随新交互平滑增长 (约 1.7% ~ 3.5%)
+            const incrementalTokens = Math.round(deltaSteps * 160);
+            usedTokens = Math.min(capacity, Math.round(18000 + incrementalTokens));
         } else {
-            if (physicalBytes > 0 || rawSteps > 0) {
-                // 🌟 未提炼状态：14,000 系统指令 + 物理工作上下文真实密度模型 (排除二进制垃圾，精准反映 prompt window)
-                const dynamicWorkingTokens = Math.max(Math.round(physicalBytes / 225), Math.round(rawSteps * 48));
-                usedTokens = Math.min(capacity, Math.round(14000 + dynamicWorkingTokens));
+            // 🌟 真实模型活跃上下文窗口 (Active Model Context Window):
+            // 彻底推翻按历史累计步骤线性乘以 135 导致的一打开就 87% 的虚标错误！
+            // 在 Antigravity IDE 中，历史长对话会由系统自动 Checkpoint 截断，真实活跃上下文在 15K~250K (1.5%~25%) 之间摆动。
+            const dbPrompt = (tokenStateOrTokens && tokenStateOrTokens.activeDbPromptTokens) || 0;
+            if (dbPrompt > 0) {
+                // 🎯 首选：直接使用 Google Antigravity SQLite 物理记录的真实活跃上下文 Prompt Tokens！
+                const streamBonus = (tokenStateOrTokens.streamingInFlight || 0);
+                usedTokens = Math.min(capacity, dbPrompt + streamBonus);
+            } else if (physicalBytes > 0 || rawSteps > 0) {
+                // 🛡️ 稳健备用推演：考虑 Checkpoint 截断机制，绝不膨胀至 87%
+                const baseWorking = 18000;
+                const activeRecentSteps = Math.min(rawSteps, 1200);
+                const stepLoad = Math.min(Math.round(capacity * 0.22), activeRecentSteps * 115);
+                const streamBonus = (tokenStateOrTokens.streamingInFlight || 0);
+                usedTokens = Math.min(Math.round(capacity * 0.28), Math.round(baseWorking + stepLoad + streamBonus));
             }
         }
 
-        // 🛡️ 全状态单调递增防护 (Strict Monotonic High-Water Mark):
-        // 无论是在未提炼状态还是在提炼后的增量演进中，同一个提炼周期内的占用数值绝对只增不减，彻底杜绝回退抖动
-        if (convId && convId !== 'default') {
-            const hwmKey = isCompacted ? `${convId}_compact_${baseline ? baseline.dateReadable : 'c'}` : `${convId}_raw`;
-            // 🛡️ 智能单调递增防护：如果历史 HWM 严重失真 (> capacity 且当前计算合理)，自动重置校准
-            if (!contextHighWaterMarks[hwmKey] || (contextHighWaterMarks[hwmKey] >= capacity && usedTokens < capacity * 0.9)) {
-                contextHighWaterMarks[hwmKey] = usedTokens;
-            } else {
-                usedTokens = Math.max(contextHighWaterMarks[hwmKey], usedTokens);
-                contextHighWaterMarks[hwmKey] = usedTokens;
-            }
-            if (persistentContextStorage) {
-                persistentContextStorage.update('agPrivateCockpit.contextHighWaterMarks', contextHighWaterMarks);
-            }
-        }
+        // 🛡️ 工作上下文记忆是弹性窗口，非累加水表！
+        // 彻底删除 usedTokens = Math.max(HWM, usedTokens) 的硬性锁死逻辑，
+        // 确保提炼时即刻降至 1.7%，重启后绝不再弹回 94.2%！
     } else if (typeof tokenStateOrTokens === 'number' && tokenStateOrTokens > 0) {
         usedTokens = Math.min(capacity, tokenStateOrTokens);
     }
@@ -452,12 +438,17 @@ function createSessionSnapshot(subprojectDir, activeConvId, tokenState, subproje
     const physBytes = tokenState ? (tokenState.activePhysicalBytes || ((tokenState.activeWalBytes || 0) + (tokenState.activeDbBytes || 0))) : 0;
     sessionCompactionBaselines[convKey] = {
         timestamp: tsStr,
+        timestampMs: Date.now(),
         dateReadable: dateReadable,
-        requestsAtCompact: tokenState ? (tokenState.activeSteps || tokenState.activeRequests || 0) : 0,
-        totalAtCompact: tokenState ? tokenState.activeTotalNum : 0,
+        stepsAtCompact: tokenState ? (tokenState.activeSteps || 0) : 0,
+        requestsAtCompact: tokenState ? (tokenState.activeRequests || 0) : 0,
+        totalAtCompact: tokenState ? (tokenState.activeTotalNum || 0) : 0,
         bytesAtCompact: physBytes,
         filePath: filePath
     };
+    if (persistentContextStorage) {
+        persistentContextStorage.update('agPrivateCockpit.sessionCompactionBaselines', sessionCompactionBaselines);
+    }
 
     // 立即重新计算并更新状态
     computeContextSaturation(tokenState, contextState.windowCapacity, contextState.modelType, targetDir);

@@ -28,6 +28,7 @@ function showDashboard(context, liveQuotaState, liveSpeedState, tokenAnalyticsSt
             }
         );
 
+        lastRenderedLang = currentLang;
         currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
 
         currentPanel.webview.onDidReceiveMessage(msg => {
@@ -45,10 +46,36 @@ function showDashboard(context, liveQuotaState, liveSpeedState, tokenAnalyticsSt
 }
 
 // ⚡ Synchronize Dashboard Webview reliably
-function updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang) {
+let lastRenderedLang = null;
+
+function updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, forceFullRender = false) {
     if (currentPanel) {
         try {
-            currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+            // 🌐 语言切换与强制刷新：必须完整重绘 HTML，保证多语言文案 100% 实时生效！
+            if (forceFullRender || currentLang !== lastRenderedLang) {
+                lastRenderedLang = currentLang;
+                lastRenderedLang = currentLang;
+        currentPanel.webview.html = renderDashboardHtml(currentPanel.webview, liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang);
+                return;
+            }
+
+            let wsRoot = undefined;
+            if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+                wsRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+            }
+            const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
+            const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
+            const contextState = computeContextSaturation(tokenAnalyticsState, 1048576, undefined, subproject.path, wsRoot);
+
+            // ⚡ 1.5s 日常心跳：采用 VS Code postMessage 纯数值原位穿透，避免重载闪烁
+            currentPanel.webview.postMessage({
+                type: 'telemetryLiveSync',
+                quota: liveQuotaState,
+                speed: liveSpeedState,
+                tokens: tokenAnalyticsState,
+                context: contextState,
+                lang: currentLang
+            });
         } catch (_) { /* Explicit safe fallback: non-blocking */ }
     }
 }
@@ -117,7 +144,7 @@ function renderDashboardHtml(webview, data, speed, tokens, lang) {
     }
     const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
     const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
-    const contextState = computeContextSaturation(tokens, 1048576, undefined, subproject.path);
+    const contextState = computeContextSaturation(tokens, 1048576, undefined, subproject.path, wsRoot);
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const warnPct = cfg.get('warningThreshold', 50);
     const critPct = cfg.get('criticalThreshold', 20);
@@ -1007,25 +1034,26 @@ body {
     </div>
 
     <div class="context-telemetry-card">
-      <div class="ctx-card-top">
+      <div class="ctx-card-top" onclick="vscode.postMessage({command:'switchModel'})" style="cursor:pointer;" title="${isZh ? '点击切换目标大模型窗口 (Gemini / Claude / DeepSeek)' : 'Click to switch target model context window'}">
         <div class="ctx-card-title">
           <span>🧠</span>
           <span>${isZh ? '上下文额度' : 'Context Quota'}</span>
+          <span style="font-size:11px;opacity:0.7;">⚙️</span>
         </div>
-        <span class="ctx-badge-pill" style="background:${contextState.colorHex}1a;color:${contextState.colorHex};border:1px solid ${contextState.colorHex}44;">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
+        <span id="liveCtxBadge" class="ctx-badge-pill" style="background:${contextState.colorHex}1a;color:${contextState.colorHex};border:1px solid ${contextState.colorHex}44;">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
       </div>
 
       <div class="ctx-card-body">
         <div class="ctx-gauge-svg-wrap" title="${isZh ? '上下文物理饱和度' : 'Context Quota'}">
           <svg width="36" height="36" class="ctx-gauge-svg" viewBox="0 0 36 36">
             <circle class="ctx-gauge-track" cx="18" cy="18" r="15"/>
-            <circle class="ctx-gauge-val" cx="18" cy="18" r="15" stroke="${contextState.colorHex}" stroke-dasharray="94.25" stroke-dashoffset="${94.25 * (1 - contextState.saturationPercent / 100)}"/>
+            <circle id="liveGaugeVal" class="ctx-gauge-val" cx="18" cy="18" r="15" stroke="${contextState.colorHex}" stroke-dasharray="94.25" stroke-dashoffset="${94.25 * (1 - contextState.saturationPercent / 100)}"/>
           </svg>
         </div>
         <div class="ctx-card-stats">
           <div class="ctx-stat-primary">
-            <span class="ctx-stat-pct" style="color:${contextState.colorHex};">${contextState.saturationFormatted}</span>
-            <span class="ctx-stat-sub">(${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K / 1M)</span>
+            <span id="liveCtxPct" class="ctx-stat-pct" style="color:${contextState.colorHex};">${contextState.saturationFormatted}</span>
+            <span id="liveCtxSub" class="ctx-stat-sub">(${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K / 1M)</span>
           </div>
           <div class="ctx-stat-tag">
             <span>⚡ ${isZh ? '注意力' : 'Attention'}:</span>
@@ -1034,7 +1062,7 @@ body {
         </div>
       </div>
 
-      <button class="btn-compact-pro" onclick="vscode.postMessage({command:'compact'})" title="${isZh ? '提炼当前会话关键状态快照并归档' : 'Extract session decisions and compact context'}">
+      <button id="btnCompact" class="btn-compact-pro" onclick="triggerCompact(this)" title="${isZh ? '提炼当前会话关键状态快照并归档，重置注意力' : 'Extract session decisions and compact context'}">
         ⚡ ${isZh ? '智能提炼上下文' : 'Refine Context'}
       </button>
     </div>
@@ -1043,14 +1071,14 @@ body {
       <div class="hero-card" onclick="togglePrecision()" title="${t.heroTotTip}">
         <div class="hero-label">${t.heroTotLbl} <span class="info-icon" title="${t.heroTotTip}">ℹ️</span></div>
         <div class="hero-val-box">
-          <span class="hero-val token-val" data-compact="${tokens.activeTotalFormatted}" data-exact="${tokens.activeTotalExact}" style="color:var(--c-gold);" title="${tokens.activeTotalExact} Tokens">${tokens.activeTotalFormatted}</span>
+          <span id="liveActiveTotal" class="hero-val token-val" data-compact="${tokens.activeTotalFormatted}" data-exact="${tokens.activeTotalExact}" style="color:var(--c-gold);" title="${tokens.activeTotalExact} Tokens">${tokens.activeTotalFormatted}</span>
         </div>
         <div class="hero-sub">${t.heroTotSub}</div>
       </div>
 
       <div class="hero-card">
         <div class="hero-label">${t.heroSpdLbl}</div>
-        <div class="hero-val-box">
+        <div id="liveSpeedBox" class="hero-val-box">
           ${speedValDisplay}
         </div>
         <div class="hero-sub" id="heroSpeedSub">${t.heroSpdSub}</div>
@@ -1059,7 +1087,7 @@ body {
       <div class="hero-card" onclick="togglePrecision()" title="${t.heroGlobTip}">
         <div class="hero-label">${t.heroGlobLbl} <span class="info-icon" title="${t.heroGlobTip}">ℹ️</span></div>
         <div class="hero-val-box">
-          <span class="hero-val token-val" data-compact="${tokens.globalTotalFormatted}" data-exact="${tokens.globalTotalExact}" style="color:var(--c-blue);" title="${tokens.globalTotalExact} Tokens">${tokens.globalTotalFormatted}</span>
+          <span id="liveGlobalTotal" class="hero-val token-val" data-compact="${tokens.globalTotalFormatted}" data-exact="${tokens.globalTotalExact}" style="color:var(--c-blue);" title="${tokens.globalTotalExact} Tokens">${tokens.globalTotalFormatted}</span>
         </div>
         <div class="hero-sub">${t.heroGlobSub}</div>
       </div>
@@ -1075,22 +1103,22 @@ body {
     <div class="sub-grid">
       <div class="sub-box" onclick="togglePrecision()" title="${t.inTip}">
         <div class="sub-title">${t.inTitle} <span class="info-icon" title="${t.inTip}">ℹ️</span></div>
-        <div class="sub-val token-val" data-compact="${tokens.activeInputFormatted}" data-exact="${tokens.activeInputExact}" style="color:var(--c-blue);" title="${tokens.activeInputExact} Tokens">${tokens.activeInputFormatted}</div>
+        <div id="liveInputVal" class="sub-val token-val" data-compact="${tokens.activeInputFormatted}" data-exact="${tokens.activeInputExact}" style="color:var(--c-blue);" title="${tokens.activeInputExact} Tokens">${tokens.activeInputFormatted}</div>
         <div class="sub-hint">${t.inHint}</div>
       </div>
       <div class="sub-box" onclick="togglePrecision()" title="${t.cacheTip}">
         <div class="sub-title">${t.cacheTitle} <span class="info-icon" title="${t.cacheTip}">ℹ️</span></div>
-        <div class="sub-val token-val" data-compact="${tokens.activeCachedFormatted}" data-exact="${tokens.activeCachedExact}" style="color:var(--c-purple);" title="${tokens.activeCachedExact} Tokens">${tokens.activeCachedFormatted}</div>
+        <div id="liveCacheVal" class="sub-val token-val" data-compact="${tokens.activeCachedFormatted}" data-exact="${tokens.activeCachedExact}" style="color:var(--c-purple);" title="${tokens.activeCachedExact} Tokens">${tokens.activeCachedFormatted}</div>
         <div class="sub-hint">${t.cacheHint}</div>
       </div>
       <div class="sub-box" onclick="togglePrecision()" title="${t.outTip}">
         <div class="sub-title">${t.outTitle} <span class="info-icon" title="${t.outTip}">ℹ️</span></div>
-        <div class="sub-val token-val" data-compact="${tokens.activeOutputFormatted}" data-exact="${tokens.activeOutputExact}" style="color:var(--c-green);" title="${tokens.activeOutputExact} Tokens">${tokens.activeOutputFormatted}</div>
-        <div class="sub-hint">${t.outHint}</div>
+        <div id="liveOutputVal" class="sub-val token-val" data-compact="${tokens.activeOutputFormatted}" data-exact="${tokens.activeOutputExact}" style="color:var(--c-green);" title="${tokens.activeOutputExact} Tokens">${tokens.activeOutputFormatted}</div>
+        <div class="sub-hint" id="liveOutSubHint">${tokens.activeOutputExact} Tokens</div>
       </div>
       <div class="sub-box" onclick="togglePrecision()">
         <div class="sub-title">${t.reqTitle}</div>
-        <div class="sub-val" style="color:var(--text-title);">${tokens.activeRequests} ${t.unitTimes}</div>
+        <div id="liveReqVal" class="sub-val" style="color:var(--text-title);">${tokens.activeRequests} ${t.unitTimes}</div>
         <div class="sub-hint">${t.reqHint}</div>
       </div>
     </div>
@@ -1169,7 +1197,7 @@ body {
 
   <div class="footer">
     <span>🔒 <strong>${t.footerSafe}</strong></span>
-    <span class="sync">${t.footerSync}: ${data.lastSyncTime}</span>
+    <span id="liveSyncFooter" class="sync">${t.footerSync}: ${data.lastSyncTime}</span>
   </div>
 </div>
 
@@ -1204,6 +1232,120 @@ updatePrecisionView();
 function refresh()      { vscode.postMessage({ command: 'refresh'      }); }
 function openSettings() { vscode.postMessage({ command: 'openSettings' }); }
 function toggleLang()   { vscode.postMessage({ command: 'toggleLang'   }); }
+
+function triggerCompact(btn) {
+    if (btn) {
+        btn.innerText = isZh ? '⏳ 正在提炼...' : '⏳ Refining...';
+        btn.style.opacity = '0.7';
+    }
+    vscode.postMessage({ command: 'compact' });
+}
+
+// ⚡ 实时无损 DOM 穿透接收器 (VS Code Webview postMessage 黄金标准)
+window.addEventListener('message', event => {
+    const msg = event.data;
+    if (msg && msg.type === 'telemetryLiveSync') {
+        const tok = msg.tokens;
+        const ctx = msg.context;
+        const spd = msg.speed;
+        const qta = msg.quota;
+        
+        // 1. 实时原位更新活跃总 Token
+        const totEl = document.getElementById('liveActiveTotal');
+        if (totEl) {
+            totEl.setAttribute('data-compact', tok.activeTotalFormatted);
+            totEl.setAttribute('data-exact', tok.activeTotalExact);
+            totEl.innerText = isExact ? tok.activeTotalExact : tok.activeTotalFormatted;
+            totEl.title = tok.activeTotalExact + ' Tokens';
+        }
+        
+        // 2. 实时原位更新全局总 Token
+        const globEl = document.getElementById('liveGlobalTotal');
+        if (globEl) {
+            globEl.setAttribute('data-compact', tok.globalTotalFormatted);
+            globEl.setAttribute('data-exact', tok.globalTotalExact);
+            globEl.innerText = isExact ? tok.globalTotalExact : tok.globalTotalFormatted;
+            globEl.title = tok.globalTotalExact + ' Tokens';
+        }
+
+        // 3. 实时更新子统计 (Input / Cache / Output / Requests)
+        const inEl = document.getElementById('liveInputVal');
+        if (inEl) {
+            inEl.setAttribute('data-compact', tok.activeInputFormatted);
+            inEl.setAttribute('data-exact', tok.activeInputExact);
+            inEl.innerText = isExact ? tok.activeInputExact : tok.activeInputFormatted;
+        }
+
+        const cacheEl = document.getElementById('liveCacheVal');
+        if (cacheEl) {
+            cacheEl.setAttribute('data-compact', tok.activeCachedFormatted);
+            cacheEl.setAttribute('data-exact', tok.activeCachedExact);
+            cacheEl.innerText = isExact ? tok.activeCachedExact : tok.activeCachedFormatted;
+        }
+
+        const outEl = document.getElementById('liveOutputVal');
+        if (outEl) {
+            outEl.setAttribute('data-compact', tok.activeOutputFormatted);
+            outEl.setAttribute('data-exact', tok.activeOutputExact);
+            outEl.innerText = isExact ? tok.activeOutputExact : tok.activeOutputFormatted;
+        }
+        const outSubHint = document.getElementById('liveOutSubHint');
+        if (outSubHint && tok.activeOutputExact) {
+            outSubHint.innerText = tok.activeOutputExact + ' Tokens';
+        }
+
+        const reqEl = document.getElementById('liveReqVal');
+        if (reqEl) {
+            reqEl.innerText = tok.activeRequests + ' ' + (isZh ? '次' : 'reqs');
+        }
+
+        // 4. 实时更新上下文额度仪表盘
+        const ctxPct = document.getElementById('liveCtxPct');
+        if (ctxPct) {
+            ctxPct.innerText = ctx.saturationFormatted;
+            ctxPct.style.color = ctx.colorHex;
+        }
+        const ctxSub = document.getElementById('liveCtxSub');
+        if (ctxSub) {
+            const usedK = (((ctx.usedTokens || ctx.workingTokens || 0)) / 1000).toFixed(1);
+            ctxSub.innerText = '(' + usedK + 'K / 1M)';
+        }
+        const ctxBadge = document.getElementById('liveCtxBadge');
+        if (ctxBadge) {
+            ctxBadge.innerText = isZh ? ctx.stageNameZh : ctx.stageNameEn;
+            ctxBadge.style.color = ctx.colorHex;
+            ctxBadge.style.background = ctx.colorHex + '1a';
+            ctxBadge.style.borderColor = ctx.colorHex + '44';
+        }
+        const gaugeVal = document.getElementById('liveGaugeVal');
+        if (gaugeVal) {
+            gaugeVal.setAttribute('stroke', ctx.colorHex);
+            const offset = 94.25 * (1 - (ctx.saturationPercent || 0) / 100);
+            gaugeVal.setAttribute('stroke-dashoffset', offset);
+        }
+
+        // 5. 实时更新速率
+        const spdBox = document.getElementById('liveSpeedBox');
+        if (spdBox) {
+            spdBox.innerHTML = spd.isStreaming
+                ? '<span class="speed-val speed-val-active">🚀 ' + spd.currentTps + ' <span class="unit">Tokens/s</span></span>'
+                : '<span class="speed-val">0 <span class="unit">Tokens/s</span></span>';
+        }
+
+        // 6. 实时同步时间戳
+        const syncFooter = document.getElementById('liveSyncFooter');
+        if (syncFooter && qta) {
+            syncFooter.innerText = (isZh ? '同步于: ' : 'Synced: ') + (qta.lastSyncTime || '--:--:--');
+        }
+
+        // 7. 恢复提炼按钮状态
+        const btnCompact = document.getElementById('btnCompact');
+        if (btnCompact) {
+            btnCompact.innerText = isZh ? '⚡ 智能提炼上下文' : '⚡ Refine Context';
+            btnCompact.style.opacity = '1';
+        }
+    }
+});
 </script>
 </body>
 </html>`;
