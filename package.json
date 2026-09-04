@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -142,7 +142,7 @@
         },
         "agPrivateCockpit.showContextSaturation": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Whether to display the context quota saturation meter on the status bar (是否在底部状态栏显示上下文额度饱和度)",
           "order": 4
         },

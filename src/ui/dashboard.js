@@ -95,9 +95,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
         { label: `🌐 本机全局累计: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `共计 ${tokenAnalyticsState.globalConvsCount} 个会话的物理总和`, detail: '包含本机磁盘上所有历史 Antigravity 开发会话' },
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `周期: 7天重置 | 7天: ${g.weeklyResetTimeZh} | 5h: ${g.fiveHourResetTimeZh}`, detail: 'Gemini 3.8 Flash • 3.7 Flash • 3.1 Pro 原生旗舰 (全自动实时)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `周期: 7天重置 | 7天: ${c.weeklyResetTimeZh} | 5h: ${c.fiveHourResetTimeZh}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS 专属配额池 (全自动实时)' },
-        { label: `🧠 切换测算目标模型窗口`, description: '当前支持: Gemini (1M/2M), Claude (200K), GPT-4o (128K), DeepSeek (64K)', detail: '实时调整上下文额度饱和度参考基准' },
         { label: `⚡ 实时响应速率: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (生成中)' : '0 Tokens/s (待机)'} ｜ 🏆 峰值 ${liveSpeedState.peakTps} Tokens/s`, description: `本地 IPC 延迟: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: '真实生成状态动态检测' },
-        { label: `⚡ 智能提炼上下文快照`, description: '物理归档当前会话快照，重置模型注意力保留率' },
         { label: `🔄 立即强制刷新`, description: '从底层 Language Server 探测最新配额' },
         { label: `🖥️ 打开可视化驾驶舱`, description: '查看官方品牌大屏与真实会话明细' },
         { label: `🌐 切换为 English`, description: '当前: 中文' },
@@ -108,7 +106,6 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
         { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.8 Flash • 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Generation Velocity: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (Streaming)' : '0 Tokens/s (Idle)'} ｜ 🏆 Peak Burst: ${liveSpeedState.peakTps} Tokens/s`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
-        { label: `⚡ Refine Context Snapshot Now`, description: 'Archive snapshot to disk & reset model attention baseline' },
         { label: `🔄 Force Refresh Now`, description: 'Probe latest quota from Language Server' },
         { label: `🖥️ Open Visual Dashboard`, description: 'View brand-accurate quota cockpit & disk analytics' },
         { label: `🌐 Switch to Chinese (中文)`, description: 'Current: English' },
@@ -1031,40 +1028,6 @@ body {
         <button class="btn-prec" onclick="togglePrecision()" title="${t.btnPrecExact}"><span id="precIcon">🔢</span> <span id="precText">${isZh ? '切换全精度' : 'Exact Mode'}</span></button>
         <div class="cycle-badge">${t.cycleBadge}</div>
       </div>
-    </div>
-
-    <div class="context-telemetry-card">
-      <div class="ctx-card-top" onclick="vscode.postMessage({command:'switchModel'})" style="cursor:pointer;" title="${isZh ? '点击切换目标大模型窗口 (Gemini / Claude / DeepSeek)' : 'Click to switch target model context window'}">
-        <div class="ctx-card-title">
-          <span>🧠</span>
-          <span>${isZh ? '上下文额度' : 'Context Quota'}</span>
-          <span style="font-size:11px;opacity:0.7;">⚙️</span>
-        </div>
-        <span id="liveCtxBadge" class="ctx-badge-pill" style="background:${contextState.colorHex}1a;color:${contextState.colorHex};border:1px solid ${contextState.colorHex}44;">${isZh ? contextState.stageNameZh : contextState.stageNameEn}</span>
-      </div>
-
-      <div class="ctx-card-body">
-        <div class="ctx-gauge-svg-wrap" title="${isZh ? '上下文物理饱和度' : 'Context Quota'}">
-          <svg width="36" height="36" class="ctx-gauge-svg" viewBox="0 0 36 36">
-            <circle class="ctx-gauge-track" cx="18" cy="18" r="15"/>
-            <circle id="liveGaugeVal" class="ctx-gauge-val" cx="18" cy="18" r="15" stroke="${contextState.colorHex}" stroke-dasharray="94.25" stroke-dashoffset="${94.25 * (1 - contextState.saturationPercent / 100)}"/>
-          </svg>
-        </div>
-        <div class="ctx-card-stats">
-          <div class="ctx-stat-primary">
-            <span id="liveCtxPct" class="ctx-stat-pct" style="color:${contextState.colorHex};">${contextState.saturationFormatted}</span>
-            <span id="liveCtxSub" class="ctx-stat-sub">(${(((contextState.usedTokens || contextState.workingTokens || 0)) / 1000).toFixed(1)}K / 1M)</span>
-          </div>
-          <div class="ctx-stat-tag">
-            <span>⚡ ${isZh ? '注意力' : 'Attention'}:</span>
-            <span><strong>${isZh ? (contextState.isCompacted ? '100% (敏捷)' : contextState.attentionHealthZh) : contextState.attentionHealthEn}</strong></span>
-          </div>
-        </div>
-      </div>
-
-      <button id="btnCompact" class="btn-compact-pro" onclick="triggerCompact(this)" title="${isZh ? '提炼当前会话关键状态快照并归档，重置注意力' : 'Extract session decisions and compact context'}">
-        ⚡ ${isZh ? '智能提炼上下文' : 'Refine Context'}
-      </button>
     </div>
 
     <div class="hero-row">

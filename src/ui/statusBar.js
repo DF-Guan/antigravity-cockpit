@@ -118,8 +118,6 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
 ---
 `);
-        tip.appendMarkdown(`🧠 **会话上下文饱和度**: **${contextState.saturationFormatted}** / 1024K (\`${contextState.stageNameZh}\`)
-`);
         tip.appendMarkdown(`- 💎 **当前会话总吞吐: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 会话轮次: **${tokenAnalyticsState.activeRequests}**
 `);
         tip.appendMarkdown(`- 📥 输入: **${tokenAnalyticsState.activeInputFormatted}** (\`${tokenAnalyticsState.activeInputExact}\`) ｜ ⚡ 前缀缓存: **${tokenAnalyticsState.activeCachedPercent}**
@@ -155,7 +153,7 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
 ---
 `);
-        tip.appendMarkdown(`[⚡ 提炼上下文](command:agPrivateCockpit.compactContext) | [🔄 刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
+        tip.appendMarkdown(`[🔄 刷新](command:agPrivateCockpit.refresh) | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard) | [🌐 English](command:agPrivateCockpit.toggleLang) | [⚙️ 设置](command:agPrivateCockpit.openNativeSettings)`);
     } else {
         const liveBadgeEn = liveQuotaState.isLive ? '🟢 Native Live Synced' : (liveQuotaState.isLoading ? '🔄 Syncing...' : '⚡ Local Ready');
         tip.appendMarkdown(`### 🛸 Antigravity Private Quota Cockpit
@@ -164,8 +162,6 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
         tip.appendMarkdown(`*Last sync: ${liveQuotaState.lastSyncTime} • Status: ${liveBadgeEn}*
 
 ---
-`);
-        tip.appendMarkdown(`🧠 **Context Saturation**: **${contextState.saturationFormatted}** / 1024K (\`${contextState.stageNameEn}\`)
 `);
         tip.appendMarkdown(`- 💎 **Session Total: ${tokenAnalyticsState.activeTotalFormatted}** (\`${tokenAnalyticsState.activeTotalExact}\` Tokens) ｜ 📈 Turns: **${tokenAnalyticsState.activeRequests}**
 `);
@@ -202,7 +198,7 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 
 ---
 `);
-        tip.appendMarkdown(`[⚡ 提炼上下文](command:agPrivateCockpit.compactContext) | [🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
+        tip.appendMarkdown(`[🔄 Refresh](command:agPrivateCockpit.refresh) | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard) | [🌐 中文](command:agPrivateCockpit.toggleLang) | [⚙️ Settings](command:agPrivateCockpit.openNativeSettings)`);
     }
     return tip;
 }
@@ -214,7 +210,7 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
     const showGemini  = cfg.get('showGemini', true);
     const showClaude  = cfg.get('showClaude', true);
     const showSpeed   = cfg.get('showTokenSpeed', true);
-    const showContext = cfg.get('showContextSaturation', true);
+    const showContext = cfg.get('showContextSaturation', false);
     const customCap   = cfg.get('contextWindowLimit', 1048576);
     const compact     = cfg.get('compactStatusBar', false);
     const warnPct     = cfg.get('warningThreshold', 50);

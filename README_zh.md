@@ -1,66 +1,60 @@
 # 🛸 Antigravity Private Cockpit
 
-[![CI & Quality Gate](https://github.com/DF-Guan/antigravity-cockpit/actions/workflows/ci.yml/badge.svg)](https://github.com/DF-Guan/antigravity-cockpit/actions/workflows/ci.yml)
-[![Open VSX](https://img.shields.io/open-vsx/v/DF-Guan/antigravity-cockpit?color=blue&label=Open%20VSX)](https://open-vsx.org/extension/DF-Guan/antigravity-cockpit)
-[![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-success.svg)](#-核心产品力卖点为什么选择-private-cockpit)
-[![Zero Telemetry](https://img.shields.io/badge/Telemetry-ZERO-brightgreen.svg)](#-核心产品力卖点为什么选择-private-cockpit)
-[![Factual Audit](https://img.shields.io/badge/Data%20Audit-100%25%20Physical%20Disk-blue.svg)](#-核心产品力卖点为什么选择-private-cockpit)
-[![No Ads](https://img.shields.io/badge/Ads-None%20%7C%20Pure%20Utility-blueviolet.svg)](#-核心产品力卖点为什么选择-private-cockpit)
-[![Bilingual](https://img.shields.io/badge/Language-English%20%7C%20%E4%B8%AD%E6%96%87-orange.svg)](README.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<div align="center">
 
-> 🔒 **专为开发者打造的 100% 纯本地物理离线 AI 配额、Token 消耗事实审计、多模型上下文额度治理与实时流速监控驾驶舱。**  
-> 零外部网络请求、零数据遥测上报、零 Token 泄露风险、零虚构加权数据、纯净无广告。直接与本地 Antigravity Language Server 守护进程直连，具备 **Netstat-PID 精确端口瞬时握手** 与 **真实物理微分流速感知** 能力。
+![Version](https://img.shields.io/badge/version-2.1.10-blue.svg?style=flat-square)
+![Antigravity](https://img.shields.io/badge/Antigravity_IDE-Native_Compatible-38bdf8.svg?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
+![Privacy](https://img.shields.io/badge/Privacy-100%25_Offline-success.svg?style=flat-square)
+![Offline](https://img.shields.io/badge/Telemetry-ZERO-purple.svg?style=flat-square)
 
-[🌐 **Switch to English Documentation (README.md)**](README.md)
+</div>
+
+> 🔒 **专为开发者打造的 100% 纯本地物理离线 AI 配额、Token 消耗事实审计与实时流速监控驾驶舱。**  
+> 零外部网络请求 · 零遥测泄露 · 毫秒级原生网络表直连 · 官方 Gemini & Claude 配额同频 · 极简状态栏 HUD
+
+[English Documentation (README.md)](README.md)
 
 ---
 
 ## 📸 界面实测预览 (Visual Preview)
 
 ### 📍 1. 底部状态栏微距常驻监控 (Native Status Bar Integration)
-> 官方矢量品牌几何 · 纯净 `🧠 上下文额度%` 仪表 · 独立纯数字告警变色 · 真实物理微分测速 · 极致紧凑 0 冗余死区
-![底部状态栏微距常驻监控](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_zh.png)
+> 官方矢量品牌几何 · 独立纯数字告警变色 · 真实物理微分测速 · 极致紧凑 0 冗余死区
+![底部状态栏效果](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/statusbar_banner_zh.png)
 
 ### 🛸 2. 交互式可视化配额与纯物理 Token 驾驶舱 (Interactive Dashboard)
-> 14 款大模型动态发现 · 实时高精上下文额度感知 · 纯物理 SQLite-WAL Token 消耗审计
-![配额驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png)
+> 14 款大模型动态发现 · 官方配额全同频 · 纯物理 SQLite-WAL Token 消耗审计
+![可视化驾驶舱](https://raw.githubusercontent.com/DF-Guan/antigravity-cockpit/main/assets/dashboard_preview_zh.png)
 
 ---
 
-## 💎 核心产品力 7 大支柱（为什么选择 Private Cockpit？）
+## 💎 核心产品力 6 大支柱（为什么选择 Private Cockpit？）
 
 ### 1. 🔒 100% 纯本地离线安全（零外发 · 零泄露 · 零遥测）
-* **0 外部网络请求**：完全通过本地回环通信（`127.0.0.1`）直连底层守护进程，绝不把任何数据发送至外部服务器或第三方代理；
+* **0 外部网络调用**：不向任何第三方或云端 API 发送请求，仅与本机回环地址（`127.0.0.1`）上的 Language Server 守护进程通信；
 * **0 遥测与行为追踪**：不植入任何统计代码、打点分析或远程日志收集，隐私安全绝对闭环；
 * **凭据内存驻留**：CSRF 令牌仅在本地运行内存中使用，杜绝凭据泄漏隐患。
 
-### 2. 🧠 实时上下文额度与饱和度感知引擎（v2.0.0 重磅）
-* **动态饱和度分级告警**：基于当前会话物理 Token 实时计算模型上下文窗口占用率，毫秒级自适应分级告警；
-* **多模型原生容量矩阵自适应**：内置 Google Gemini (1M/2M)、Anthropic Claude (200K)、OpenAI GPT-4o (128K)、DeepSeek (64K) 等容量自动换算；
-* **单调递增高水位与零回退持久化**：采用持久化 Memento 存储与单调递增算法，杜绝窗口重载或 IDE 重启时的数值回退与抖动。
-
-### 3. 📸 智能上下文快照提炼与双模架构平权兼容（v2.0.0 重磅）
-* **⚡ 会话工作记忆瞬时瘦身 (Attention Health Reset)**：
-  - 区别于 `/learn` 侧重“学习长期规则”，“智能提炼上下文”专门用于**“清理当前会话内存噪音、生成工程进度快照”**；
-  - 一键将 200,000+ Tokens 的长文本工作记忆浓缩为 16,000 精华基线，瞬间消除“中间迷失 (Lost in the Middle)”与幻觉，让模型注意力恢复 100% 敏捷；
-* **双模平权兼容 (Projects / Workspace Dual-Mode)**：
-  - **💼 Monorepo 专属模式 (`projects/`)**：若工作区包含多个子工程，自动识别当前激活工程，快照精准隔离归档至 `projects/<子项目名>/docs/snapshots/`；
-  - **📁 通用工作区模式 (`workspace/`)**：对于未自定义 `projects/` 目录的普通单工程，快照全自动保存至 `<工作区根目录>/docs/snapshots/`，以 `workspace` 身份平滑兼容；
-* **💡 零配置自愈建目录 (Zero-Config Auto-Creation)**：
-  - 点击提炼时，引擎会自动级联创建缺失的 `docs/snapshots/` 目录，无需开发者手动预建；
-* **全局三层文档强联动**：自动在所属子工程或工作区的 `memory.md` 写入最新快照指针，为新会话与跨 Agent 协作提供高密度基线；
-* **极简无侵入交互**：单键瞬时提炼落盘，自动弹出轻量淡出通知，不弹开文件打扰编码心流。
-
-### 4. ⚡ Netstat-PID 端口映射引擎（30ms 瞬时直连 · 100% 同步率）
+### 2. ⚡ Netstat-PID 端口映射引擎（30ms 瞬时直连 · 100% 同步率）
 * **PID 精准网络表映射**：通过 `netstat -ano` 直接抓取 Language Server 进程当前真正处于 `LISTENING` 状态的所有物理端口；
 * **0 漏检与偏移免疫**：彻底解决传统端口递增扫描因端口大偏移（+70 以上）而漏检的问题，实现 100% 瞬时命中；
 * **智能本地缓存**：握手成功后自动缓存端口号，后续每轮轮询直接本地直连，耗时 < 10ms。
 
+### 3. ✨ Google Gemini 官方配额全同频（周周期 & 5h冲刺双窗口）
+* **旗舰模型优先映射**：全面同频 `Gemini 3.8 Flash`、`Gemini 3.7 Flash` 与 `Gemini 3.1 Pro` 官方配额池；
+* **精确到分秒的满额重置倒计时**：清晰掌握每周额度与 5 小时冲刺额度消耗进度；
+* **三级自适应纯数字色彩预警**：绿色（充裕）、黄色（注意）、红色（耗尽）精准指示。
+
+### 4. 🎭 Anthropic Claude & GPT-OSS 专属配额监控
+* **主流高级推理模型覆盖**：独立呈现 Claude 4.6 Sonnet / Opus (Thinking) 及 GPT-OSS 120B 配额池状态；
+* **双窗口独立进度条**：7 天周期与 5 小时高频冲刺双进度条清晰可视；
+* **官方原生物理状态指示**：运行良好 / 额度偏低无缝切换。
+
 ### 5. 🎯 当前活跃会话独立隔离与全局总和严格区分
 * **单会话纯净事实审计**：按最新修改时间毫秒级定位当前活跃会话（Active Session），4 宫格指标严格仅统计当前会话物理数据；
 * **全局历史累计总池**：独立呈现本机所有历史会话累加总和（Global Total），口径严密隔离，绝不混淆；
-* **📁 自适应滚动清单**：会话清单配备 `max-height: 220px` 极简自适应滚动条与动态会话总数感知，排版始终优雅克制；
+* **📁 本机各会话独立吞吐清单置底**：清单配备自适应滚动条与动态会话总数感知，优雅置于界面底端；
 * **本地删除即时同步**：本地删除会话或制品文件时，清单自动物理剔除，总 Token 精准实时扣减；
 * **🔢 全精度一键切换**：支持在“K/M 缩略模式（`25.6M`）”与“千分位精确整数模式（`25,563,472`）”之间一键无缝切换。
 
@@ -68,67 +62,6 @@
 * **物理字节差分感知**：每 1.5 秒监听本地 SQLite-WAL 与轨迹物理增长，真实换算每秒 Token 吞吐流速；
 * **极速吞吐真实捕捉**：流式生成时动态呈现 Gemini 3.8 / 3.7 Flash 高速吞吐波形（**160 ~ 185 Tokens/s**），真实标定 **226.8 Tokens/s** 极限爆发峰值；
 * **智能休眠感知**：模型停止生成 6.0 秒后平滑回落至 `0 t/s (💤 待机就绪)`，同时历史真实峰值完整保留。
-
-### 7. 🎯 状态栏极致紧凑与多模型状态独立监控
-* **多模型槽位并列呈现**：Gemini、Claude 额度、上下文饱和度与实时流速一目了然，零遮挡；
-* **纯数字分级告警变色**：图标与标签保持干净中性主题色，仅配额纯数字按安全（绿）、警戒（黄）、极低（红）三级独立着色；
-* **超轻量原生常驻**：内存占用 < 2MB，底层采用全异步非阻塞轮询，对编码心流零干扰。
-
----
-
-## 💡 深度解答：为什么有了底层自动截断，还需要主动提炼上下文？
-
-许多大模型开发者常有疑惑：*“既然 Antigravity 底层超限时会自动截断并插入 Checkpoint 摘要，为什么我们还需要在驾驶舱中主动提炼？”*
-
-| 维度 / 特性 | 🤖 Antigravity 底层被动截断 | ⚡ Cockpit 主动智能快照提炼 (推荐) |
-| :--- | :--- | :--- |
-| **触发时机** | **临界死线**：额度饱和到 95%~100% 爆满时才被迫截断 | **黄金节点**：完成一个里程碑、注意力衰减到 ~70% 时主动提炼 |
-| **提炼质量** | **机械截断**：粗暴裁剪前文，极易丢失核心顶层架构契约 | **高密度结构化提炼**：剥离数万行终端调试噪音，精准沉淀核心事实 |
-| **模型注意力** | **持续衰减**：长期背负数十兆工具输出，产生“失忆与幻觉” (Lost in the Middle) | **即刻重置**：瞬间卸下历史噪音包袱，模型推理重回 100% 敏捷状态 |
-| **资产沉淀** | **无物理落盘**：会话一旦损坏或重开，前文记忆彻底蒸发 | **物理版本化归档**：生成带时间戳快照并联动 `memory.md`，工程全可追溯 |
-
-### 🧠 深入拆解：大模型长文本的“三大隐形陷阱”
-1. **摆脱“迷失在中间 (Lost in the Middle)”与注意力泥潭**：  
-   虽然 Gemini 具备 1M/2M 庞大窗口，但当累积了几十轮调试日志后，海量噪音会分散注意力。在 70% 时主动提炼，能清空数万行无用工具输出，让模型推理恢复 100% 敏捷；
-2. **拒绝灾难性遗忘**：  
-   底层被动截断容易机械抹去最初制定的顶层架构规则；主动提炼由开发者把控节奏，确保核心交付与未竟待办 100% 固化；
-3. **沉淀永续工程资产**：  
-   自动将关键上下文持久化到 `projects/<子项目>/docs/snapshots/` 并同步 `memory.md`，为后续新会话与跨 Agent 协作提供秒级无缝接力。
-
----
-
----
-
-## 🧠 深度辨析：智能提炼上下文 vs `/learn` 快捷指令的区别与黄金协同
-
-许多开发者常问：*“Antigravity 原生已有 `/learn` 学习指令，Cockpit 的【智能提炼上下文】有什么本质区别？两者如何配合？”*
-
-两者在架构上属于**完全不同层级的机制：一个是‘大脑认知与规矩进化（员工守则）’，一个是‘工程现场存档与内存清理（游戏存档）’**：
-
-```mermaid
-flowchart TD
-    subgraph Learn["🧠 /learn 指令 (终身认知升级)"]
-        L1["用户批评纠偏 / 总结最佳实践"] --> L2["提取避坑铁律与通用行为准则"] --> L3["固化至全局知识库 / rules 规则库<br/>(所有 Agent 永久继承 · 终身不犯同样错误)"]
-    end
-
-    subgraph Compact["⚡ 智能提炼上下文 (工程现场存档 & 内存清理)"]
-        C1["单会话持续对话堆叠 (5,000+ 步)"] --> C2["剥离终端工具输出与重复流水日志"] --> C3["落盘至 docs/snapshots/*.md<br/>(重置注意力为 100% · 当前项目永不失忆)"]
-    end
-```
-
-### 📊 核心能力维度全方位对比
-
-| 对比维度 | 🧠 `/learn` 快捷指令 (Antigravity 原生) | ⚡ Cockpit `[ 智能提炼上下文 ]` (本插件核心) |
-| :--- | :--- | :--- |
-| **解决的目标** | **“吸收教训，下次不要再犯同样的低级错误”** | **“会话太长了，清理内存噪音，重置注意力”** |
-| **物理落盘位置** | 全局/工作区知识库 (`.agents/rules/` 或 `knowledge/`) | 当前子项目的 [`docs/snapshots/snapshot_*.md`](file:///d:/%E8%B5%84%E6%96%99M2/mywork/Antigravity/projects/antigravity-cockpit/docs/snapshots) |
-| **生效与作用域** | **跨项目、跨会话、终身全局生效**（所有 Agent 永久继承） | **当前子项目专属、当前会话生效**（记录当前进度与待办） |
-| **工作记忆影响** | 不清理当前会话 Token，仅沉淀规则认知 | **立即重置当前工作记忆占用**（从 80% 降回 1.6% 充裕敏捷区） |
-| **生动形象比喻** | **“把事故写进公司员工守则或飞行员手册”** | **“单机游戏在 Boss 关卡前的即时存档 (Quick Save)”** |
-
-### 🤝 实战黄金协同工作流
-1. **何时使用 `/learn`**：当 Agent 犯了逻辑/流程错误并被您批评纠偏时，输入 `/learn` 固化为全局规则；
-2. **何时点击 `[ ⚡ 智能提炼上下文 ]`**：当状态栏 `🧠` 饱和度升高（>70%）或一个核心里程碑完成时，点击它给当前工程存档并重置注意力。
 
 ---
 
@@ -141,8 +74,6 @@ flowchart TD
 | `agPrivateCockpit.showGemini` | `true` | 是否在状态栏显示 Google Gemini 原生配额 |
 | `agPrivateCockpit.showClaude` | `true` | 是否在状态栏显示 Anthropic Claude & GPT 原生配额 |
 | `agPrivateCockpit.showTokenSpeed` | `true` | 是否在状态栏显示实时 Token 响应速率 (`t/s`) |
-| `agPrivateCockpit.showContextSaturation` | `true` | 是否在状态栏显示上下文额度饱和度仪表 (`🧠 额度%`) |
-| `agPrivateCockpit.contextWindowLimit` | `1048576` | 模型上下文额度上限 Tokens（默认 1M，Claude 为 200K） |
 | `agPrivateCockpit.compactStatusBar` | `false` | 极简模式（仅显示图标与周配额，隐藏 5h 冲刺） |
 | `agPrivateCockpit.refreshIntervalSeconds` | `15` | 后台探测刷新周期（秒，最低 5 秒） |
 | `agPrivateCockpit.warningThreshold` | `50` | 额度告警黄色预警阈值（%） |
