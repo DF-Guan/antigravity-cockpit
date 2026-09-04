@@ -1093,13 +1093,6 @@ body {
       </div>
     </div>
 
-    <div class="real-history-box">
-      <div class="real-history-head">${t.historyTitle}</div>
-      <div class="real-history-list">
-        ${realHistoryHtml}
-      </div>
-    </div>
-
     <div class="sub-grid">
       <div class="sub-box" onclick="togglePrecision()" title="${t.inTip}">
         <div class="sub-title">${t.inTitle} <span class="info-icon" title="${t.inTip}">ℹ️</span></div>
@@ -1192,6 +1185,13 @@ body {
         <div class="meta-row"><span>${t.resetLabel}</span><span class="meta-val">${t.resetTimeC}</span></div>
         <div class="meta-row"><span>${t.fiveResetLbl}</span><span class="meta-val" style="color:${c5 >= 100 ? 'var(--c-green)' : 'inherit'}">${t.fiveResetC}</span></div>
       </div>
+    </div>
+  </div>
+
+  <div class="real-history-box">
+    <div class="real-history-head">${t.historyTitle}</div>
+    <div class="real-history-list">
+      ${realHistoryHtml}
     </div>
   </div>
 
