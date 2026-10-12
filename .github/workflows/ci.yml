@@ -27,10 +27,10 @@ jobs:
       - name: Verify CommonJS Syntax & Module AST
         run: |
           node -c src/extension.js
-          node -c src/services/contextEngine.js
           node -c src/services/quotaService.js
           node -c src/services/speedEngine.js
           node -c src/services/tokenScanner.js
           node -c src/ui/dashboard.js
           node -c src/ui/statusBar.js
           node -c src/utils/i18n.js
+          npm test
