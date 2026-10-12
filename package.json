@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "2.1.10",
+  "version": "2.1.11",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -69,16 +69,6 @@
         "title": "Antigravity Private Cockpit: Open Settings",
         "category": "Antigravity Cockpit",
         "icon": "$(settings-gear)"
-      },
-      {
-        "command": "agPrivateCockpit.compactContext",
-        "title": "Antigravity Cockpit: 智能提炼上下文状态快照",
-        "category": "Antigravity Cockpit"
-      },
-      {
-        "command": "agPrivateCockpit.switchModel",
-        "title": "切换上下文测算模型 (Switch Context Model Capacity)",
-        "category": "Antigravity Cockpit"
       }
     ],
     "configuration": {
@@ -139,37 +129,6 @@
           "type": "boolean",
           "default": true,
           "description": "Toggle recent conversation Token Speed (t/s) indicator on status bar (default: true)."
-        },
-        "agPrivateCockpit.showContextSaturation": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to display the context quota saturation meter on the status bar (是否在底部状态栏显示上下文额度饱和度)",
-          "order": 4
-        },
-        "agPrivateCockpit.contextWindowLimit": {
-          "type": "number",
-          "default": 1048576,
-          "description": "Model context window limit in tokens (Default 1,048,576 for Gemini 1M, 200,000 for Claude) (模型上下文额度上限 Tokens，默认 1,048,576 / 1M)",
-          "order": 5
-        },
-        "agPrivateCockpit.modelType": {
-          "type": "string",
-          "enum": [
-            "gemini",
-            "gemini-2m",
-            "claude",
-            "gpt4",
-            "deepseek"
-          ],
-          "enumDescriptions": [
-            "Google Gemini 3.8 / 3.7 Flash (1M Tokens Window)",
-            "Google Gemini 1.5 Pro (2M Tokens Window)",
-            "Anthropic Claude 3.5 / 3.7 Sonnet (200K Tokens Window)",
-            "OpenAI GPT-4o / GPT-4.5 (128K Tokens Window)",
-            "DeepSeek V3 / R1 (64K Tokens Window)"
-          ],
-          "default": "gemini",
-          "description": "Target AI model window capacity for real-time context saturation telemetry (测算上下文额度饱和度时使用的目标模型窗口上限)."
         }
       }
     },

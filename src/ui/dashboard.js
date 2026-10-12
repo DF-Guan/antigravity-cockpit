@@ -1,5 +1,4 @@
 //﻿​‌​​​​​‌​‌​‌​‌​‌​‌​‌​‌​​​‌​​‌​​​​​‌‌‌​‌​​‌​​​‌​​​‌​​​‌‌​​​‌​‌‌​‌​‌​​​‌‌‌​‌‌‌​‌​‌​‌‌​​​​‌​‌‌​‌‌‌​​‌‌‌‌‌​​​‌​‌​​‌‌​‌​​‌​​‌​‌​​​‌‌‌​​‌‌‌​‌​​​‌‌​​​​​​‌‌​‌‌​​​‌‌​​​‌​​‌‌​‌​​​‌‌​​​​‌​‌‌​​​‌‌​‌‌​​​‌‌​​‌‌​​​​​‌‌​​​‌​​​‌‌‌​​​​‌‌​​‌​​​​‌‌​​​​​‌‌​​​‌​​‌‌​​​​‌​​‌‌​​​‌​​‌‌​​‌​‍
-const { computeContextSaturation, getContextState, resolveActiveSubproject } = require('../services/contextEngine');
 const vscode = require('vscode');
 
 let currentPanel = undefined;
@@ -59,22 +58,14 @@ function updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsSta
                 return;
             }
 
-            let wsRoot = undefined;
-            if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-                wsRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
-            }
-            const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
-            const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
-            const contextState = computeContextSaturation(tokenAnalyticsState, 1048576, undefined, subproject.path, wsRoot);
-
+            
             // ⚡ 1.5s 日常心跳：采用 VS Code postMessage 纯数值原位穿透，避免重载闪烁
             currentPanel.webview.postMessage({
                 type: 'telemetryLiveSync',
                 quota: liveQuotaState,
                 speed: liveSpeedState,
                 tokens: tokenAnalyticsState,
-                context: contextState,
-                lang: currentLang
+                                lang: currentLang
             });
         } catch (_) { /* Explicit safe fallback: non-blocking */ }
     }
@@ -117,11 +108,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
     }).then(sel => {
         if (!sel) return;
         const txt = sel.label;
-        if (txt.includes('模型') || txt.includes('Model')) {
-            vscode.commands.executeCommand('agPrivateCockpit.switchModel');
-        } else if (txt.includes('提炼') || txt.includes('Refine')) {
-            if (callbacks.onCompact) callbacks.onCompact();
-        } else if (txt.includes('可视化') || txt.includes('Visual')) {
+        if (txt.includes('可视化') || txt.includes('Visual')) {
             if (callbacks.onOpenDashboard) callbacks.onOpenDashboard();
         } else if (txt.includes('切换') || txt.includes('Switch')) {
             if (callbacks.onToggleLang) callbacks.onToggleLang();
@@ -135,14 +122,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
 
 function renderDashboardHtml(webview, data, speed, tokens, lang) {
     const isZh = lang === 'zh';
-      let wsRoot = undefined;
-    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-        wsRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
-    }
-    const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
-    const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
-    const contextState = computeContextSaturation(tokens, 1048576, undefined, subproject.path, wsRoot);
-    const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
+          const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const warnPct = cfg.get('warningThreshold', 50);
     const critPct = cfg.get('criticalThreshold', 20);
 
@@ -803,162 +783,6 @@ body {
   .header-title-box { flex-direction: column; align-items: flex-start; }
 }
 
-/* 🧠 State-of-the-Art Bulletproof Ultra-Adaptive Context Telemetry Card */
-.context-telemetry-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-sub);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin-bottom: 12px;
-  gap: 8px;
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.ctx-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  width: 100%;
-  min-width: 0;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 5px;
-}
-
-.ctx-card-title {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-title);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.ctx-badge-pill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 10px;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.ctx-card-body {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-width: 0;
-}
-
-.ctx-gauge-svg-wrap {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  max-width: 36px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ctx-gauge-svg {
-  width: 36px;
-  height: 36px;
-  transform: rotate(-90deg);
-}
-
-.ctx-gauge-track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-width: 3.8;
-}
-
-.ctx-gauge-val {
-  fill: none;
-  stroke-width: 3.8;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s ease;
-}
-
-.ctx-card-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.ctx-stat-primary {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  line-height: 1.1;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.ctx-stat-pct {
-  font-size: 14px;
-  font-weight: 800;
-  font-feature-settings: "tnum";
-}
-
-.ctx-stat-sub {
-  font-size: 10px;
-  color: var(--text-desc);
-  white-space: nowrap;
-}
-
-.ctx-stat-tag {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: var(--text-desc);
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.ctx-stat-tag strong {
-  color: var(--text-title);
-  font-weight: 600;
-}
-
-.btn-compact-pro {
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  color: #38bdf8;
-  border-radius: 6px;
-  padding: 5px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.btn-compact-pro:hover {
-  background: rgba(56, 189, 248, 0.22);
-  border-color: #38bdf8;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-}
 
 /* 📱 Responsive layout for narrow viewports */
 @media (max-width: 460px) {
@@ -979,29 +803,6 @@ body {
   }
 }
 
-/* 🖥️ Wide screen layout (> 580px) */
-@media (min-width: 580px) {
-  .context-telemetry-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-  }
-  .ctx-card-top {
-    border-bottom: none;
-    padding-bottom: 0;
-    width: auto;
-  }
-  .ctx-card-body {
-    flex: 1;
-  }
-  .btn-compact-pro {
-    width: auto;
-    padding: 6px 12px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-}
 </style>
 </head>
 <body>
@@ -1196,21 +997,13 @@ function refresh()      { vscode.postMessage({ command: 'refresh'      }); }
 function openSettings() { vscode.postMessage({ command: 'openSettings' }); }
 function toggleLang()   { vscode.postMessage({ command: 'toggleLang'   }); }
 
-function triggerCompact(btn) {
-    if (btn) {
-        btn.innerText = isZh ? '⏳ 正在提炼...' : '⏳ Refining...';
-        btn.style.opacity = '0.7';
-    }
-    vscode.postMessage({ command: 'compact' });
-}
 
 // ⚡ 实时无损 DOM 穿透接收器 (VS Code Webview postMessage 黄金标准)
 window.addEventListener('message', event => {
     const msg = event.data;
     if (msg && msg.type === 'telemetryLiveSync') {
         const tok = msg.tokens;
-        const ctx = msg.context;
-        const spd = msg.speed;
+                const spd = msg.speed;
         const qta = msg.quota;
         
         // 1. 实时原位更新活跃总 Token
@@ -1262,31 +1055,7 @@ window.addEventListener('message', event => {
             reqEl.innerText = tok.activeRequests + ' ' + (isZh ? '次' : 'reqs');
         }
 
-        // 4. 实时更新上下文额度仪表盘
-        const ctxPct = document.getElementById('liveCtxPct');
-        if (ctxPct) {
-            ctxPct.innerText = ctx.saturationFormatted;
-            ctxPct.style.color = ctx.colorHex;
-        }
-        const ctxSub = document.getElementById('liveCtxSub');
-        if (ctxSub) {
-            const usedK = (((ctx.usedTokens || ctx.workingTokens || 0)) / 1000).toFixed(1);
-            ctxSub.innerText = '(' + usedK + 'K / 1M)';
-        }
-        const ctxBadge = document.getElementById('liveCtxBadge');
-        if (ctxBadge) {
-            ctxBadge.innerText = isZh ? ctx.stageNameZh : ctx.stageNameEn;
-            ctxBadge.style.color = ctx.colorHex;
-            ctxBadge.style.background = ctx.colorHex + '1a';
-            ctxBadge.style.borderColor = ctx.colorHex + '44';
-        }
-        const gaugeVal = document.getElementById('liveGaugeVal');
-        if (gaugeVal) {
-            gaugeVal.setAttribute('stroke', ctx.colorHex);
-            const offset = 94.25 * (1 - (ctx.saturationPercent || 0) / 100);
-            gaugeVal.setAttribute('stroke-dashoffset', offset);
-        }
-
+        
         // 5. 实时更新速率
         const spdBox = document.getElementById('liveSpeedBox');
         if (spdBox) {
@@ -1301,13 +1070,7 @@ window.addEventListener('message', event => {
             syncFooter.innerText = (isZh ? '同步于: ' : 'Synced: ') + (qta.lastSyncTime || '--:--:--');
         }
 
-        // 7. 恢复提炼按钮状态
-        const btnCompact = document.getElementById('btnCompact');
-        if (btnCompact) {
-            btnCompact.innerText = isZh ? '⚡ 智能提炼上下文' : '⚡ Refine Context';
-            btnCompact.style.opacity = '1';
-        }
-    }
+            }
 });
 </script>
 </body>

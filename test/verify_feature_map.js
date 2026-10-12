@@ -83,30 +83,22 @@ try {
     assert(false, "FM-05 [Feature 3]: Token Scanner Exports", e.message);
 }
 
-// 5. Feature 4 & 5: Context Engine Multi-Model Capacities & Snapshot
-try {
-    const contextEngine = require(path.join(projectRoot, 'src', 'services', 'contextEngine'));
-    const caps = contextEngine.MODEL_CAPACITIES;
-    const hasAllModels = caps && caps.gemini === 1048576 && caps['gemini-2m'] === 2097152 && caps.claude === 200000 && caps.gpt4 === 128000 && caps.deepseek === 64000;
-    assert(hasAllModels, "FM-06 [Feature 4]: 5-Model Capacity Matrix Invariant", "Capacity mismatch");
-
-    assert(typeof contextEngine.computeContextSaturation === 'function' && typeof contextEngine.createSessionSnapshot === 'function' && typeof contextEngine.setModelType === 'function',
-        "FM-07 [Feature 4 & 5]: Context Engine API Completeness", "Missing computeContextSaturation / createSessionSnapshot / setModelType");
-} catch (e) {
-    assert(false, "FM-06 & 07: Context Engine Invariants", e.message);
-}
-
-// 6. Feature 6 & 7: UI StatusBar & Dashboard
+// 5. Feature 4: UI StatusBar HUD API
 try {
     const statusBar = require(path.join(projectRoot, 'src', 'ui', 'statusBar'));
-    assert(typeof statusBar.initStatusBarItems === 'function' && typeof statusBar.renderStatusBar === 'function',
-        "FM-08 [Feature 6]: Status Bar HUD API", "initStatusBarItems or renderStatusBar missing");
-
-    const dashboard = require(path.join(projectRoot, 'src', 'ui', 'dashboard'));
-    assert(typeof dashboard.showDashboard === 'function' && typeof dashboard.updateDashboardIfOpen === 'function',
-        "FM-09 [Feature 7]: Dashboard Webview API", "showDashboard or updateDashboardIfOpen missing");
+    assert(typeof statusBar.initStatusBarItems === 'function' && typeof statusBar.renderStatusBar === 'function' && typeof statusBar.buildUnifiedTooltip === 'function',
+        "FM-06 [Feature 4]: Status Bar HUD API", "initStatusBarItems / renderStatusBar / buildUnifiedTooltip missing");
 } catch (e) {
-    assert(false, "FM-08 & 09: UI Invariants", e.message);
+    assert(false, "FM-06 [Feature 4]: Status Bar HUD API", e.message);
+}
+
+// 6. Feature 5: UI Dashboard Webview API
+try {
+    const dashboard = require(path.join(projectRoot, 'src', 'ui', 'dashboard'));
+    assert(typeof dashboard.showDashboard === 'function' && typeof dashboard.updateDashboardIfOpen === 'function' && typeof dashboard.showQuickOverview === 'function',
+        "FM-07 [Feature 5]: Dashboard Webview API", "showDashboard / updateDashboardIfOpen / showQuickOverview missing");
+} catch (e) {
+    assert(false, "FM-07 [Feature 5]: Dashboard Webview API", e.message);
 }
 
 console.log("================================================================");

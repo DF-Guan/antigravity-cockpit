@@ -1,11 +1,8 @@
-//﻿​‌​​​​​‌​‌​‌​‌​‌​‌​‌​‌​​​‌​​‌​​​​​‌‌‌​‌​​‌​​​‌​​​‌​​​‌‌​​​‌​‌‌​‌​‌​​​‌‌‌​‌‌‌​‌​‌​‌‌​​​​‌​‌‌​‌‌‌​​‌‌‌‌‌​​​‌​‌​​‌‌​‌​​‌​​‌​‌​​​‌‌‌​​‌‌‌​‌​​​‌‌​​​​​​‌‌​‌‌​​​‌‌​​​‌​​‌‌​‌​​​‌‌​​​​‌​‌‌​​​‌‌​‌‌​​​‌‌​​‌‌​​​​​‌‌​​​‌​​​‌‌‌​​​​‌‌​​‌​​​​‌‌​​​​​‌‌​​​‌​​‌‌​​​​‌​​‌‌​​​‌​​‌‌​​‌​‍
 const vscode = require('vscode');
-const { computeContextSaturation, getContextState, resolveActiveSubproject } = require('../services/contextEngine');
 
 let sbGIcon, sbGWeekVal, sbG5h;
 let sbCIcon, sbCWeekVal, sbC5h;
 let sbSpeedIcon, sbSpeedVal;
-let sbContextItem;
 
 function initStatusBarItems(context, onClickCommand) {
     sbGIcon    = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
@@ -19,15 +16,11 @@ function initStatusBarItems(context, onClickCommand) {
     sbSpeedIcon = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9994);
     sbSpeedVal  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9993);
 
-    sbContextItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 9992);
-    sbContextItem.command = 'agPrivateCockpit.compactContext';
-
     const allItems = [sbGIcon, sbGWeekVal, sbG5h, sbCIcon, sbCWeekVal, sbC5h, sbSpeedIcon, sbSpeedVal];
     allItems.forEach(item => {
         item.command = onClickCommand || 'agPrivateCockpit.openDashboard';
         context.subscriptions.push(item);
     });
-    context.subscriptions.push(sbContextItem);
 }
 
 function getNumberAlertColor(pct, warnPct, critPct) {
@@ -37,69 +30,7 @@ function getNumberAlertColor(pct, warnPct, critPct) {
     return '#3fb950';
 }
 
-function buildContextTooltip(lang, contextState, tokenAnalyticsState) {
-    const isZh = lang === 'zh';
-    const tip = new vscode.MarkdownString();
-    tip.isTrusted = true;
-
-    const modelDisplayNames = {
-        'gemini': 'Google Gemini 3.8/3.7 Flash (1M)',
-        'gemini-2m': 'Google Gemini 1.5 Pro (2M)',
-        'claude': 'Anthropic Claude (200K)',
-        'gpt4': 'OpenAI GPT-4o (128K)',
-        'deepseek': 'DeepSeek V3/R1 (64K)'
-    };
-    const currentModelName = modelDisplayNames[contextState.modelType] || 'Google Gemini (1M)';
-
-    const capFormatted = Math.round(contextState.windowCapacity / 1000) + 'K';
-    const totExact = tokenAnalyticsState.activeTotalExact || '0';
-    const totFormatted = tokenAnalyticsState.activeTotalFormatted || '0';
-    const inFormatted = tokenAnalyticsState.activeInputFormatted || '0';
-    const outFormatted = tokenAnalyticsState.activeOutputFormatted || '0';
-
-    if (isZh) {
-        tip.appendMarkdown(`### 🧠 上下文窗口饱和度 (Context Saturation)
-
-`);
-        tip.appendMarkdown(`*当前占用: **${contextState.saturationFormatted}** / ${capFormatted} (${contextState.stageNameZh})*
-
----
-`);
-        tip.appendMarkdown(`📊 **当前活跃会话物理吞吐**: **${totFormatted}** (\`${totExact}\` Tokens)
-`);
-        tip.appendMarkdown(`- 📥 输入 Context: **${inFormatted}** (含前缀缓存)
-`);
-        tip.appendMarkdown(`- 📤 输出 Token: **${outFormatted}** (代码与思考链)
-`);
-        tip.appendMarkdown(`- ⚡ **长文本注意力保留率**: \`${contextState.attentionHealthZh}\`
-
----
-`);
-        tip.appendMarkdown(`💡 **[⚡ 点击执行 智能提炼上下文快照](command:agPrivateCockpit.compactContext)** | [🖥️ 打开驾驶舱](command:agPrivateCockpit.openDashboard)`);
-    } else {
-        tip.appendMarkdown(`### 🧠 Context Window Saturation
-
-`);
-        tip.appendMarkdown(`*Current Usage: **${contextState.saturationFormatted}** / ${capFormatted} (${contextState.stageNameEn})*
-
----
-`);
-        tip.appendMarkdown(`📊 **Active Session Tokens**: **${totFormatted}** (\`${totExact}\` Tokens)
-`);
-        tip.appendMarkdown(`- 📥 Input Context: **${inFormatted}** (with Cache)
-`);
-        tip.appendMarkdown(`- 📤 Output Tokens: **${outFormatted}** (Code & Traces)
-`);
-        tip.appendMarkdown(`- ⚡ **Attention Retention**: \`${contextState.attentionHealthEn}\`
-
----
-`);
-        tip.appendMarkdown(`💡 **[⚡ Click to run 提炼上下文](command:agPrivateCockpit.compactContext)** | [🖥️ Dashboard](command:agPrivateCockpit.openDashboard)`);
-    }
-    return tip;
-}
-
-function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState) {
+function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState) {
     const isZh = lang === 'zh';
     const tip = new vscode.MarkdownString();
     tip.isTrusted = true;
@@ -204,14 +135,12 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
 }
 
 function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState) {
-    if (!sbGIcon || !sbGWeekVal || !sbG5h || !sbCIcon || !sbCWeekVal || !sbC5h || !sbSpeedIcon || !sbSpeedVal || !sbContextItem) return;
+    if (!sbGIcon || !sbGWeekVal || !sbG5h || !sbCIcon || !sbCWeekVal || !sbC5h || !sbSpeedIcon || !sbSpeedVal) return;
 
     const cfg = vscode.workspace.getConfiguration('agPrivateCockpit');
     const showGemini  = cfg.get('showGemini', true);
     const showClaude  = cfg.get('showClaude', true);
     const showSpeed   = cfg.get('showTokenSpeed', true);
-    const showContext = cfg.get('showContextSaturation', false);
-    const customCap   = cfg.get('contextWindowLimit', 1048576);
     const compact     = cfg.get('compactStatusBar', false);
     const warnPct     = cfg.get('warningThreshold', 50);
     const critPct     = cfg.get('criticalThreshold', 20);
@@ -221,15 +150,7 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
     const cW = liveQuotaState.claude.weeklyPercent;
     const c5 = liveQuotaState.claude.fiveHourPercent;
 
-        let wsRoot = undefined;
-    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-        wsRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
-    }
-    const activeEditorPath = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : null;
-    const subproject = resolveActiveSubproject(wsRoot, activeEditorPath);
-    const configuredModel = cfg.get('modelType', undefined);
-    const contextState = computeContextSaturation(tokenAnalyticsState, customCap, configuredModel, subproject.path, wsRoot);
-    const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState, contextState);
+    const tip = buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
 
     // 1. Google Gemini
     if (showGemini) {
@@ -305,22 +226,11 @@ function renderStatusBar(lang, liveQuotaState, liveSpeedState, tokenAnalyticsSta
         sbSpeedIcon.hide();
         sbSpeedVal.hide();
     }
-
-    // 4. 🧠 Clean, High-Precision Context Saturation Meter
-    if (showContext) {
-        sbContextItem.text = `🧠 ${contextState.saturationFormatted}`;
-        sbContextItem.color = contextState.colorHex;
-        sbContextItem.tooltip = buildContextTooltip(lang, contextState, tokenAnalyticsState);
-        sbContextItem.show();
-    } else {
-        sbContextItem.hide();
-    }
 }
 
 module.exports = {
     initStatusBarItems,
     renderStatusBar,
     buildUnifiedTooltip,
-    buildContextTooltip,
     getNumberAlertColor
 };

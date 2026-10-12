@@ -20,9 +20,12 @@ Thank you for your interest in contributing to **Antigravity Private Cockpit**! 
 3. **Validate code syntax & integrity**:
    ```bash
    node -c src/extension.js
-   node -c src/services/contextEngine.js
    node -c src/services/quotaService.js
+   node -c src/services/speedEngine.js
    node -c src/services/tokenScanner.js
+   node -c src/ui/statusBar.js
+   node -c src/ui/dashboard.js
+   npm test
    ```
 
 ---
@@ -47,5 +50,5 @@ Thank you for your interest in contributing to **Antigravity Private Cockpit**! 
    git checkout -b feature/my-cool-feature
    ```
 2. Commit your changes following standard semantic commits (`feat:`, `fix:`, `docs:`, `chore:`).
-3. Ensure all tests pass.
+3. Ensure all tests pass (`npm test`).
 4. Submit a Pull Request targeting `main`.

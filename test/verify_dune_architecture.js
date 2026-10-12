@@ -67,11 +67,10 @@ scanDir(srcDir);
 
 // -------------------------------------------------------------
 // Axiom 3: 每个持久状态唯一显式写入者 (Single Obvious Writer)
-// 约束 2: memory.md 与 docs/snapshots/ 仅允许由 contextEngine.js 写入
-// 约束 3: token 高水位线仅允许由 tokenScanner.js / contextEngine.js 单点维护
+// 约束 2: 业务源码严禁未经授权修改项目 Tier-2/Tier-3 约束文件
+// 约束 3: token 高水位线仅允许由 tokenScanner.js 单点维护
 // -------------------------------------------------------------
 try {
-
     let snapshotWriterViolation = false;
     let writerDetails = [];
 
@@ -81,16 +80,12 @@ try {
         
         // 检查谁在写 memory.md 或 snapshots
         if (content.includes('memory.md') && (content.includes('writeFileSync') || content.includes('appendFileSync'))) {
-            if (rel !== 'src/services/contextEngine.js') {
-                snapshotWriterViolation = true;
-                writerDetails.push(`${rel} 擅自写入 memory.md`);
-            }
+            snapshotWriterViolation = true;
+            writerDetails.push(`${rel} 擅自写入 memory.md`);
         }
         if (content.includes('snapshots') && (content.includes('writeFileSync') || content.includes('createSessionSnapshot'))) {
-            if (rel !== 'src/services/contextEngine.js' && rel !== 'src/extension.js') {
-                snapshotWriterViolation = true;
-                writerDetails.push(`${rel} 擅自生成快照文件`);
-            }
+            snapshotWriterViolation = true;
+            writerDetails.push(`${rel} 擅自生成快照文件`);
         }
     });
 

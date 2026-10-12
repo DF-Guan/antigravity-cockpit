@@ -1,5 +1,12 @@
 # Change Log (更新日志)
 
+## [2.1.11] - 2026-10-12
+### 🧹 全面移除实验性上下文统计与提炼残余 (Complete Removal of Context Saturation Remnants)
+- **🧼 深度清理代码与注册项**: 全量移除 contextEngine 依赖、状态栏上下文指示器 (sbContextItem)、命令面板残留命令 (compactContext / switchModel) 及对应设置项 (showContextSaturation / contextWindowLimit / modelType)；
+- **🖼️ 核心素材全量更新**: 重新生成并校准状态栏横幅与可视化大屏全渠道预览图（中/英文 assets），彻底消除粉色脑部图标、上下文额度数值与旧版文案痕迹；
+- **📐 架构契约与测试套件对齐**: 同步精炼 Feature Map、Dune 5 大公理检查与质量门禁套件，聚焦 100% 物理离线配额直连、实时生成微分测速与真实会话 Token 审计。
+
+---
 ## [2.1.10] - 2026-09-04
 ### 🎯 专注核心指标与实验性功能收敛 (Core Metric Focus & Telemetry Convergence)
 - **🙈 隐藏实验性上下文额度与提炼入口**: 暂时收敛尚在校准调优中的上下文额度卡片与智能提炼快照交互入口（状态栏与驾驶舱大屏），待底层模型长文本保留率测算算法进一步升级后再行开放；

@@ -97,10 +97,12 @@ try {
 try {
     const cmds = pkg.contributes && pkg.contributes.commands ? pkg.contributes.commands : [];
     const hasDashboardCmd = cmds.some(c => c.command === 'agPrivateCockpit.openDashboard');
-    const hasSwitchModelCmd = cmds.some(c => c.command === 'agPrivateCockpit.switchModel');
-    const hasCompactCmd = cmds.some(c => c.command === 'agPrivateCockpit.compactContext');
+    const hasOverviewCmd = cmds.some(c => c.command === 'agPrivateCockpit.quickOverview');
+    const hasRefreshCmd = cmds.some(c => c.command === 'agPrivateCockpit.refresh');
+    const hasToggleLangCmd = cmds.some(c => c.command === 'agPrivateCockpit.toggleLang');
+    const hasSettingsCmd = cmds.some(c => c.command === 'agPrivateCockpit.openNativeSettings');
 
-    assert(hasDashboardCmd && hasSwitchModelCmd && hasCompactCmd, "Gate 4: 核心命令注册完整性 (Commands Contributed)", "缺少关键命令贡献项");
+    assert(hasDashboardCmd && hasOverviewCmd && hasRefreshCmd && hasToggleLangCmd && hasSettingsCmd, "Gate 4: 核心命令注册完整性 (Commands Contributed)", "缺少关键命令贡献项");
 } catch (e) {
     assert(false, "Gate 4: 命令注册检查", e.message);
 }
