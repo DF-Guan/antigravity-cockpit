@@ -42,14 +42,24 @@
 * **Local In-Memory Cache**: Caches verified ports for sub-10ms subsequent polling.
 
 ### 3. ✨ Google Gemini Official Quota Live Sync (7-Day & 5h Windows)
-* **Flagship Priority Mapping**: Fully synchronized with `Gemini 3.8 Flash`, `Gemini 3.7 Flash`, and `Gemini 3.1 Pro` official pools;
+* **Flagship Priority Mapping**: Fully synchronized with `Gemini 4 Argon` (Pro / Ultra / Enterprise exclusive), `Gemini 3.8 Flash`, `Gemini 3.7 Flash`, and `Gemini 3.1 Pro` official pools;
 * **Second-Precision Countdown**: Exact countdown to quota reset times;
 * **3-Tier Adaptive Digit Color Alerts**: Green (Healthy), Yellow (Watch), Red (Critical).
 
 ### 4. 🎭 Anthropic Claude & GPT-OSS Quota Tracker
-* **Advanced Reasoning Model Coverage**: Independently tracks Claude 4.6 Sonnet / Opus (Thinking) and GPT-OSS 120B pools;
+* **Advanced Reasoning Model Coverage**: Fully synchronized with Claude Sonnet 5.5 (Thinking), Claude Opus 5.5 (Thinking), and GPT-OSS 120B pools;
 * **Dual Progress Bars**: 7-Day and 5-Hour sprint capacity bars for instant clarity;
 * **Native Status Indicator**: Seamless transitions between Optimal and Low Quota.
+
+> ⚠️ **Special Notice on Model Availability & Subscription Tiers**:  
+> This extension monitors the physical quota pools provided by the local Language Server. **The specific models available in your IDE are strictly governed by your official Google Antigravity subscription plan** (Free / Google AI Plus / Google AI Pro / Google AI Ultra / Enterprise).  
+> For example:  
+> - **Google AI Pro / Ultra / Enterprise**: Exclusive access to top-tier reasoning flagships (e.g. **Gemini 4 Argon**, **Claude Opus 5.5**, and **Gemini 3.1 Pro**);  
+> - **Free / Google AI Plus**: Provides everyday frontier models (e.g. **Gemini 3.8 Flash** and **GPT-OSS 120B**, with Plus trial access to Claude).  
+> **If high-tier models such as Gemini 4 Argon or Claude Opus do not appear in your IDE model picker, this is strictly due to official Google subscription entitlement rules, not an extension defect or misleading claim.**  
+> Please consult the official model availability matrix: 👉 **[Google Antigravity Official Models & Plans Documentation](https://antigravity.google/docs/models)**
+
+---
 
 ### 5. 🎯 Active Session Isolation & Global Separation
 * **Single-Session Pure Audit**: Automatically targets the active session by filesystem timestamp;
@@ -73,6 +83,7 @@ Customize the extension in VS Code / Antigravity IDE Settings (`agPrivateCockpit
 | :--- | :---: | :--- |
 | `agPrivateCockpit.showGemini` | `true` | Show Google Gemini quota on status bar |
 | `agPrivateCockpit.showClaude` | `true` | Show Anthropic Claude quota on status bar |
+| `agPrivateCockpit.openModelsDoc` | *(Command)* | Quick command to open Google Antigravity official models documentation |
 | `agPrivateCockpit.showTokenSpeed` | `true` | Show real-time Token generation velocity (`t/s`) |
 | `agPrivateCockpit.compactStatusBar` | `false` | Compact mode (icon + weekly quota only) |
 | `agPrivateCockpit.refreshIntervalSeconds` | `15` | Polling refresh interval in seconds (min 5s) |

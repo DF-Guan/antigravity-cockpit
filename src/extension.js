@@ -37,6 +37,7 @@ function activate(context) {
                 if (cmd === 'refresh') fetchAndRefresh(context, true);
                 else if (cmd === 'openSettings') vscode.commands.executeCommand('agPrivateCockpit.openNativeSettings');
                 else if (cmd === 'toggleLang') setLanguage(context, currentLang === 'zh' ? 'en' : 'zh');
+                else if (cmd === 'openOfficialModelsDoc') vscode.env.openExternal(vscode.Uri.parse('https://antigravity.google/docs/models'));
             });
         }),
         vscode.commands.registerCommand('agPrivateCockpit.quickOverview', () => {
@@ -53,6 +54,9 @@ function activate(context) {
         }),
         vscode.commands.registerCommand('agPrivateCockpit.openNativeSettings', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', '@ext:DF-Guan.antigravity-cockpit');
+        }),
+        vscode.commands.registerCommand('agPrivateCockpit.openModelsDoc', () => {
+            vscode.env.openExternal(vscode.Uri.parse('https://antigravity.google/docs/models'));
         })
     );
 

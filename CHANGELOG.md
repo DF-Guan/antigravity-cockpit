@@ -1,5 +1,16 @@
 # Change Log (更新日志)
 
+## [2.1.12] - 2026-10-14
+### Added
+- **📖 官方模型支持与订阅方案说明直连 (Official Models Documentation Integration)**:
+  - 在 Webview 驾驶舱、状态栏悬浮 Tooltip、快捷总览菜单及 README 文档中深度集成 Google Antigravity [官方模型文档 (https://antigravity.google/docs/models)](https://antigravity.google/docs/models) 直链；
+  - 明确标注各级别订阅方案（Free / Plus / Pro / Ultra / Enterprise）的可用模型与权益差异，杜绝低阶订阅用户因缺少特定模型而产生误解；
+  - 注册 `agPrivateCockpit.openModelsDoc` 命令，支持在外部浏览器中一键打开官方最新支持模型矩阵。
+
+### Changed
+- **🚀 官方前沿模型矩阵对齐 (Frontier Model Alignment)**:
+  - 默认展示模型全面对齐官方前沿序列：Google Gemini（Gemini 4 Argon [Pro/Ultra/Enterprise 专享]、Gemini 3.8 Flash、Gemini 3.7 Flash、Gemini 3.1 Pro）与 Anthropic Claude / GPT（Claude Sonnet 5.5、Claude Opus 5.5、GPT-OSS 120B）。
+
 ## [2.1.11] - 2026-10-12
 ### 🧹 全面移除实验性上下文统计与提炼残余 (Complete Removal of Context Saturation Remnants)
 - **🧼 深度清理代码与注册项**: 全量移除 contextEngine 依赖、状态栏上下文指示器 (sbContextItem)、命令面板残留命令 (compactContext / switchModel) 及对应设置项 (showContextSaturation / contextWindowLimit / modelType)；

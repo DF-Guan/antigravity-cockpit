@@ -9,8 +9,8 @@ const liveQuotaState = {
     isLoading: true,
     lastSyncTime: '--:--:--',
     availableModels: [],
-    geminiModels: ['Gemini 3.8 Flash', 'Gemini 3.7 Flash', 'Gemini 3.5 Flash', 'Gemini 3.1 Pro'],
-    claudeModels: ['Claude Sonnet 4.6 (Thinking)', 'Claude Opus 4.6 (Thinking)', 'GPT-OSS 120B (Medium)'],
+    geminiModels: ['Gemini 4 Argon', 'Gemini 3.8 Flash', 'Gemini 3.7 Flash', 'Gemini 3.1 Pro'],
+    claudeModels: ['Claude Sonnet 5.5 (Thinking)', 'Claude Opus 5.5 (Thinking)', 'GPT-OSS 120B (Medium)'],
     gemini: {
         weeklyPercent: 0,
         weeklyResetTimeZh: '7天周期',
@@ -401,7 +401,7 @@ async function fetchLiveQuota(context, speedState, tokenState) {
                         configs.forEach(m => {
                             const lbl = m.label || '';
                             if (lbl && !models.includes(lbl)) models.push(lbl);
-                            if (lbl.toLowerCase().includes('gemini') && !geminis.includes(lbl)) geminis.push(lbl);
+                            if ((lbl.toLowerCase().includes('gemini') || lbl.toLowerCase().includes('argon')) && !geminis.includes(lbl)) geminis.push(lbl);
                             else if ((lbl.toLowerCase().includes('claude') || lbl.toLowerCase().includes('gpt')) && !claudes.includes(lbl)) claudes.push(lbl);
                         });
 

@@ -94,7 +94,7 @@ function showQuickOverview(context, liveQuotaState, liveSpeedState, tokenAnalyti
     ] : [
         { label: `💎 Active Session Total: ${tokenAnalyticsState.activeTotalFormatted} (${tokenAnalyticsState.activeTotalExact})`, description: `Session ID: ${tokenAnalyticsState.activeConvShort} | Out: ${tokenAnalyticsState.activeOutputFormatted} | Turns: ${tokenAnalyticsState.activeRequests}`, detail: 'Strictly isolated to active current conversation only' },
         { label: `🌐 Machine Global Total: ${tokenAnalyticsState.globalTotalFormatted} (${tokenAnalyticsState.globalTotalExact})`, description: `Sum of all ${tokenAnalyticsState.globalConvsCount} sessions`, detail: 'All historical Antigravity sessions' },
-        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 3.8 Flash • 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
+        { label: `✨ Google Gemini: ${gW} (5h: ${g5})`, description: `Cycle: 7-Day Window | Reset: ${g.weeklyResetTimeEn} | 5h: ${g.fiveHourResetTimeEn}`, detail: 'Gemini 4 Argon • 3.8 Flash • 3.7 Flash • 3.1 Pro Flagship (Auto Live)' },
         { label: `🎭 Claude 4.6 & GPT: ${cW} (5h: ${c5})`, description: `Cycle: 7-Day Window | Reset: ${c.weeklyResetTimeEn} | 5h: ${c.fiveHourResetTimeEn}`, detail: 'Claude 4.6 Sonnet / Opus, GPT-OSS Pool (Auto Live)' },
         { label: `⚡ Generation Velocity: 🚀 ${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (Streaming)' : '0 Tokens/s (Idle)'} ｜ 🏆 Peak Burst: ${liveSpeedState.peakTps} Tokens/s`, description: `Local IPC Latency: ${liveSpeedState.latencyMs}ms | ${liveSpeedState.lastMeasuredTime}`, detail: 'Real-time response velocity' },
         { label: `🔄 Force Refresh Now`, description: 'Probe latest quota from Language Server' },
@@ -645,6 +645,64 @@ body {
 .card-g { border-top: 3px solid #3b82f6; }
 .card-c { border-top: 3px solid var(--c-terracotta); }
 
+.model-tier-notice {
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: -2px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--c-muted);
+  line-height: 1.4;
+}
+.model-tier-notice .notice-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.model-tier-notice .notice-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.model-tier-notice a.notice-link {
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 3px 8px;
+  background: rgba(56, 189, 248, 0.1);
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.model-tier-notice a.notice-link:hover {
+  background: rgba(56, 189, 248, 0.22);
+  text-decoration: underline;
+}
+.brand-info .model-doc-mini {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: normal;
+  color: var(--c-muted);
+  opacity: 0.8;
+  text-decoration: none;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.brand-info .model-doc-mini:hover {
+  opacity: 1;
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
 .card-head {
   display: flex;
   align-items: center;
@@ -898,7 +956,7 @@ body {
             </svg>
           </div>
           <div class="brand-info">
-            <div class="brand-name">${t.geminiBrand}</div>
+            <div class="brand-name">${t.geminiBrand} <a href="https://antigravity.google/docs/models" target="_blank" class="model-doc-mini" title="${t.tierHelp}" onclick="openOfficialModelsDoc(); return false;">🔗 ${t.docShort}</a></div>
             <div class="brand-sub">${t.geminiSub}</div>
           </div>
         </div>
@@ -929,7 +987,7 @@ body {
             </svg>
           </div>
           <div class="brand-info">
-            <div class="brand-name">${t.claudeBrand}</div>
+            <div class="brand-name">${t.claudeBrand} <a href="https://antigravity.google/docs/models" target="_blank" class="model-doc-mini" title="${t.tierHelp}" onclick="openOfficialModelsDoc(); return false;">🔗 ${t.docShort}</a></div>
             <div class="brand-sub">${t.claudeSub}</div>
           </div>
         </div>
@@ -950,6 +1008,14 @@ body {
         <div class="meta-row"><span>${t.fiveResetLbl}</span><span class="meta-val" style="color:${c5 >= 100 ? 'var(--c-green)' : 'inherit'}">${t.fiveResetC}</span></div>
       </div>
     </div>
+  </div>
+
+    <div class="model-tier-notice">
+    <div class="notice-left">
+      <span class="notice-icon">📖</span>
+      <span class="notice-text">${t.modelsNotice}</span>
+    </div>
+    <a href="https://antigravity.google/docs/models" target="_blank" class="notice-link" onclick="openOfficialModelsDoc(); return false;">${t.modelsDocLink}</a>
   </div>
 
   <div class="real-history-box">
@@ -996,6 +1062,7 @@ updatePrecisionView();
 function refresh()      { vscode.postMessage({ command: 'refresh'      }); }
 function openSettings() { vscode.postMessage({ command: 'openSettings' }); }
 function toggleLang()   { vscode.postMessage({ command: 'toggleLang'   }); }
+function openOfficialModelsDoc() { vscode.postMessage({ command: 'openOfficialModelsDoc' }); }
 
 
 // ⚡ 实时无损 DOM 穿透接收器 (VS Code Webview postMessage 黄金标准)

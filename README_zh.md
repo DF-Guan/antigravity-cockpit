@@ -42,14 +42,24 @@
 * **智能本地缓存**：握手成功后自动缓存端口号，后续每轮轮询直接本地直连，耗时 < 10ms。
 
 ### 3. ✨ Google Gemini 官方配额全同频（周周期 & 5h冲刺双窗口）
-* **旗舰模型优先映射**：全面同频 `Gemini 3.8 Flash`、`Gemini 3.7 Flash` 与 `Gemini 3.1 Pro` 官方配额池；
+* **旗舰模型优先映射**：全面同频 `Gemini 4 Argon`（Pro / Ultra / Enterprise 计划专享）、`Gemini 3.8 Flash`、`Gemini 3.7 Flash` 与 `Gemini 3.1 Pro` 官方配额池；
 * **精确到分秒的满额重置倒计时**：清晰掌握每周额度与 5 小时冲刺额度消耗进度；
 * **三级自适应纯数字色彩预警**：绿色（充裕）、黄色（注意）、红色（耗尽）精准指示。
 
 ### 4. 🎭 Anthropic Claude & GPT-OSS 专属配额监控
-* **主流高级推理模型覆盖**：独立呈现 Claude 4.6 Sonnet / Opus (Thinking) 及 GPT-OSS 120B 配额池状态；
+* **主流高级推理模型覆盖**：全面同频 Claude Sonnet 5.5 (Thinking)、Claude Opus 5.5 (Thinking) 及 GPT-OSS 120B 配额池状态；
 * **双窗口独立进度条**：7 天周期与 5 小时高频冲刺双进度条清晰可视；
 * **官方原生物理状态指示**：运行良好 / 额度偏低无缝切换。
+
+> ⚠️ **关于模型可用性与官方订阅层级的特别说明**：  
+> 本插件监控的是 Language Server 本地暴露的物理配额池。**您在 IDE 中实际能够选择和使用的模型严格取决于您的 Google Antigravity 官方订阅方案**（Free / Google AI Plus / Google AI Pro / Google AI Ultra / Enterprise）。  
+> 例如：  
+> - **Google AI Pro / Ultra / Enterprise**：专享顶级前沿旗舰（如 **Gemini 4 Argon**、**Claude Opus 5.5**、**Gemini 3.1 Pro** 等）；  
+> - **Free / Google AI Plus**：开放基础主流模型（如 **Gemini 3.8 Flash**、**GPT-OSS 120B**，Plus 提供 Claude 限期试用）。  
+> **若您在 IDE 下拉框中未看到 Gemini 4 Argon 或 Claude Opus 等高级模型，属官方订阅权限划分，并非插件虚假宣传或功能缺陷。**  
+> 详情请查阅官方完整模型支持矩阵：👉 **[Google Antigravity 官方模型与订阅方案文档 (Models Docs)](https://antigravity.google/docs/models)**
+
+---
 
 ### 5. 🎯 当前活跃会话独立隔离与全局总和严格区分
 * **单会话纯净事实审计**：按最新修改时间毫秒级定位当前活跃会话（Active Session），4 宫格指标严格仅统计当前会话物理数据；
@@ -73,6 +83,7 @@
 | :--- | :---: | :--- |
 | `agPrivateCockpit.showGemini` | `true` | 是否在状态栏显示 Google Gemini 原生配额 |
 | `agPrivateCockpit.showClaude` | `true` | 是否在状态栏显示 Anthropic Claude & GPT 原生配额 |
+| `agPrivateCockpit.openModelsDoc` | *(命令)* | 快捷打开 Google Antigravity 官方支持模型说明文档 |
 | `agPrivateCockpit.showTokenSpeed` | `true` | 是否在状态栏显示实时 Token 响应速率 (`t/s`) |
 | `agPrivateCockpit.compactStatusBar` | `false` | 极简模式（仅显示图标与周配额，隐藏 5h 冲刺） |
 | `agPrivateCockpit.refreshIntervalSeconds` | `15` | 后台探测刷新周期（秒，最低 5 秒） |

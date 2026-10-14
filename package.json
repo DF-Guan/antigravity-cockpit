@@ -2,7 +2,7 @@
   "name": "antigravity-cockpit",
   "displayName": "Antigravity Private Cockpit – 100% Offline AI Quota Monitor",
   "description": "🔒 100% Offline & Private AI Quota Monitor for Antigravity IDE. Zero telemetry, zero external network requests, zero token leaks. Real-time Gemini & Claude quota tracker with a gorgeous bilingual dashboard.",
-  "version": "2.1.11",
+  "version": "2.1.12",
   "publisher": "DF-Guan",
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -69,6 +69,12 @@
         "title": "Antigravity Private Cockpit: Open Settings",
         "category": "Antigravity Cockpit",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "agPrivateCockpit.openModelsDoc",
+        "title": "Antigravity Private Cockpit: Official Models & Plans Documentation",
+        "category": "Antigravity Cockpit",
+        "icon": "$(book)"
       }
     ],
     "configuration": {
