@@ -1,5 +1,18 @@
 # Change Log (更新日志)
 
+## [2.1.13] - 2026-10-16
+### Fixed
+- **⚡ 真实物理动态测速与流式平滑 (Real Dynamic Generation Velocity & EMA Smoothing)**:
+  - 彻底移除原测速引擎中静态硬编码的固定 TPS 常数，实现基于底层 SQLite-WAL / 会话数据流物理字节增量 (ΔBytes) 的精确微分测量；
+  - 引入 35% 惯性 + 65% 即时增量的 EMA 指数加权移动平均滤波，展现自然平滑的动态流速起伏，生成结束后自然平滑归零；
+  - 移除硬编码峰值与延迟，实现真实历史个人最高 TPS 动态刷新与持久化，并通过本地 IPC 往返耗时测量毫秒级实时延迟。
+
+### Changed
+- **🎨 驾驶舱实时测速卡片视觉与排版统一 (Dashboard Velocity Typography & In-place Sync)**:
+  - 修复前端遥测数据同步时因未定义样式类导致的字体骤然变细变小、状态徽章丢失的跳变冲突；
+  - 优化数值字重契约至黄金标准 700 (Bold)，统一采用紧凑规范的 t/s 计量单位；
+  - 实现 #heroSpeedVal、#heroSpeedBadge 与 #heroSpeedSub 原位平滑更新，彻底终结格式打架与闪烁。
+
 ## [2.1.12] - 2026-10-14
 ### Added
 - **📖 官方模型支持与订阅方案说明直连 (Official Models Documentation Integration)**:

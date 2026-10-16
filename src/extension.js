@@ -3,7 +3,7 @@ const path = require('path');
 const vscode = require('vscode');
 const { getEffectiveLang } = require('./utils/i18n');
 const { liveQuotaState, fetchLiveQuota } = require('./services/quotaService');
-const { liveSpeedState, updateLiveSpeedEngine } = require('./services/speedEngine');
+const { liveSpeedState, updateLiveSpeedEngine, initSpeedEngineStorage } = require('./services/speedEngine');
 const { tokenAnalyticsState, computeLiveTokenAnalytics, initTokenScannerStorage } = require('./services/tokenScanner');
 const { initStatusBarItems, renderStatusBar } = require('./ui/statusBar');
 const { showDashboard, updateDashboardIfOpen, showQuickOverview } = require('./ui/dashboard');
@@ -17,6 +17,7 @@ function activate(context) {
 
     // 🌟 1. 同步加载物理持久化高水位线 (彻底杜绝 Reload Window / 重启时的数值回退与闪烁)
     initTokenScannerStorage(context.globalState);
+    initSpeedEngineStorage(context.globalState);
 
     currentLang = context.globalState.get('agPrivateCockpit.lang', getEffectiveLang());
     computeLiveTokenAnalytics();

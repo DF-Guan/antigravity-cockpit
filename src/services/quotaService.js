@@ -387,7 +387,12 @@ async function fetchLiveQuota(context, speedState, tokenState) {
     if (speedState) speedState.lastMeasuredTime = nowTime;
 
     try {
+        const tStart = Date.now();
         const res = await probeLanguageServerQuota();
+        const roundTrip = Date.now() - tStart;
+        if (speedState && roundTrip > 0) {
+            speedState.latencyMs = Math.min(120, Math.max(3, roundTrip));
+        }
         if (res && res.json && res.json.response && res.json.response.groups) {
             // 🌟 Parallel live model discovery
             if (cachedPort && cachedToken) {

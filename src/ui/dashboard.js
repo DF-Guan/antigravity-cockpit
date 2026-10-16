@@ -498,7 +498,7 @@ body {
 }
 .hero-val {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -609,7 +609,7 @@ body {
 }
 .sub-val {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   margin: 2px 0;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
@@ -1123,12 +1123,24 @@ window.addEventListener('message', event => {
         }
 
         
-        // 5. 实时更新速率
-        const spdBox = document.getElementById('liveSpeedBox');
-        if (spdBox) {
-            spdBox.innerHTML = spd.isStreaming
-                ? '<span class="speed-val speed-val-active">🚀 ' + spd.currentTps + ' <span class="unit">Tokens/s</span></span>'
-                : '<span class="speed-val">0 <span class="unit">Tokens/s</span></span>';
+        // 5. 实时原位平滑更新速率与徽章 (统一样式与字重契约，杜绝跳动)
+        const spdValEl = document.getElementById('heroSpeedVal');
+        const spdBadgeEl = document.getElementById('heroSpeedBadge');
+        const spdSubEl = document.getElementById('heroSpeedSub');
+        if (spdValEl) {
+            const isStreaming = spd && spd.isStreaming;
+            const tpsNum = isStreaming ? spd.currentTps : '0';
+            spdValEl.innerHTML = tpsNum + ' <span style="font-size:13px;font-weight:700;">t/s</span>';
+            spdValEl.style.color = isStreaming ? 'var(--c-blue)' : 'var(--text-muted)';
+        }
+        if (spdBadgeEl) {
+            const isStreaming = spd && spd.isStreaming;
+            spdBadgeEl.innerText = isStreaming ? (isZh ? '🟢 正在生成' : '🟢 Streaming') : (isZh ? '💤 待机就绪' : '💤 Idle Ready');
+            spdBadgeEl.style.background = isStreaming ? 'rgba(56,189,248,0.18)' : 'var(--bg-card)';
+            spdBadgeEl.style.color = isStreaming ? 'var(--c-blue)' : 'inherit';
+        }
+        if (spdSubEl && spd) {
+            spdSubEl.innerText = (isZh ? '峰值 ' : 'Peak ') + spd.peakTps + ' t/s ｜ ' + (isZh ? '本地 ' : 'Local ') + spd.latencyMs + 'ms';
         }
 
         // 6. 实时同步时间戳
