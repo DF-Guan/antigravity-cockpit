@@ -12,6 +12,7 @@ const liveSpeedState = {
 let persistentSpeedStorage = null;
 let prevTotalBytes = 0;
 let prevScanTime = 0;
+let prevLatestMtime = 0;
 let prevCalculatedTps = 0;
 let consecutiveIdleCount = 0;
 let streamingTokenAccumulator = 0;
@@ -104,6 +105,9 @@ function updateLiveSpeedEngine() {
 
         const elapsedSec = prevScanTime > 0 ? Math.max(0.4, (now - prevScanTime) / 1000) : 1.5;
         const deltaBytes = (prevTotalBytes > 0 && act.totalBytes >= prevTotalBytes) ? (act.totalBytes - prevTotalBytes) : 0;
+        const hasPhysicalDelta = (deltaBytes > 0) || (act.latestMtime > (prevLatestMtime || 0));
+        liveSpeedState.hasPhysicalDelta = hasPhysicalDelta;
+        liveSpeedState.consecutiveIdleCount = consecutiveIdleCount;
 
         let dynamicTps = 0;
         if (deltaBytes > 0) {
@@ -145,6 +149,9 @@ function updateLiveSpeedEngine() {
         lastStreamingTick = now;
     } else {
         consecutiveIdleCount++;
+        const hasPhysicalDelta = (act.totalBytes !== prevTotalBytes) || (act.latestMtime > (prevLatestMtime || 0));
+        liveSpeedState.hasPhysicalDelta = hasPhysicalDelta;
+        liveSpeedState.consecutiveIdleCount = consecutiveIdleCount;
         if (consecutiveIdleCount === 1 && prevCalculatedTps > 0) {
             // 停止生成的第 1 个 1.5s 周期：平滑降落回冲，避免生硬刹车
             liveSpeedState.currentTps = Number((prevCalculatedTps * 0.3).toFixed(1));
@@ -160,6 +167,7 @@ function updateLiveSpeedEngine() {
     }
 
     prevTotalBytes = act.totalBytes;
+    prevLatestMtime = act.latestMtime;
     prevScanTime = now;
     return liveSpeedState;
 }

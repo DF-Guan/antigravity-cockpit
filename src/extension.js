@@ -13,7 +13,8 @@ let speedTimer;
 let currentLang = 'auto';
 
 function activate(context) {
-    console.log('[Antigravity Private Cockpit] v2.1.11 激活');
+    const extVersion = (context.extension && context.extension.packageJSON) ? context.extension.packageJSON.version : '2.1.13';
+    console.log(`[Antigravity Private Cockpit] v${extVersion} 激活`);
 
     // 🌟 1. 同步加载物理持久化高水位线 (彻底杜绝 Reload Window / 重启时的数值回退与闪烁)
     initTokenScannerStorage(context.globalState);
@@ -80,12 +81,23 @@ function activate(context) {
     fetchAndRefresh(context, false);
     restartAutoRefresh(context);
 
-    // 4. 1.5 秒 SQLite-WAL 亚秒级流速与 Token 增量实时感知定时器
+    // 4. 1.5 秒 SQLite-WAL 亚秒级流速与智能低功耗感知定时器
+    let idleHeartbeatCount = 0;
     speedTimer = setInterval(() => {
-        updateLiveSpeedEngine();
-        computeLiveTokenAnalytics(); // 🌟 实时计算最新会话物理增长与流速变化
-        renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
-        updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, false);
+        const speed = updateLiveSpeedEngine();
+        const isStreaming = speed && speed.isStreaming;
+        const isLanding = speed && speed.consecutiveIdleCount <= 2;
+        const hasDelta = speed && speed.hasPhysicalDelta;
+
+        // 🌟 智能节电与 I/O 降频：处于活跃流式、停止降落、物理有增量、或每 5 次心跳(约 7.5s) 时触发完整审计
+        if (isStreaming || isLanding || hasDelta || idleHeartbeatCount >= 4) {
+            idleHeartbeatCount = 0;
+            computeLiveTokenAnalytics();
+            renderStatusBar(currentLang, liveQuotaState, liveSpeedState, tokenAnalyticsState);
+            updateDashboardIfOpen(liveQuotaState, liveSpeedState, tokenAnalyticsState, currentLang, false);
+        } else {
+            idleHeartbeatCount++;
+        }
     }, 1500);
     context.subscriptions.push({ dispose: () => { if (speedTimer) clearInterval(speedTimer); } });
 }

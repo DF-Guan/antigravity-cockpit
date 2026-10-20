@@ -78,9 +78,9 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
         tip.appendMarkdown(`各模型可用性严格由您的 Google Antigravity 订阅级别决定：\n- **Pro / Ultra / Enterprise**: 专享旗舰模型（如 **Gemini 4 Argon**、**Claude Opus 5.5**、**Gemini 3.1 Pro** 等）；\n- **Free / Plus**: 支持基础主流模型（如 **Gemini 3.8 Flash**、**GPT-OSS 120B**）。\n若无法切换至特定高阶模型，请参阅官方文档：\n👉 [Google Antigravity 官方支持模型文档 (https://antigravity.google/docs/models)](https://antigravity.google/docs/models)\n\n---\n`);
         tip.appendMarkdown(`⚡ **实时流式响应测速**
 `);
-        tip.appendMarkdown(`- 🚀 **实时生成流速**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 生成中)' : '0 Tokens/s (💤 待机就绪)'}**
+        tip.appendMarkdown(`- 🚀 **实时生成流速**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' t/s (🟢 生成中)' : '0 t/s (💤 待机就绪)'}**
 `);
-        tip.appendMarkdown(`- 🏆 **历史爆发峰值**: **${liveSpeedState.peakTps} Tokens/s**
+        tip.appendMarkdown(`- 🏆 **历史爆发峰值**: **${liveSpeedState.peakTps} t/s**
 `);
         tip.appendMarkdown(`- ⏱️ 本地 IPC 延迟: \`${liveSpeedState.latencyMs}ms\`
 
@@ -125,9 +125,9 @@ function buildUnifiedTooltip(lang, liveQuotaState, liveSpeedState, tokenAnalytic
         tip.appendMarkdown(`Model availability is strictly governed by your Google Antigravity plan:\n- **Pro / Ultra / Enterprise**: Exclusive flagships (e.g. **Gemini 4 Argon**, **Claude Opus 5.5**, **Gemini 3.1 Pro**);\n- **Free / Plus**: Mainstream models (e.g. **Gemini 3.8 Flash**, **GPT-OSS 120B**).\nTo verify your model tier eligibility, please visit:\n👉 [Google Antigravity Official Models Docs (https://antigravity.google/docs/models)](https://antigravity.google/docs/models)\n\n---\n`);
         tip.appendMarkdown(`⚡ **Live Generation Velocity**
 `);
-        tip.appendMarkdown(`- 🚀 **Live Generation Speed**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' Tokens/s (🟢 Streaming)' : '0 Tokens/s (💤 Idle)'}**
+        tip.appendMarkdown(`- 🚀 **Live Generation Speed**: **${liveSpeedState.isStreaming ? liveSpeedState.currentTps + ' t/s (🟢 Streaming)' : '0 t/s (💤 Idle)'}**
 `);
-        tip.appendMarkdown(`- 🏆 **Peak Burst Speed**: **${liveSpeedState.peakTps} Tokens/s**
+        tip.appendMarkdown(`- 🏆 **Peak Burst Speed**: **${liveSpeedState.peakTps} t/s**
 `);
         tip.appendMarkdown(`- ⏱️ Local Latency: \`${liveSpeedState.latencyMs}ms\`
 

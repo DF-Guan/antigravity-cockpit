@@ -1,5 +1,17 @@
 # Change Log (更新日志)
 
+## [2.1.14] - 2026-10-20
+### Fixed
+- **🚀 激活日志版本动态化 (Dynamic Activation Version Logging)**:
+  - 移除入口日志中硬编码的历史版本字符串，改为由 `packageJSON.version` 动态读取，确保控制台输出版本 100% 真实对齐。
+- **⚡ 状态栏 Tooltip 速率单位严密一致 (Unified Velocity Units)**:
+  - 将状态栏悬浮 Tooltip 中的生成流速与历史爆发峰值单位由残留的 `Tokens/s` 全面规范统一为紧凑规范的 `t/s`，与状态栏字面及大屏指标完全同频。
+
+### Changed
+- **🍃 智能待机 I/O 降频节电机制 (Zero-Jank Idle Throttle & Energy Optimization)**:
+  - 针对非生成态下的背景轮询引入自适应调度：活跃流式与停止降落期保持 1.5 秒极速采样，长期待机且物理字节无变化时平滑降频，大幅削减无效 SQLite 打开与目录遍历开销；
+  - 保持底层文件物理增量（ΔBytes / mtime）毫秒级唤醒感知，兼顾超轻能耗与无感响应。
+
 ## [2.1.13] - 2026-10-16
 ### Fixed
 - **⚡ 真实物理动态测速与流式平滑 (Real Dynamic Generation Velocity & EMA Smoothing)**:
