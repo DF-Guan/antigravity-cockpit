@@ -100,6 +100,14 @@ function activate(context) {
         }
     }, 1500);
     context.subscriptions.push({ dispose: () => { if (speedTimer) clearInterval(speedTimer); } });
+
+    // 🌟 5. 导出核心生态公开 API (供外部脚本与自主 Agent 无需重复嗅探端口即可直接消费)
+    return {
+        getQuotaState: () => liveQuotaState,
+        getSpeedState: () => liveSpeedState,
+        getTokenAnalytics: () => tokenAnalyticsState,
+        refresh: () => fetchAndRefresh(context, true)
+    };
 }
 
 async function fetchAndRefresh(context, manual = false) {

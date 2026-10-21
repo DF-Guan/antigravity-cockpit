@@ -2,7 +2,8 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-2.1.10-blue.svg?style=flat-square)
+![Version](https://img.shields.io/open-vsx/v/df-guan/antigravity-cockpit?style=flat-square&color=38bdf8)
+![Installs](https://img.shields.io/open-vsx/dt/df-guan/antigravity-cockpit?style=flat-square&color=blue)
 ![Antigravity](https://img.shields.io/badge/Antigravity_IDE-Native_Compatible-38bdf8.svg?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
 ![Privacy](https://img.shields.io/badge/Privacy-100%25_Offline-success.svg?style=flat-square)
@@ -72,6 +73,41 @@
 * **物理字节差分感知**：每 1.5 秒监听本地 SQLite-WAL 与轨迹物理增长，真实换算每秒 Token 吞吐流速；
 * **极速吞吐真实捕捉**：流式生成时动态呈现 Gemini 3.8 / 3.7 Flash 高速吞吐波形（**160 ~ 185 Tokens/s**），真实标定 **226.8 Tokens/s** 极限爆发峰值；
 * **智能休眠感知**：模型停止生成 6.0 秒后平滑回落至 `0 t/s (💤 待机就绪)`，同时历史真实峰值完整保留。
+
+
+### 6. 🚀 物理增量微分流速引擎 (Dynamic Generation Velocity)
+* **底层物理字节微分测速**：基于底层 SQLite-WAL / 会话数据流物理字节增量（$\Delta \text{Bytes}$）进行亚秒级微分采样，辅以 35% 惯性 + 65% 即时的 EMA 指数加权移动平均滤波，展现真实平滑的生成动态波形；
+* **智能待机极轻量节电**：生成期间 1.5s 极速同频；长期待机且底层物理字节无变化时平滑降频节流，大幅减少无效 SQLite 查询，兼具超低能耗与即时毫秒级唤醒；
+* **历史爆发峰值标定**：自动标定当前会话最高爆发流速（Peak Burst）并持久化记忆，在生成完毕后平滑减速归零。
+
+### 7. 🔌 开放生态编程接口 (Programmatic Public API for Agents & Tools)
+为赋能开发者构建自主 Agent、CLI 脚本与自动化流水线，本插件在激活时向 VS Code / Antigravity 宿主暴露了**免嗅探的公开只读 API**。其他插件或脚本无需自行通过 `netstat` 抓取端口与 Token，即可一键直连获取本机的最新实时配额与测速状态：
+
+```javascript
+const vscode = require('vscode');
+
+// 获取 Antigravity Cockpit 扩展实例
+const cockpitExt = vscode.extensions.getExtension('DF-Guan.antigravity-cockpit');
+if (cockpitExt) {
+    const api = cockpitExt.isActive ? cockpitExt.exports : await cockpitExt.activate();
+    
+    // 1. 获取最新实时配额大盘 (Gemini & Claude 周额度 / 5h 冲刺 / 重置时间)
+    const quota = api.getQuotaState();
+    console.log('Gemini 5h 冲刺余量:', quota.gemini.fiveHourPercent + '%');
+    console.log('Claude 7天周预算余量:', quota.claude.weeklyPercent + '%');
+    
+    // 2. 获取实时生成流速与本地 IPC 延迟
+    const speed = api.getSpeedState();
+    console.log('当前生成 TPS:', speed.currentTps, '峰值:', speed.peakTps, '本地延迟:', speed.latencyMs + 'ms');
+
+    // 3. 获取物理 Token 统计状态
+    const tokens = api.getTokenAnalytics();
+    console.log('活跃会话总消耗:', tokens.activeTotalFormatted);
+
+    // 4. 手动触发一次强制与底层守护进程刷新
+    await api.refresh();
+}
+```
 
 ---
 

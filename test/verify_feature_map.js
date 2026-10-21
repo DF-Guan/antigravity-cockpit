@@ -105,6 +105,24 @@ try {
     assert(false, "FM-07 [Feature 5]: Dashboard Webview API", e.message);
 }
 
+// 7. Feature 6: Extension Public Programmatic API (Ecosystem Infrastructure)
+try {
+    const extension = require(path.join(projectRoot, 'src', 'extension'));
+    assert(typeof extension.activate === 'function' && typeof extension.deactivate === 'function',
+        "FM-08 [Feature 6]: Extension Lifecycle API", "activate/deactivate missing");
+    const mockContext = {
+        subscriptions: [],
+        globalState: { get: () => null, update: () => {} },
+        extension: { packageJSON: { version: '2.1.14' } }
+    };
+    const exportsApi = extension.activate(mockContext);
+    assert(exportsApi && typeof exportsApi.getQuotaState === 'function' && typeof exportsApi.getSpeedState === 'function' && typeof exportsApi.getTokenAnalytics === 'function',
+        "FM-09 [Feature 6]: Public Exported API Invariants", "Public API missing getQuotaState / getSpeedState / getTokenAnalytics");
+    extension.deactivate();
+} catch (e) {
+    assert(false, "FM-08 [Feature 6]: Extension Public API Exports", e.message);
+}
+
 console.log("================================================================");
 console.log(`FEATURE MAP VALIDATION RESULT: ${passes.length} Passed, ${errors.length} Failed`);
 console.log("================================================================");

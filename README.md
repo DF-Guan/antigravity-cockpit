@@ -2,7 +2,8 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-2.1.10-blue.svg?style=flat-square)
+![Version](https://img.shields.io/open-vsx/v/df-guan/antigravity-cockpit?style=flat-square&color=38bdf8)
+![Installs](https://img.shields.io/open-vsx/dt/df-guan/antigravity-cockpit?style=flat-square&color=blue)
 ![Antigravity](https://img.shields.io/badge/Antigravity_IDE-Native_Compatible-38bdf8.svg?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
 ![Privacy](https://img.shields.io/badge/Privacy-100%25_Offline-success.svg?style=flat-square)
@@ -32,9 +33,9 @@
 ## 💎 6 Key Architectural Pillars
 
 ### 1. 🔒 100% Offline & Private (Zero Outbound · Zero Telemetry)
-* **0 External Requests**: Pure loopback communication (`127.0.0.1`) directly with the local daemon;
-* **0 Telemetry & Analytics**: Absolutely no tracking scripts, ping analytics, or remote log collection;
-* **In-Memory Credentials**: CSRF tokens reside purely in memory.
+* **0 External Network Calls**: Absolutely zero requests to third-party or public APIs; all network activity is strictly confined to local loopback (`127.0.0.1`) IPC handshakes with the Language Server daemon;
+* **0 Telemetry & Analytics**: No tracking scripts, ping telemetry, Google Analytics, or remote log aggregators—100% physical privacy isolation;
+* **Zero Account Credentials Stored**: Does not request, access, or persist any Google account passwords or OAuth Refresh Tokens. Only stores the ephemeral local CSRF token in global state strictly for 127.0.0.1 loopback IPC authentication.
 
 ### 2. ⚡ Netstat-PID Instant Port Handshake Engine
 * **PID-Exact Network Table Mapping**: Captures real `LISTENING` ports of the Language Server daemon using `netstat -ano`;
